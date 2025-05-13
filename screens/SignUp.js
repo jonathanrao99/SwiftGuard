@@ -24,6 +24,41 @@ export default function SignUp({ navigation }) {
     return `${month}/${day}/${year}`;
   };
 
+  const validateEmail = (value) => {
+    setEmail(value);
+    if (!value.includes('@') || !value.includes('.com')) {
+      setEmailError('Must include @ and .com');
+    } else {
+      setEmailError('');
+    }
+  };
+
+  const validatePhone = (value) => {
+    setPhone(value);
+    const digits = value.replace(/\D/g, '');
+    if (digits.length !== 10) {
+      setPhoneError('Must be 10 digits');
+    } else {
+      setPhoneError('');
+    }
+  };
+
+  const validateDobDate = (d) => {
+    setDate(d);
+    const dobStr = formatDate(d);
+    setDob(dobStr);
+    const today = new Date();
+    let age = today.getFullYear() - d.getFullYear();
+    const m = today.getMonth() - d.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < d.getDate())) age--;
+    if (age < 16) setDobError('Must be at least 16 yrs old'); else setDobError('');
+  };
+
+  const validateConfirm = (value) => {
+    setConfirmPassword(value);
+    if (value !== password) setConfirmError('Passwords do not match'); else setConfirmError('');
+  };
+
   const handleSignUp = () => {
     let valid = true;
     if (!email.includes('@') || !email.includes('.com')) {
@@ -88,7 +123,7 @@ export default function SignUp({ navigation }) {
             <TextInput
               placeholder="Enter your Email Address"
               value={email}
-              onChangeText={setEmail}
+              onChangeText={validateEmail}
               style={styles.input}
               keyboardType="email-address"
               autoCapitalize="none"
@@ -102,7 +137,7 @@ export default function SignUp({ navigation }) {
               <TextInput
                 placeholder="Enter #"
                 value={phone}
-                onChangeText={setPhone}
+                onChangeText={validatePhone}
                 style={styles.input}
                 keyboardType="phone-pad"
               />
@@ -124,7 +159,7 @@ export default function SignUp({ navigation }) {
             <TextInput
               placeholder="Enter Password"
               value={password}
-              onChangeText={setPassword}
+              onChangeText={(text) => { setPassword(text); if (confirmPassword) validateConfirm(confirmPassword); }}
               style={styles.input}
               secureTextEntry
             />
@@ -135,7 +170,7 @@ export default function SignUp({ navigation }) {
             <TextInput
               placeholder="Confirm Password"
               value={confirmPassword}
-              onChangeText={setConfirmPassword}
+              onChangeText={validateConfirm}
               style={styles.input}
               secureTextEntry
             />
@@ -165,8 +200,7 @@ export default function SignUp({ navigation }) {
             onChange={(event, selectedDate) => {
               setShowDatePicker(false);
               if (selectedDate) {
-                setDate(selectedDate);
-                setDob(formatDate(selectedDate));
+                validateDobDate(selectedDate);
               }
             }}
           />
@@ -200,4 +234,5 @@ const styles = StyleSheet.create({
   signInContainer: { width: '100%', flexDirection: 'row', justifyContent: 'center', marginTop: 20 },
   signInText: { color: '#666' },
   signInLink: { color: '#2E88FA', fontWeight: 'bold' },
+  signUpText: { color: '#fff', fontWeight: 'bold' },
 }); 
