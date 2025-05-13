@@ -25,11 +25,11 @@ export default function SignUp({ navigation }) {
         behavior={Platform.OS === 'ios' ? 'padding' : null}
         style={styles.container}
       >
-        <ScrollView contentContainerStyle={styles.scrollContainer} keyboardShouldPersistTaps="handled">
+        <View style={styles.innerContainer}>
           <View style={styles.logoContainer}>
             <MaterialCommunityIcons name="shield-key-outline" size={120} color="#2E88FA" />
           </View>
-          <Text style={styles.header}>Sign Up to SwiftGuard</Text>
+          <Text style={styles.header}>Sign Up</Text>
           <Text style={styles.subheader}>Join us in less than 1 minute, no cost.</Text>
 
           <View style={styles.inputContainer}>
@@ -93,7 +93,14 @@ export default function SignUp({ navigation }) {
           >
             <Text style={styles.signUpText}>Sign Up</Text>
           </TouchableOpacity>
-        </ScrollView>
+          
+          <View style={styles.signUpContainer}>
+          <Text style={styles.signUpText}>Already have an account? </Text>
+          <TouchableOpacity onPress={() => navigation.navigate('LoginScreen')}>
+            <Text style={styles.signUpLink}>Sign in</Text>
+          </TouchableOpacity>
+        </View>
+        </View>
 
         {showDatePicker && (
           <DateTimePicker
@@ -118,8 +125,8 @@ const styles = StyleSheet.create({
   inputText: { fontSize: 16, color: '#000', lineHeight: 45 },
   placeholderText: { color: '#888' },
   safe: { flex: 1, backgroundColor: '#fff' },
-  container: { flex: 1 },
-  scrollContainer: { alignItems: 'center', paddingHorizontal: 20, paddingVertical: 20 },
+  container: { flex: 1, paddingHorizontal: 20, justifyContent: 'center', alignItems: 'center' },
+  innerContainer: { width: '100%' },
   logoContainer: { alignItems: 'center', marginVertical: 10 },
   header: { fontSize: 20, fontWeight: 'bold', color: '#333', textAlign: 'center', marginTop: 10 },
   subheader: { fontSize: 14, color: '#666', textAlign: 'center', marginBottom: 20 },
