@@ -71,10 +71,10 @@ export default function LoginScreen({ navigation }) {
             />
           </TouchableOpacity>
         </View>
-        <View style={styles.authOptionsContainer}>
-          <TouchableOpacity style={styles.biometricButton} onPress={handleBiometricAuth}>
-            <MaterialCommunityIcons name="face-recognition" size={24} color="#2E88FA" />
-            <Text style={styles.biometricText}>Use Face ID</Text>
+        {/* Biometric and Forgot Password links under password field */}
+        <View style={styles.authOptionsRow}>
+          <TouchableOpacity onPress={handleBiometricAuth}>
+            <Text style={styles.forgotText}>Use Face ID</Text>
           </TouchableOpacity>
           <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword')}>
             <Text style={styles.forgotText}>Forgot Password</Text>
@@ -123,7 +123,7 @@ const styles = StyleSheet.create({
   input: { width: '100%', borderWidth: 1, borderColor: '#ccc', borderRadius: 8, paddingLeft: 40, height: 45 },
   inputIcon: { position: 'absolute', top: 12, left: 10 },
   passwordToggle: { position: 'absolute', right: 10, top: 12 },
-  authOptionsContainer: { width: '100%', flexDirection: 'row', justifyContent: 'space-between', marginTop: 15 },
+  authOptionsRow: { width: '100%', flexDirection: 'row', justifyContent: 'space-between', marginTop: 10, marginBottom: 10 },
   signInButton: { width: '100%', backgroundColor: '#2E88FA', height: 45, borderRadius: 8, justifyContent: 'center', alignItems: 'center', marginTop: 20 },
   signInText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
   dividerContainer: { flexDirection: 'row', alignItems: 'center', marginVertical: 20 },
@@ -135,7 +135,5 @@ const styles = StyleSheet.create({
   signUpContainer: { width: '100%', flexDirection: 'row', justifyContent: 'center', marginTop: 10 },
   signUpText: { color: '#666' },
   signUpLink: { color: '#2E88FA', fontWeight: 'bold' },
-  biometricButton: { flexDirection: 'row', alignItems: 'center', marginTop: 15 },
-  biometricText: { color: '#2E88FA', fontSize: 16, marginLeft: 8 },
   forgotText: { fontSize: 12, color: '#2E88FA' },
 }); 
