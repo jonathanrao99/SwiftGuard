@@ -1,11 +1,29 @@
 import React, { useState } from 'react';
-import { SafeAreaView, View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
+import { SafeAreaView, View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform, Alert } from 'react-native';
 import { MaterialCommunityIcons, FontAwesome } from '@expo/vector-icons';
+import * as LocalAuthentication from 'expo-local-authentication';
 
 export default function LoginScreen({ navigation }) {
   const [isClient, setIsClient] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+
+  const handleBiometricAuth = async () => {
+    try {
+      const compatible = await LocalAuthentication.hasHardwareAsync();
+      const enrolled = await LocalAuthentication.isEnrolledAsync();
+      if (!compatible || !enrolled) {
+        Alert.alert('Biometric not supported', 'Your device does not support Face ID or no biometrics are enrolled.');
+        return;
+      }
+      const result = await LocalAuthentication.authenticateAsync({ promptMessage: 'Login with Face ID' });
+      if (result.success) {
+        navigation.replace(isClient ? 'ClientDashboard' : 'SecurityDashboard');
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -22,7 +40,7 @@ export default function LoginScreen({ navigation }) {
             <Text style={[styles.segmentText, !isClient && styles.segmentTextActive]}>Security</Text>
           </TouchableOpacity>
         </View>
-        <Text style={styles.header}>Sign In to SwiftGuard</Text>
+        <Text style={styles.header}>Sign In</Text>
         <Text style={styles.subheader}>Welcome back, Please enter your account details below.</Text>
         <View style={styles.inputContainer}>
           <MaterialCommunityIcons name="email-outline" size={20} color="#888" style={styles.inputIcon} />
@@ -50,6 +68,10 @@ export default function LoginScreen({ navigation }) {
         </View>
         <TouchableOpacity style={styles.signInButton} onPress={() => navigation.replace(isClient ? 'ClientDashboard' : 'SecurityDashboard')}>
           <Text style={styles.signInText}>Sign In</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.biometricButton} onPress={handleBiometricAuth}>
+          <MaterialCommunityIcons name="face-recognition" size={24} color="#2E88FA" />
+          <Text style={styles.biometricText}>Use Face ID</Text>
         </TouchableOpacity>
         <View style={styles.dividerContainer}>
           <View style={styles.divider} />
@@ -103,4 +125,6 @@ const styles = StyleSheet.create({
   signUpContainer: { width: '100%', flexDirection: 'row', justifyContent: 'center', marginTop: 10 },
   signUpText: { color: '#666' },
   signUpLink: { color: '#2E88FA', fontWeight: 'bold' },
+  biometricButton: { flexDirection: 'row', alignItems: 'center', marginTop: 15 },
+  biometricText: { color: '#2E88FA', fontSize: 16, marginLeft: 8 },
 }); 
