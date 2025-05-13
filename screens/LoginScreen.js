@@ -127,7 +127,7 @@ const styles = StyleSheet.create({
   authOptionsRow: { width: '100%', flexDirection: 'row', justifyContent: 'space-between', marginTop: 10, marginBottom: 10 },
   authOption: { flexDirection: 'row', alignItems: 'center' },
   authIcon: { marginRight: 6 },
-  signInButton: { width: '100%', backgroundColor: '#2E88FA', height: 45, borderRadius: 8, justifyContent: 'center', alignItems: 'center', marginTop: 20 },
+  signInButton: { width: '100%', backgroundColor: '#2E88FA', height: 45, borderRadius: 8, justifyContent: 'center', alignItems: 'center', marginTop: 10 },
   signInText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
   dividerContainer: { flexDirection: 'row', alignItems: 'center', marginVertical: 20 },
   divider: { flex: 1, height: 1, backgroundColor: '#eee' },

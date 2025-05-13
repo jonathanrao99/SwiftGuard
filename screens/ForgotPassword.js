@@ -19,7 +19,7 @@ export default function ForgotPassword({ navigation }) {
     <SafeAreaView style={styles.safe}>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : null} style={styles.container}>
         <View style={styles.logoContainer}>
-          <MaterialCommunityIcons name="shield-key-outline" size={80} color="#2E88FA" />
+          <MaterialCommunityIcons name="shield-key-outline" size={120} color="#2E88FA" />
         </View>
         <Text style={styles.header}>Forgot Password</Text>
         <Text style={styles.subheader}>Please enter your email address to reset your password.</Text>

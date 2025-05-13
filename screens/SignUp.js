@@ -59,16 +59,6 @@ export default function SignUp({ navigation }) {
     if (value !== password) setConfirmError('Passwords do not match'); else setConfirmError('');
   };
 
-  const handlePhoneChange = (value) => {
-    setPhone(value);
-    const digits = value.replace(/\D/g, '');
-    if (digits.length > 10) {
-      setPhoneError('Must be 10 digits');
-    } else if (phoneError) {
-      setPhoneError('');
-    }
-  };
-
   const handleSignUp = () => {
     let valid = true;
     if (!email.includes('@') || !email.includes('.com')) {
@@ -148,7 +138,7 @@ export default function SignUp({ navigation }) {
               <TextInput
                 placeholder="Enter #"
                 value={phone}
-                onChangeText={handlePhoneChange}
+                onChangeText={(value) => { setPhone(value); if (phoneError) setPhoneError(''); }}
                 onBlur={() => validatePhone(phone)}
                 style={styles.input}
                 keyboardType="phone-pad"
