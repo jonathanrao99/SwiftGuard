@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { SafeAreaView, View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import { MaterialCommunityIcons, FontAwesome } from '@expo/vector-icons';
+import DateTimePicker from '@react-native-community/datetimepicker';
 
 export default function SignUp({ navigation }) {
   const [email, setEmail] = useState('');
@@ -8,6 +9,15 @@ export default function SignUp({ navigation }) {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [phone, setPhone] = useState('');
   const [dob, setDob] = useState('');
+  const [date, setDate] = useState(new Date());
+  const [showDatePicker, setShowDatePicker] = useState(false);
+
+  const formatDate = (d) => {
+    const month = d.getMonth() + 1;
+    const day = d.getDate();
+    const year = d.getFullYear();
+    return `${month}/${day}/${year}`;
+  };
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -17,10 +27,10 @@ export default function SignUp({ navigation }) {
       >
         <ScrollView contentContainerStyle={styles.scrollContainer} keyboardShouldPersistTaps="handled">
           <View style={styles.logoContainer}>
-            <MaterialCommunityIcons name="shield-key-outline" size={80} color="#2E88FA" />
+            <MaterialCommunityIcons name="shield-key-outline" size={120} color="#2E88FA" />
           </View>
           <Text style={styles.header}>Sign Up to SwiftGuard</Text>
-          <Text style={styles.subheader}>Join us for less than 1 minute, no cost.</Text>
+          <Text style={styles.subheader}>Join us in less than 1 minute, no cost.</Text>
 
           <View style={styles.inputContainer}>
             <MaterialCommunityIcons name="email-outline" size={20} color="#888" style={styles.inputIcon} />
@@ -32,6 +42,27 @@ export default function SignUp({ navigation }) {
               keyboardType="email-address"
               autoCapitalize="none"
             />
+          </View>
+
+          <View style={styles.rowContainer}>
+            <View style={[styles.inputContainer, styles.halfWidth]}>
+              <FontAwesome name="phone" size={20} color="#888" style={styles.inputIcon} />
+              <TextInput
+                placeholder="Enter #"
+                value={phone}
+                onChangeText={setPhone}
+                style={styles.input}
+                keyboardType="phone-pad"
+              />
+            </View>
+            <View style={[styles.inputContainer, styles.halfWidth]}>
+              <MaterialCommunityIcons name="calendar-month" size={20} color="#888" style={styles.inputIcon} />
+              <TouchableOpacity style={styles.input} onPress={() => setShowDatePicker(true)}>
+                <Text style={[styles.inputText, dob ? {} : styles.placeholderText]}>
+                  {dob || 'Date of Birth'}
+                </Text>
+              </TouchableOpacity>
+            </View>
           </View>
 
           <View style={styles.inputContainer}>
@@ -56,28 +87,6 @@ export default function SignUp({ navigation }) {
             />
           </View>
 
-          <View style={styles.rowContainer}>
-            <View style={[styles.inputContainer, styles.halfWidth]}>
-              <FontAwesome name="phone" size={20} color="#888" style={styles.inputIcon} />
-              <TextInput
-                placeholder="Enter #"
-                value={phone}
-                onChangeText={setPhone}
-                style={styles.input}
-                keyboardType="phone-pad"
-              />
-            </View>
-            <View style={[styles.inputContainer, styles.halfWidth]}>
-              <MaterialCommunityIcons name="calendar-month" size={20} color="#888" style={styles.inputIcon} />
-              <TextInput
-                placeholder="Date of Birth"
-                value={dob}
-                onChangeText={setDob}
-                style={styles.input}
-              />
-            </View>
-          </View>
-
           <TouchableOpacity
             style={styles.signUpButton}
             onPress={() => navigation.replace('ClientDashboard')}
@@ -85,12 +94,29 @@ export default function SignUp({ navigation }) {
             <Text style={styles.signUpText}>Sign Up</Text>
           </TouchableOpacity>
         </ScrollView>
+
+        {showDatePicker && (
+          <DateTimePicker
+            value={date}
+            mode="date"
+            display="default"
+            onChange={(event, selectedDate) => {
+              setShowDatePicker(false);
+              if (selectedDate) {
+                setDate(selectedDate);
+                setDob(formatDate(selectedDate));
+              }
+            }}
+          />
+        )}
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  inputText: { fontSize: 16, color: '#000', lineHeight: 45 },
+  placeholderText: { color: '#888' },
   safe: { flex: 1, backgroundColor: '#fff' },
   container: { flex: 1 },
   scrollContainer: { alignItems: 'center', paddingHorizontal: 20, paddingVertical: 20 },
