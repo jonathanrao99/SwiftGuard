@@ -34,7 +34,7 @@ export default function SignUp({ navigation }) {
     }
     const phoneDigits = phone.replace(/\D/g, '');
     if (phoneDigits.length !== 10) {
-      setPhoneError('Phone number must be 10 digits');
+      setPhoneError('Must be 10 digits');
       valid = false;
     } else {
       setPhoneError('');
@@ -46,7 +46,7 @@ export default function SignUp({ navigation }) {
       age--;
     }
     if (age < 16) {
-      setDobError('You must be at least 16 years old');
+      setDobError('Must be at least 16 yrs old');
       valid = false;
     } else {
       setDobError('');
@@ -106,6 +106,7 @@ export default function SignUp({ navigation }) {
                 style={styles.input}
                 keyboardType="phone-pad"
               />
+              {phoneError ? <Text style={styles.errorText}>{phoneError}</Text> : null}
             </View>
             <View style={[styles.inputContainer, styles.halfWidth]}>
               <MaterialCommunityIcons name="calendar-month" size={20} color="#888" style={styles.inputIcon} />
@@ -114,10 +115,9 @@ export default function SignUp({ navigation }) {
                   {dob || 'Date of Birth'}
                 </Text>
               </TouchableOpacity>
+              {dobError ? <Text style={styles.errorText}>{dobError}</Text> : null}
             </View>
           </View>
-          {phoneError ? <Text style={styles.errorText}>{phoneError}</Text> : null}
-          {dobError ? <Text style={styles.errorText}>{dobError}</Text> : null}
 
           <View style={styles.inputContainer}>
             <MaterialCommunityIcons name="lock-outline" size={20} color="#888" style={styles.inputIcon} />
