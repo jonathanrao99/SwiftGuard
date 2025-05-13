@@ -73,7 +73,8 @@ export default function LoginScreen({ navigation }) {
         </View>
         {/* Biometric and Forgot Password links under password field */}
         <View style={styles.authOptionsRow}>
-          <TouchableOpacity onPress={handleBiometricAuth}>
+          <TouchableOpacity style={styles.authOption} onPress={handleBiometricAuth}>
+            <MaterialCommunityIcons name="face-recognition" size={16} color="#2E88FA" style={styles.authIcon} />
             <Text style={styles.forgotText}>Use Face ID</Text>
           </TouchableOpacity>
           <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword')}>
@@ -124,6 +125,8 @@ const styles = StyleSheet.create({
   inputIcon: { position: 'absolute', top: 12, left: 10 },
   passwordToggle: { position: 'absolute', right: 10, top: 12 },
   authOptionsRow: { width: '100%', flexDirection: 'row', justifyContent: 'space-between', marginTop: 10, marginBottom: 10 },
+  authOption: { flexDirection: 'row', alignItems: 'center' },
+  authIcon: { marginRight: 6 },
   signInButton: { width: '100%', backgroundColor: '#2E88FA', height: 45, borderRadius: 8, justifyContent: 'center', alignItems: 'center', marginTop: 20 },
   signInText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
   dividerContainer: { flexDirection: 'row', alignItems: 'center', marginVertical: 20 },
