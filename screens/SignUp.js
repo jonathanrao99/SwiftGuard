@@ -11,12 +11,55 @@ export default function SignUp({ navigation }) {
   const [dob, setDob] = useState('');
   const [date, setDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [isClient, setIsClient] = useState(true);
+  const [emailError, setEmailError] = useState('');
+  const [phoneError, setPhoneError] = useState('');
+  const [dobError, setDobError] = useState('');
+  const [confirmError, setConfirmError] = useState('');
 
   const formatDate = (d) => {
     const month = d.getMonth() + 1;
     const day = d.getDate();
     const year = d.getFullYear();
     return `${month}/${day}/${year}`;
+  };
+
+  const handleSignUp = () => {
+    let valid = true;
+    if (!email.includes('@') || !email.includes('.com')) {
+      setEmailError('Please enter a valid email address');
+      valid = false;
+    } else {
+      setEmailError('');
+    }
+    const phoneDigits = phone.replace(/\D/g, '');
+    if (phoneDigits.length !== 10) {
+      setPhoneError('Phone number must be 10 digits');
+      valid = false;
+    } else {
+      setPhoneError('');
+    }
+    const today = new Date();
+    let age = today.getFullYear() - date.getFullYear();
+    const m = today.getMonth() - date.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < date.getDate())) {
+      age--;
+    }
+    if (age < 16) {
+      setDobError('You must be at least 16 years old');
+      valid = false;
+    } else {
+      setDobError('');
+    }
+    if (password !== confirmPassword) {
+      setConfirmError('Passwords do not match');
+      valid = false;
+    } else {
+      setConfirmError('');
+    }
+    if (valid) {
+      navigation.replace(isClient ? 'ClientDashboard' : 'SecurityDashboard');
+    }
   };
 
   return (
@@ -28,6 +71,14 @@ export default function SignUp({ navigation }) {
         <View style={styles.innerContainer}>
           <View style={styles.logoContainer}>
             <MaterialCommunityIcons name="shield-key-outline" size={120} color="#2E88FA" />
+          </View>
+          <View style={styles.segmentContainer}>
+            <TouchableOpacity style={[styles.segment, isClient && styles.segmentActive]} onPress={() => setIsClient(true)}>
+              <Text style={[styles.segmentText, isClient && styles.segmentTextActive]}>Client</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.segment, !isClient && styles.segmentActive]} onPress={() => setIsClient(false)}>
+              <Text style={[styles.segmentText, !isClient && styles.segmentTextActive]}>Security</Text>
+            </TouchableOpacity>
           </View>
           <Text style={styles.header}>Sign Up</Text>
           <Text style={styles.subheader}>Join us in less than 1 minute, no cost.</Text>
@@ -42,6 +93,7 @@ export default function SignUp({ navigation }) {
               keyboardType="email-address"
               autoCapitalize="none"
             />
+            {emailError ? <Text style={styles.errorText}>{emailError}</Text> : null}
           </View>
 
           <View style={styles.rowContainer}>
@@ -64,6 +116,8 @@ export default function SignUp({ navigation }) {
               </TouchableOpacity>
             </View>
           </View>
+          {phoneError ? <Text style={styles.errorText}>{phoneError}</Text> : null}
+          {dobError ? <Text style={styles.errorText}>{dobError}</Text> : null}
 
           <View style={styles.inputContainer}>
             <MaterialCommunityIcons name="lock-outline" size={20} color="#888" style={styles.inputIcon} />
@@ -86,18 +140,19 @@ export default function SignUp({ navigation }) {
               secureTextEntry
             />
           </View>
+          {confirmError ? <Text style={styles.errorText}>{confirmError}</Text> : null}
 
           <TouchableOpacity
             style={styles.signUpButton}
-            onPress={() => navigation.replace('ClientDashboard')}
+            onPress={handleSignUp}
           >
             <Text style={styles.signUpText}>Sign Up</Text>
           </TouchableOpacity>
           
-          <View style={styles.signUpContainer}>
-          <Text style={styles.signUpText}>Already have an account? </Text>
-          <TouchableOpacity onPress={() => navigation.navigate('LoginScreen')}>
-            <Text style={styles.signUpLink}>Sign in</Text>
+          <View style={styles.signInContainer}>
+          <Text style={styles.signInText}>Already have an account? </Text>
+          <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+            <Text style={styles.signInLink}>Sign in</Text>
           </TouchableOpacity>
         </View>
         </View>
@@ -122,11 +177,17 @@ export default function SignUp({ navigation }) {
 }
 
 const styles = StyleSheet.create({
+  errorText: { color: 'red', fontSize: 12, marginTop: 4 },
   inputText: { fontSize: 16, color: '#000', lineHeight: 45 },
   placeholderText: { color: '#888' },
   safe: { flex: 1, backgroundColor: '#fff' },
   container: { flex: 1, paddingHorizontal: 20, justifyContent: 'center', alignItems: 'center' },
   innerContainer: { width: '100%' },
+  segmentContainer: { flexDirection: 'row', alignSelf: 'center', marginVertical: 10, backgroundColor: '#f0f0f0', borderRadius: 25 },
+  segment: { paddingVertical: 8, paddingHorizontal: 25, borderRadius: 25 },
+  segmentActive: { backgroundColor: '#2E88FA' },
+  segmentText: { fontSize: 14, color: '#666' },
+  segmentTextActive: { color: '#fff' },
   logoContainer: { alignItems: 'center', marginVertical: 10 },
   header: { fontSize: 20, fontWeight: 'bold', color: '#333', textAlign: 'center', marginTop: 10 },
   subheader: { fontSize: 14, color: '#666', textAlign: 'center', marginBottom: 20 },
@@ -136,5 +197,7 @@ const styles = StyleSheet.create({
   input: { width: '100%', borderWidth: 1, borderColor: '#ccc', borderRadius: 8, paddingLeft: 40, height: 45 },
   inputIcon: { position: 'absolute', top: 12, left: 10 },
   signUpButton: { width: '100%', backgroundColor: '#2E88FA', height: 45, borderRadius: 8, justifyContent: 'center', alignItems: 'center', marginTop: 20 },
-  signUpText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
+  signInContainer: { width: '100%', flexDirection: 'row', justifyContent: 'center', marginTop: 20 },
+  signInText: { color: '#666' },
+  signInLink: { color: '#2E88FA', fontWeight: 'bold' },
 }); 
