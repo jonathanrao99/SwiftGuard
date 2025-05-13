@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { SafeAreaView, View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
+import { SafeAreaView, View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform, Linking } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 export default function ForgotPassword({ navigation }) {
@@ -39,8 +39,13 @@ export default function ForgotPassword({ navigation }) {
           <Text style={styles.continueText}>Continue</Text>
         </TouchableOpacity>
         <View style={styles.footerContainer}>
-          <Text style={styles.footerText}>Don't remember your email? </Text>
-          <Text style={styles.footerLink}>Contact Us at: help@swiftguard.app</Text>
+          <Text style={styles.footerText}>Don't remember your email?</Text>
+        </View>
+        <View style={styles.footerContainer}>
+          <Text style={styles.footerText}>Contact Us at: </Text>
+          <Text style={styles.footerLink} onPress={() => Linking.openURL('mailto:help@swiftguard.app')}>
+            help@swiftguard.app
+          </Text>
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
