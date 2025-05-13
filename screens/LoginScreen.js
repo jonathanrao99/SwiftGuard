@@ -11,7 +11,7 @@ export default function LoginScreen({ navigation }) {
     <SafeAreaView style={styles.safe}>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : null} style={styles.container}>
         <View style={styles.logoContainer}>
-          <MaterialCommunityIcons name="shield-key-outline" size={64} color="#2E88FA" />
+          <MaterialCommunityIcons name="shield-key-outline" size={120} color="#2E88FA" />
           <Text style={styles.logoText}>SwiftGuard</Text>
         </View>
         <View style={styles.segmentContainer}>
@@ -58,11 +58,11 @@ export default function LoginScreen({ navigation }) {
         </View>
         <TouchableOpacity style={styles.socialButton} onPress={() => {}}>
           <FontAwesome name="google" size={20} color="#DB4437" style={styles.socialIcon} />
-          <Text style={styles.socialText}>Sign up with Google</Text>
+          <Text style={styles.socialText}>Sign in with Google</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.socialButton} onPress={() => {}}>
           <FontAwesome name="apple" size={20} color="#000" style={styles.socialIcon} />
-          <Text style={styles.socialText}>Sign up with Apple</Text>
+          <Text style={styles.socialText}>Sign in with Apple</Text>
         </TouchableOpacity>
         <View style={styles.signUpContainer}>
           <Text style={styles.signUpText}>Don't have an account? </Text>
@@ -77,9 +77,9 @@ export default function LoginScreen({ navigation }) {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: '#fff' },
-  container: { flex: 1, padding: 20 },
+  container: { flex: 1, paddingHorizontal: 20, justifyContent: 'center', alignItems: 'center' },
   logoContainer: { alignItems: 'center', marginVertical: 20 },
-  logoText: { fontSize: 24, fontWeight: 'bold', color: '#333', marginTop: 10 },
+  logoText: { fontSize: 28, fontWeight: 'bold', color: '#333', marginTop: 10 },
   segmentContainer: { flexDirection: 'row', alignSelf: 'center', marginVertical: 10, backgroundColor: '#f0f0f0', borderRadius: 25 },
   segment: { paddingVertical: 8, paddingHorizontal: 25, borderRadius: 25 },
   segmentActive: { backgroundColor: '#2E88FA' },
@@ -87,20 +87,20 @@ const styles = StyleSheet.create({
   segmentTextActive: { color: '#fff' },
   header: { fontSize: 20, fontWeight: 'bold', color: '#333', textAlign: 'center', marginTop: 10 },
   subheader: { fontSize: 14, color: '#666', textAlign: 'center', marginVertical: 10 },
-  inputContainer: { marginTop: 15 },
-  input: { borderWidth: 1, borderColor: '#ccc', borderRadius: 8, paddingLeft: 40, height: 45 },
+  inputContainer: { width: '100%', marginTop: 15 },
+  input: { width: '100%', borderWidth: 1, borderColor: '#ccc', borderRadius: 8, paddingLeft: 40, height: 45 },
   inputIcon: { position: 'absolute', top: 12, left: 10 },
   forgotButton: { position: 'absolute', right: 10, top: 12 },
   forgotText: { fontSize: 12, color: '#2E88FA' },
-  signInButton: { backgroundColor: '#2E88FA', height: 45, borderRadius: 8, justifyContent: 'center', alignItems: 'center', marginTop: 20 },
+  signInButton: { width: '100%', backgroundColor: '#2E88FA', height: 45, borderRadius: 8, justifyContent: 'center', alignItems: 'center', marginTop: 20 },
   signInText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
   dividerContainer: { flexDirection: 'row', alignItems: 'center', marginVertical: 20 },
   divider: { flex: 1, height: 1, backgroundColor: '#eee' },
   dividerText: { marginHorizontal: 10, color: '#666' },
-  socialButton: { flexDirection: 'row', height: 45, borderRadius: 8, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#ccc', marginBottom: 10 },
+  socialButton: { width: '100%', flexDirection: 'row', height: 45, borderRadius: 8, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#ccc', marginBottom: 10 },
   socialIcon: { marginRight: 10 },
   socialText: { fontSize: 14, color: '#333' },
-  signUpContainer: { flexDirection: 'row', justifyContent: 'center', marginTop: 10 },
+  signUpContainer: { width: '100%', flexDirection: 'row', justifyContent: 'center', marginTop: 10 },
   signUpText: { color: '#666' },
   signUpLink: { color: '#2E88FA', fontWeight: 'bold' },
 }); 
