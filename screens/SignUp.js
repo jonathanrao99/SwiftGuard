@@ -123,7 +123,8 @@ export default function SignUp({ navigation }) {
             <TextInput
               placeholder="Enter your Email Address"
               value={email}
-              onChangeText={validateEmail}
+              onChangeText={(value) => { setEmail(value); if (emailError) setEmailError(''); }}
+              onBlur={() => validateEmail(email)}
               style={styles.input}
               keyboardType="email-address"
               autoCapitalize="none"
@@ -137,7 +138,8 @@ export default function SignUp({ navigation }) {
               <TextInput
                 placeholder="Enter #"
                 value={phone}
-                onChangeText={validatePhone}
+                onChangeText={(value) => { setPhone(value); if (phoneError) setPhoneError(''); }}
+                onBlur={() => validatePhone(phone)}
                 style={styles.input}
                 keyboardType="phone-pad"
               />
