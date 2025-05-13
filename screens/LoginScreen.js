@@ -7,6 +7,7 @@ export default function LoginScreen({ navigation }) {
   const [isClient, setIsClient] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleBiometricAuth = async () => {
     try {
@@ -60,18 +61,27 @@ export default function LoginScreen({ navigation }) {
             value={password}
             onChangeText={setPassword}
             style={styles.input}
-            secureTextEntry
+            secureTextEntry={!showPassword}
           />
-          <TouchableOpacity style={styles.forgotButton} onPress={() => navigation.navigate('ForgotPassword')}>
+          <TouchableOpacity style={styles.passwordToggle} onPress={() => setShowPassword(!showPassword)}>
+            <MaterialCommunityIcons
+              name={showPassword ? 'eye-off-outline' : 'eye-outline'}
+              size={20}
+              color="#888"
+            />
+          </TouchableOpacity>
+        </View>
+        <View style={styles.authOptionsContainer}>
+          <TouchableOpacity style={styles.biometricButton} onPress={handleBiometricAuth}>
+            <MaterialCommunityIcons name="face-recognition" size={24} color="#2E88FA" />
+            <Text style={styles.biometricText}>Use Face ID</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword')}>
             <Text style={styles.forgotText}>Forgot Password</Text>
           </TouchableOpacity>
         </View>
         <TouchableOpacity style={styles.signInButton} onPress={() => navigation.replace(isClient ? 'ClientDashboard' : 'SecurityDashboard')}>
           <Text style={styles.signInText}>Sign In</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.biometricButton} onPress={handleBiometricAuth}>
-          <MaterialCommunityIcons name="face-recognition" size={24} color="#2E88FA" />
-          <Text style={styles.biometricText}>Use Face ID</Text>
         </TouchableOpacity>
         <View style={styles.dividerContainer}>
           <View style={styles.divider} />
@@ -112,8 +122,8 @@ const styles = StyleSheet.create({
   inputContainer: { width: '100%', marginTop: 15 },
   input: { width: '100%', borderWidth: 1, borderColor: '#ccc', borderRadius: 8, paddingLeft: 40, height: 45 },
   inputIcon: { position: 'absolute', top: 12, left: 10 },
-  forgotButton: { position: 'absolute', right: 10, top: 12 },
-  forgotText: { fontSize: 12, color: '#2E88FA' },
+  passwordToggle: { position: 'absolute', right: 10, top: 12 },
+  authOptionsContainer: { width: '100%', flexDirection: 'row', justifyContent: 'space-between', marginTop: 15 },
   signInButton: { width: '100%', backgroundColor: '#2E88FA', height: 45, borderRadius: 8, justifyContent: 'center', alignItems: 'center', marginTop: 20 },
   signInText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
   dividerContainer: { flexDirection: 'row', alignItems: 'center', marginVertical: 20 },
@@ -127,4 +137,5 @@ const styles = StyleSheet.create({
   signUpLink: { color: '#2E88FA', fontWeight: 'bold' },
   biometricButton: { flexDirection: 'row', alignItems: 'center', marginTop: 15 },
   biometricText: { color: '#2E88FA', fontSize: 16, marginLeft: 8 },
+  forgotText: { fontSize: 12, color: '#2E88FA' },
 }); 
