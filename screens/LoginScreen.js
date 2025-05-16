@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { SafeAreaView, View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform, Alert } from 'react-native';
+import { SafeAreaView, View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform, Alert, Image } from 'react-native';
 import { MaterialCommunityIcons, FontAwesome } from '@expo/vector-icons';
 import * as LocalAuthentication from 'expo-local-authentication';
 
@@ -30,7 +30,7 @@ export default function LoginScreen({ navigation }) {
     <SafeAreaView style={styles.safe}>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : null} style={styles.container}>
         <View style={styles.logoContainer}>
-          <MaterialCommunityIcons name="shield-key-outline" size={120} color="#2E88FA" />
+          <Image source={require('../assets/logo.png')} style={styles.logoImage} />
           <Text style={styles.logoText}>SwiftGuard</Text>
         </View>
         <View style={styles.segmentContainer}>
@@ -112,6 +112,7 @@ const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: '#fff' },
   container: { flex: 1, paddingHorizontal: 20, justifyContent: 'center', alignItems: 'center' },
   logoContainer: { alignItems: 'center', marginVertical: 20 },
+  logoImage: { width: 120, height: 120, resizeMode: 'contain' },
   logoText: { fontSize: 28, fontWeight: 'bold', color: '#333', marginTop: 10 },
   segmentContainer: { flexDirection: 'row', alignSelf: 'center', marginVertical: 10, backgroundColor: '#f0f0f0', borderRadius: 25 },
   segment: { paddingVertical: 8, paddingHorizontal: 25, borderRadius: 25 },

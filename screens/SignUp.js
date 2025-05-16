@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { SafeAreaView, View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
+import { SafeAreaView, View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, KeyboardAvoidingView, Platform, Image } from 'react-native';
 import { MaterialCommunityIcons, FontAwesome } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 
@@ -105,7 +105,7 @@ export default function SignUp({ navigation }) {
       >
         <View style={styles.innerContainer}>
           <View style={styles.logoContainer}>
-            <MaterialCommunityIcons name="shield-key-outline" size={120} color="#2E88FA" />
+            <Image source={require('../assets/logo.png')} style={styles.logoImage} />
           </View>
           <View style={styles.segmentContainer}>
             <TouchableOpacity style={[styles.segment, isClient && styles.segmentActive]} onPress={() => setIsClient(true)}>
@@ -225,6 +225,7 @@ const styles = StyleSheet.create({
   segmentText: { fontSize: 14, color: '#666' },
   segmentTextActive: { color: '#fff' },
   logoContainer: { alignItems: 'center', marginVertical: 10 },
+  logoImage: { width: 120, height: 120, resizeMode: 'contain' },
   header: { fontSize: 20, fontWeight: 'bold', color: '#333', textAlign: 'center', marginTop: 10 },
   subheader: { fontSize: 14, color: '#666', textAlign: 'center', marginBottom: 20 },
   inputContainer: { width: '100%', marginBottom: 15, position: 'relative' },

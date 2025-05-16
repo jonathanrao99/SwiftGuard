@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { SafeAreaView, View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform, Linking } from 'react-native';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { SafeAreaView, View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform, Linking, Image } from 'react-native';
 
 export default function ForgotPassword({ navigation }) {
   const [email, setEmail] = useState('');
@@ -19,7 +18,7 @@ export default function ForgotPassword({ navigation }) {
     <SafeAreaView style={styles.safe}>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : null} style={styles.container}>
         <View style={styles.logoContainer}>
-          <MaterialCommunityIcons name="shield-key-outline" size={120} color="#2E88FA" />
+          <Image source={require('../assets/logo.png')} style={styles.logoImage} />
         </View>
         <Text style={styles.header}>Forgot Password</Text>
         <Text style={styles.subheader}>Please enter your email address to reset your password.</Text>
@@ -67,4 +66,5 @@ const styles = StyleSheet.create({
   footerContainer: { flexDirection: 'row', justifyContent: 'center', marginTop: 20 },
   footerText: { color: '#666' },
   footerLink: { color: '#2E88FA', fontWeight: 'bold' },
+  logoImage: { width: 120, height: 120, resizeMode: 'contain' },
 }); 
