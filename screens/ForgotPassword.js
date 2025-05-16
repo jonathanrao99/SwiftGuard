@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { SafeAreaView, View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform, Linking, Image } from 'react-native';
+import { MaterialIcons } from '@expo/vector-icons';
 
 export default function ForgotPassword({ navigation }) {
   const [email, setEmail] = useState('');
@@ -23,7 +24,7 @@ export default function ForgotPassword({ navigation }) {
         <Text style={styles.header}>Forgot Password</Text>
         <Text style={styles.subheader}>Please enter your email address to reset your password.</Text>
         <View style={styles.inputContainer}>
-          <MaterialCommunityIcons name="email-outline" size={20} color="#888" style={styles.inputIcon} />
+          <MaterialIcons name="email" size={16} color="#888" />
           <TextInput
             placeholder="Enter your email address"
             value={email}
@@ -31,6 +32,7 @@ export default function ForgotPassword({ navigation }) {
             style={styles.input}
             keyboardType="email-address"
             autoCapitalize="none"
+            textAlignVertical="center"
           />
         </View>
         {error ? <Text style={styles.errorText}>{error}</Text> : null}
@@ -57,9 +59,17 @@ const styles = StyleSheet.create({
   logoContainer: { alignItems: 'center', marginVertical: 20 },
   header: { fontSize: 20, fontWeight: 'bold', color: '#333', textAlign: 'center', marginBottom: 10 },
   subheader: { fontSize: 14, color: '#666', textAlign: 'center', marginBottom: 20 },
-  inputContainer: { width: '100%', position: 'relative', marginBottom: 10 },
-  input: { width: '100%', borderWidth: 1, borderColor: '#ccc', borderRadius: 8, paddingLeft: 40, height: 45 },
-  inputIcon: { position: 'absolute', top: 12, left: 10 },
+  inputContainer: {
+    flexDirection: 'row', alignItems: 'center',
+    borderWidth: 1, borderColor: '#ccc', borderRadius: 8,
+    height: 45, width: '100%', paddingHorizontal: 10,
+    marginBottom: 10
+  },
+  input: {
+    flex: 1, marginLeft: 10,
+    fontSize: 16, color: '#333',
+    textAlignVertical: 'center'
+  },
   errorText: { color: 'red', fontSize: 12, marginBottom: 10 },
   continueButton: { width: '100%', backgroundColor: '#2E88FA', height: 45, borderRadius: 8, justifyContent: 'center', alignItems: 'center', marginTop: 10 },
   continueText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { SafeAreaView, View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, KeyboardAvoidingView, Platform, Image } from 'react-native';
-import { MaterialCommunityIcons, FontAwesome } from '@expo/vector-icons';
+import { SafeAreaView, View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, KeyboardAvoidingView, Platform, Alert, Image, Modal } from 'react-native';
+import { FontAwesome, MaterialIcons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 
 export default function SignUp({ navigation }) {
@@ -11,11 +11,13 @@ export default function SignUp({ navigation }) {
   const [dob, setDob] = useState('');
   const [date, setDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
-  const [isClient, setIsClient] = useState(true);
+  const [isClient, setIsClient] = useState(null);
   const [emailError, setEmailError] = useState('');
   const [phoneError, setPhoneError] = useState('');
   const [dobError, setDobError] = useState('');
   const [confirmError, setConfirmError] = useState('');
+  const [errorModalVisible, setErrorModalVisible] = useState(false);
+  const [errorModalMessage, setErrorModalMessage] = useState('');
 
   const formatDate = (d) => {
     const month = d.getMonth() + 1;
@@ -60,6 +62,11 @@ export default function SignUp({ navigation }) {
   };
 
   const handleSignUp = () => {
+    if (isClient === null) {
+      setErrorModalMessage('Please select a role to continue.');
+      setErrorModalVisible(true);
+      return;
+    }
     let valid = true;
     if (!email.includes('@') || !email.includes('.com')) {
       setEmailError('Please enter a valid email address');
@@ -107,19 +114,32 @@ export default function SignUp({ navigation }) {
           <View style={styles.logoContainer}>
             <Image source={require('../assets/logo.png')} style={styles.logoImage} />
           </View>
-          <View style={styles.segmentContainer}>
-            <TouchableOpacity style={[styles.segment, isClient && styles.segmentActive]} onPress={() => setIsClient(true)}>
-              <Text style={[styles.segmentText, isClient && styles.segmentTextActive]}>Client</Text>
+          <Modal transparent visible={errorModalVisible} animationType="fade">
+            <View style={styles.modalOverlay}>
+              <View style={styles.modalContainer}>
+                <Text style={styles.modalTitle}>Select Role</Text>
+                <Text style={styles.modalMessage}>{errorModalMessage}</Text>
+                <TouchableOpacity style={styles.modalButton} onPress={() => setErrorModalVisible(false)}>
+                  <Text style={styles.modalButtonText}>OK</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </Modal>
+          <View style={styles.roleContainer}>
+            <TouchableOpacity style={[styles.roleButton, isClient === true && styles.roleButtonActive]} onPress={() => setIsClient(true)}>
+              <FontAwesome name="user" size={20} color={isClient === true ? '#fff' : '#2E88FA'} style={styles.roleIcon} />
+              <Text style={[styles.roleText, isClient === true && styles.roleTextActive]}>Client</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={[styles.segment, !isClient && styles.segmentActive]} onPress={() => setIsClient(false)}>
-              <Text style={[styles.segmentText, !isClient && styles.segmentTextActive]}>Security</Text>
+            <TouchableOpacity style={[styles.roleButton, isClient === false && styles.roleButtonActive]} onPress={() => setIsClient(false)}>
+              <FontAwesome name="shield" size={20} color={isClient === false ? '#fff' : '#2E88FA'} style={styles.roleIcon} />
+              <Text style={[styles.roleText, isClient === false && styles.roleTextActive]}>Security</Text>
             </TouchableOpacity>
           </View>
           <Text style={styles.header}>Sign Up</Text>
           <Text style={styles.subheader}>Join us in less than 1 minute, no cost.</Text>
 
           <View style={styles.inputContainer}>
-            <MaterialCommunityIcons name="email-outline" size={20} color="#888" style={styles.inputIcon} />
+            <MaterialIcons name="email" size={16} color="#888" />
             <TextInput
               placeholder="Enter your Email Address"
               value={email}
@@ -134,7 +154,7 @@ export default function SignUp({ navigation }) {
 
           <View style={styles.rowContainer}>
             <View style={[styles.inputContainer, styles.halfWidth]}>
-              <FontAwesome name="phone" size={20} color="#888" style={styles.inputIcon} />
+              <MaterialIcons name="phone" size={16} color="#888" />
               <TextInput
                 placeholder="Enter #"
                 value={phone}
@@ -146,7 +166,7 @@ export default function SignUp({ navigation }) {
               {phoneError ? <Text style={styles.errorText}>{phoneError}</Text> : null}
             </View>
             <View style={[styles.inputContainer, styles.halfWidth]}>
-              <MaterialCommunityIcons name="calendar-month" size={20} color="#888" style={styles.inputIcon} />
+              <MaterialIcons name="calendar-today" size={16} color="#888" />
               <TouchableOpacity style={styles.input} onPress={() => setShowDatePicker(true)}>
                 <Text style={[styles.inputText, dob ? {} : styles.placeholderText]}>
                   {dob || 'Date of Birth'}
@@ -157,7 +177,7 @@ export default function SignUp({ navigation }) {
           </View>
 
           <View style={styles.inputContainer}>
-            <MaterialCommunityIcons name="lock-outline" size={20} color="#888" style={styles.inputIcon} />
+            <MaterialIcons name="lock" size={16} color="#888" />
             <TextInput
               placeholder="Enter Password"
               value={password}
@@ -168,7 +188,7 @@ export default function SignUp({ navigation }) {
           </View>
 
           <View style={styles.inputContainer}>
-            <MaterialCommunityIcons name="lock-outline" size={20} color="#888" style={styles.inputIcon} />
+            <MaterialIcons name="lock" size={16} color="#888" />
             <TextInput
               placeholder="Confirm Password"
               value={confirmPassword}
@@ -219,23 +239,44 @@ const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: '#fff' },
   container: { flex: 1, paddingHorizontal: 20, justifyContent: 'center', alignItems: 'center' },
   innerContainer: { width: '100%' },
-  segmentContainer: { flexDirection: 'row', alignSelf: 'center', marginVertical: 10, backgroundColor: '#f0f0f0', borderRadius: 25 },
-  segment: { paddingVertical: 8, paddingHorizontal: 25, borderRadius: 25 },
-  segmentActive: { backgroundColor: '#2E88FA' },
-  segmentText: { fontSize: 14, color: '#666' },
-  segmentTextActive: { color: '#fff' },
   logoContainer: { alignItems: 'center', marginVertical: 10 },
   logoImage: { width: 120, height: 120, resizeMode: 'contain' },
   header: { fontSize: 20, fontWeight: 'bold', color: '#333', textAlign: 'center', marginTop: 10 },
   subheader: { fontSize: 14, color: '#666', textAlign: 'center', marginBottom: 20 },
-  inputContainer: { width: '100%', marginBottom: 15, position: 'relative' },
+  inputContainer: {
+    flexDirection: 'row', alignItems: 'center',
+    borderWidth: 1, borderColor: '#ccc', borderRadius: 8,
+    height: 45, width: '100%', paddingHorizontal: 10,
+    marginBottom: 15
+  },
+  input: {
+    flex: 1, marginLeft: 10,
+    fontSize: 16, color: '#333',
+    textAlignVertical: 'center'
+  },
   rowContainer: { flexDirection: 'row', justifyContent: 'space-between', width: '100%' },
   halfWidth: { width: '48%' },
-  input: { width: '100%', borderWidth: 1, borderColor: '#ccc', borderRadius: 8, paddingLeft: 40, height: 45 },
-  inputIcon: { position: 'absolute', top: 12, left: 10 },
   signUpButton: { width: '100%', backgroundColor: '#2E88FA', height: 45, borderRadius: 8, justifyContent: 'center', alignItems: 'center', marginTop: 20 },
   signInContainer: { width: '100%', flexDirection: 'row', justifyContent: 'center', marginTop: 20 },
   signInText: { color: '#666' },
   signInLink: { color: '#2E88FA', fontWeight: 'bold' },
   signUpText: { color: '#fff', fontWeight: 'bold' },
+  roleContainer: { flexDirection: 'row', justifyContent: 'space-between', width: '100%', marginVertical: 10 },
+  roleButton: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    paddingVertical: 12, paddingHorizontal: 20,
+    borderRadius: 8, borderWidth: 1, borderColor: '#2E88FA', backgroundColor: '#fff',
+    shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.2, shadowRadius: 1.41, elevation: 2,
+    width: '48%'
+  },
+  roleButtonActive: { backgroundColor: '#2E88FA' },
+  roleIcon: { marginRight: 8 },
+  roleText: { fontSize: 16, color: '#2E88FA' },
+  roleTextActive: { color: '#fff', fontWeight: 'bold' },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' },
+  modalContainer: { width: '80%', backgroundColor: '#fff', borderRadius: 8, padding: 20, alignItems: 'center' },
+  modalTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: 10 },
+  modalMessage: { fontSize: 16, color: '#333', marginBottom: 20, textAlign: 'center' },
+  modalButton: { backgroundColor: '#2E88FA', paddingVertical: 10, paddingHorizontal: 20, borderRadius: 8 },
+  modalButtonText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
 }); 
