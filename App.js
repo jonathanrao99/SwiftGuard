@@ -8,6 +8,7 @@ import SecurityDashboard from './screens/SecurityDashboard';
 import ForgotPassword from './screens/ForgotPassword';
 import SignUp from './screens/SignUp';
 import WelcomeScreen from './screens/WelcomeScreen';
+import UserTypeSelection from './screens/UserTypeSelection';
 
 const Stack = createNativeStackNavigator();
 
@@ -17,6 +18,7 @@ export default function App() {
       <Stack.Navigator initialRouteName="Loading">
         <Stack.Screen name="Loading" component={LoadingScreen} options={{ headerShown: false }} />
         <Stack.Screen name="Welcome" component={WelcomeScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="UserTypeSelection" component={UserTypeSelection} options={{ headerShown: false }} />
         <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
         <Stack.Screen name="ForgotPassword" component={ForgotPassword} options={{ headerShown: false }} />
         <Stack.Screen name="SignUp" component={SignUp} options={{ headerShown: false }} />
