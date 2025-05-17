@@ -10,12 +10,12 @@ export default function UserTypeSelection({ navigation }) {
       <Text style={styles.subheader}>Secure. Reliable. Fast.</Text>
       <Text style={styles.description}>Select your account type below to get started and tailor your experience:</Text>
       <View style={styles.cardContainer}>
-        <TouchableOpacity style={styles.card} onPress={() => navigation.navigate('SignUp')}>
+        <TouchableOpacity style={styles.card} onPress={() => navigation.navigate('SignUpClient')}>
           <FontAwesome5 name="user-tie" size={36} color="#2E88FA" />
           <Text style={styles.cardTitle}>Client</Text>
           <Text style={styles.cardDescription}>Hire vetted security personnel in just a few taps.</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.card} onPress={() => navigation.navigate('SignUp')}>
+        <TouchableOpacity style={styles.card} onPress={() => navigation.navigate('SignUpGuard')}>
           <FontAwesome5 name="user-shield" size={36} color="#2E88FA" />
           <Text style={styles.cardTitle}>Security</Text>
           <Text style={styles.cardDescription}>Offer your expertise and earn seamlessly.</Text>
