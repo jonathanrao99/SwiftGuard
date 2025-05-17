@@ -4,7 +4,7 @@ import { View, Text, StyleSheet, ActivityIndicator, Image } from 'react-native';
 export default function LoadingScreen({ navigation }) {
   useEffect(() => {
     const timer = setTimeout(() => {
-      navigation.replace('Login');
+      navigation.replace('Welcome');
     }, 1500);
     return () => clearTimeout(timer);
   }, []);
