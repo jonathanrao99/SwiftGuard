@@ -1,0 +1,262 @@
+// @ts-nocheck
+import React, { useState, useRef } from 'react';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform, ScrollView, Image, StatusBar } from 'react-native';
+import { MaterialIcons } from '@expo/vector-icons';
+import { Picker } from '@react-native-picker/picker';
+import { LocationAutocomplete } from '../components/LocationAutocomplete';
+
+export default function SignUpClient({ navigation }) {
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  const [businessName, setBusinessName] = useState('');
+  const [establishmentType, setEstablishmentType] = useState('');
+  const [otherEstablishment, setOtherEstablishment] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState('');
+  const [location, setLocation] = useState('');
+  const [referralCode, setReferralCode] = useState('');
+  const [errors, setErrors] = useState({});
+
+  const debounceTimeout = useRef(null);
+
+  const handleSignUp = () => {
+    if (firstName === 'Test') {
+      navigation.navigate('OtpVerification', {
+        phone,
+        nextScreen: 'PreferredPayment',
+        firstName,
+        lastName,
+        email,
+        password,
+        businessName,
+        establishmentType: establishmentType === 'other' ? otherEstablishment : establishmentType,
+        location,
+        referralCode,
+        role: 'client',
+      });
+      return;
+    }
+    // Validate required fields
+    const newErrors = {};
+    if (!firstName) newErrors.firstName = 'First name is required';
+    if (!lastName) newErrors.lastName = 'Last name is required';
+    if (!email) newErrors.email = 'Email is required';
+    if (!phone) newErrors.phone = 'Phone number is required';
+    if (!password) newErrors.password = 'Password is required';
+    if (confirmPassword !== password) newErrors.confirmPassword = 'Passwords do not match';
+    if (!businessName) newErrors.businessName = 'Business name is required';
+    if (!establishmentType) newErrors.establishmentType = 'Establishment type is required';
+    if (establishmentType === 'other' && !otherEstablishment) newErrors.otherEstablishment = 'Please specify establishment';
+    if (!location) newErrors.location = 'Location is required';
+    setErrors(newErrors);
+    if (Object.keys(newErrors).length > 0) return;
+    // Navigate to OTP verification before payment setup
+    navigation.navigate('OtpVerification', {
+      phone,
+      nextScreen: 'PreferredPayment',
+      firstName,
+      lastName,
+      email,
+      password,
+      businessName,
+      establishmentType: establishmentType === 'other' ? otherEstablishment : establishmentType,
+      location,
+      referralCode,
+      role: 'client',
+    });
+  };
+
+  return (
+    <>
+      <StatusBar translucent backgroundColor="transparent" barStyle="dark-content" />
+    <View style={styles.safe}>
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : null} style={styles.container}>
+        <ScrollView contentContainerStyle={styles.innerContainer} keyboardShouldPersistTaps="handled">
+          
+          <Text style={styles.header}>Client Sign Up</Text>
+          <Text style={styles.subheader}>Join us in less than 1 minute.</Text>
+
+          {/* Shared Fields */}
+          <View style={styles.rowContainer}>
+            <View style={[styles.inputContainer, styles.halfInput]}>
+              <MaterialIcons name="person" size={16} color="#888" />
+              <TextInput placeholder="First Name" value={firstName} onChangeText={setFirstName} style={styles.input} />
+            </View>
+            <View style={[styles.inputContainer, styles.halfInput]}>
+              <MaterialIcons name="person" size={16} color="#888" />
+              <TextInput placeholder="Last Name" value={lastName} onChangeText={setLastName} style={styles.input} />
+            </View>
+          </View>
+          <View style={styles.rowContainer}>
+            {errors.firstName && <Text style={[styles.errorText, styles.halfInput]}>{errors.firstName}</Text>}
+            {errors.lastName && <Text style={[styles.errorText, styles.halfInput]}>{errors.lastName}</Text>}
+          </View>
+          <View style={styles.inputContainer}>
+            <MaterialIcons name="email" size={16} color="#888" />
+            <TextInput placeholder="Email" value={email} onChangeText={setEmail} style={styles.input} keyboardType="email-address" autoCapitalize="none" />
+          </View>
+          {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
+          <View style={styles.inputContainer}>
+            <MaterialIcons name="phone" size={16} color="#888" />
+            <TextInput placeholder="Phone Number" value={phone} onChangeText={setPhone} style={styles.input} keyboardType="phone-pad" />
+          </View>
+          {errors.phone && <Text style={styles.errorText}>{errors.phone}</Text>}
+          <View style={styles.inputContainer}>
+            <MaterialIcons name="lock" size={16} color="#888" />
+            <TextInput placeholder="Password" value={password} onChangeText={setPassword} style={styles.input} secureTextEntry={true} />
+          </View>
+          {errors.password && <Text style={styles.errorText}>{errors.password}</Text>}
+          <View style={styles.inputContainer}>
+            <MaterialIcons name="lock" size={16} color="#888" />
+            <TextInput
+              placeholder="Confirm Password"
+              value={confirmPassword}
+              onChangeText={setConfirmPassword}
+              style={styles.input}
+              secureTextEntry={!showConfirmPassword}
+              onBlur={() => {
+                if (confirmPassword && confirmPassword !== password) {
+                  setErrors(e => ({ ...e, confirmPassword: 'Passwords do not match' }));
+                } else {
+                  setErrors(e => { const ne = { ...e }; delete ne.confirmPassword; return ne; });
+                }
+              }}
+            />
+            <TouchableOpacity onPress={() => setShowConfirmPassword(v => !v)} style={styles.eyeIconButton}>
+              <MaterialIcons name={showConfirmPassword ? 'visibility' : 'visibility-off'} size={22} color="#888" />
+            </TouchableOpacity>
+          </View>
+          {errors.confirmPassword && <Text style={styles.errorText}>{errors.confirmPassword}</Text>}
+
+          {/* Client-Specific Fields */}
+          <Text style={styles.sectionHeader}>Business / Operational Name</Text>
+          <View style={styles.inputContainer}>
+            <MaterialIcons name="business" size={16} color="#888" />
+            <TextInput placeholder="Business Name" value={businessName} onChangeText={setBusinessName} style={styles.input} />
+          </View>
+          {errors.businessName && <Text style={styles.errorText}>{errors.businessName}</Text>}
+          <Text style={styles.sectionHeader}>Type of Establishment</Text>
+          <View style={styles.inputContainer}>
+            <MaterialIcons name="category" size={16} color="#888" />
+            <Picker selectedValue={establishmentType} onValueChange={(value) => setEstablishmentType(value)} style={styles.picker}>
+              <Picker.Item label="Select type" value="" />
+              <Picker.Item label="Club" value="club" />
+              <Picker.Item label="Event" value="event" />
+              <Picker.Item label="Private" value="private" />
+              <Picker.Item label="Corporate" value="corporate" />
+              <Picker.Item label="Other" value="other" />
+            </Picker>
+          </View>
+          {errors.establishmentType && <Text style={styles.errorText}>{errors.establishmentType}</Text>}
+          {establishmentType === 'other' && (
+            <View style={styles.inputContainer}>
+              <MaterialIcons name="edit" size={16} color="#888" />
+              <TextInput placeholder="Please specify" value={otherEstablishment} onChangeText={setOtherEstablishment} style={styles.input} />
+            </View>
+          )}
+          {establishmentType === 'other' && errors.otherEstablishment && <Text style={styles.errorText}>{errors.otherEstablishment}</Text>}
+          <Text style={styles.sectionHeader}>Location</Text>
+          <LocationAutocomplete onSelectAddress={(address) => setLocation(address)} />
+          {errors.location && <Text style={styles.errorText}>{errors.location}</Text>}
+          <Text style={styles.sectionHeader}>Referral Code (optional)</Text>
+          <View style={styles.inputContainer}>
+            <MaterialIcons name="redeem" size={16} color="#888" />
+            <TextInput placeholder="Referral Code" value={referralCode} onChangeText={setReferralCode} style={styles.input} />
+          </View>
+
+          <TouchableOpacity style={styles.signUpButton} onPress={handleSignUp}>
+            <Text style={styles.signUpText}>Sign Up</Text>
+          </TouchableOpacity>
+
+          <View style={styles.signInContainer}>
+            <Text style={styles.signInText}>Already have an account? </Text>
+            <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+              <Text style={styles.signInLink}>Sign In</Text>
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </View>
+    </>
+  );
+}
+
+const styles = StyleSheet.create({
+  safe: { flex: 1, backgroundColor: '#fff', paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0 },
+  container: { flex: 1, justifyContent: 'center' },
+  innerContainer: { paddingHorizontal: 20, paddingBottom: 30 },
+  logoContainer: { alignItems: 'center', marginVertical: 10 },
+  logoImage: { width: 120, height: 120, resizeMode: 'contain' },
+  header: { fontSize: 20, fontWeight: 'bold', color: '#333', textAlign: 'center', marginTop: 10 },
+  subheader: { fontSize: 14, color: '#666', textAlign: 'center', marginBottom: 20 },
+  sectionHeader: { fontSize: 16, fontWeight: '600', color: '#333', marginBottom: 5 },
+  inputContainer: {
+    flexDirection: 'row', alignItems: 'center',
+    borderWidth: 1, borderColor: '#ccc', borderRadius: 8,
+    height: 45, width: '100%', paddingHorizontal: 10,
+    marginBottom: 15
+  },
+  input: { flex: 1, marginLeft: 10, fontSize: 16, color: '#333', textAlignVertical: 'center' },
+  signUpButton: {
+    width: '100%', backgroundColor: '#2E88FA', height: 45,
+    borderRadius: 8, justifyContent: 'center', alignItems: 'center', marginTop: 20
+  },
+  signUpText: { color: '#fff', fontWeight: 'bold' },
+  signInContainer: { width: '100%', flexDirection: 'row', justifyContent: 'center', marginTop: 20 },
+  signInText: { color: '#666' },
+  signInLink: { color: '#2E88FA', fontWeight: 'bold' },
+  rowContainer: { flexDirection: 'row', justifyContent: 'space-between' },
+  halfInput: { width: '48%' },
+  picker: { width: '100%', height: 60 },
+  suggestionText: { padding: 10, fontSize: 16, color: '#333' },
+  inputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    height: 45,
+    width: '100%',
+    backgroundColor: '#fff',
+  },
+  autocompleteWrapper: {
+    width: '100%',
+    position: 'relative',
+    marginBottom: 15,
+  },
+  autocompleteInput: {
+    flex: 1,
+    paddingLeft: 5,
+  },
+  autocompleteListContainer: {
+    position: 'absolute',
+    top: 50,
+    left: 0,
+    right: 0,
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderBottomLeftRadius: 8,
+    borderBottomRightRadius: 8,
+    zIndex: 2,
+    elevation: 1,
+    maxHeight: 250,
+  },
+  suggestionItem: {
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+  },
+  eyeIconButton: {
+    padding: 4,
+    marginLeft: 4,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  errorText: { color: 'red', fontSize: 12, marginTop: -15, marginBottom: 5 },
+}); 

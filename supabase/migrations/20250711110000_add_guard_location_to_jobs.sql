@@ -1,0 +1,5 @@
+
+ALTER TABLE jobs
+ADD COLUMN guard_latitude DOUBLE PRECISION,
+ADD COLUMN guard_longitude DOUBLE PRECISION,
+ADD COLUMN last_location_update TIMESTAMPTZ;

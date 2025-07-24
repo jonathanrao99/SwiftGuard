@@ -1,0 +1,51 @@
+{
+  "version": "1.0.0",
+  "generated": "2025-07-18T01:03:38.346Z",
+  "assets": {
+    "adaptive-icon.png": {
+      "size": 1038796,
+      "lastModified": "2025-05-18T22:27:58.711Z",
+      "type": "png"
+    },
+    "EventSecurity.json": {
+      "size": 255504,
+      "lastModified": "2025-05-21T19:42:59.948Z",
+      "type": "json"
+    },
+    "favicon.png": {
+      "size": 195546,
+      "lastModified": "2025-05-16T19:42:55.916Z",
+      "type": "png"
+    },
+    "icon.png": {
+      "size": 1038796,
+      "lastModified": "2025-05-18T22:27:58.711Z",
+      "type": "png"
+    },
+    "logo.png": {
+      "size": 745932,
+      "lastModified": "2025-05-17T01:18:17.457Z",
+      "type": "png"
+    },
+    "logovideo.mp4": {
+      "size": 1415670,
+      "lastModified": "2025-05-23T23:56:50.035Z",
+      "type": "mp4"
+    },
+    "SecureBuilding.json": {
+      "size": 746379,
+      "lastModified": "2025-05-21T19:55:58.415Z",
+      "type": "json"
+    },
+    "SecurePayment.json": {
+      "size": 337865,
+      "lastModified": "2025-05-21T19:56:57.594Z",
+      "type": "json"
+    },
+    "splash-icon.png": {
+      "size": 1038796,
+      "lastModified": "2025-05-18T22:27:58.711Z",
+      "type": "png"
+    }
+  }
+}
