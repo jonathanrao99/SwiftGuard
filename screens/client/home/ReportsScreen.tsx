@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, StatusBar, Platform } from 'react-native';
 import { MaterialIcons, MaterialCommunityIcons, Feather } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { COLORS, SPACING } from '../../theme';
+import { COLORS, SPACING } from '../../../theme';
 
 export default function ReportsScreen({ navigation }: { navigation: any }) {
   const [filter, setFilter] = useState('All');

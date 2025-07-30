@@ -13,6 +13,15 @@ import {
   Alert,
   Image,
 } from 'react-native';
+import Animated, { 
+  useSharedValue, 
+  useAnimatedStyle, 
+  withSpring, 
+  withTiming, 
+  withDelay, 
+  withSequence,
+  runOnJS 
+} from 'react-native-reanimated';
 import {
   MaterialIcons,
   MaterialCommunityIcons,
@@ -42,6 +51,14 @@ export default function GuardDashboard({ navigation }) {
   const [status, setStatus] = useState('Ready');
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [isTracking, setIsTracking] = useState(false);
+
+  // Animation values
+  const quickActionsOpacity = useSharedValue(0);
+  const quickActionsTranslateY = useSharedValue(30);
+  const upcomingJobsOpacity = useSharedValue(0);
+  const upcomingJobsTranslateY = useSharedValue(30);
+  const earningsOpacity = useSharedValue(0);
+  const earningsTranslateY = useSharedValue(30);
 
   // Mock data for upcoming jobs and earnings
   const upcomingJobs = [
@@ -85,6 +102,19 @@ export default function GuardDashboard({ navigation }) {
     }, [])
   );
 
+  // Start animations on mount
+  useEffect(() => {
+    // Staggered animations
+    quickActionsOpacity.value = withDelay(200, withTiming(1, { duration: 600 }));
+    quickActionsTranslateY.value = withDelay(200, withSpring(0, { damping: 15, stiffness: 100 }));
+
+    upcomingJobsOpacity.value = withDelay(400, withTiming(1, { duration: 600 }));
+    upcomingJobsTranslateY.value = withDelay(400, withSpring(0, { damping: 15, stiffness: 100 }));
+
+    earningsOpacity.value = withDelay(600, withTiming(1, { duration: 600 }));
+    earningsTranslateY.value = withDelay(600, withSpring(0, { damping: 15, stiffness: 100 }));
+  }, []);
+
   const toggleLocationTracking = async () => {
     if (isTracking) {
       await stopLocationTracking();
@@ -96,6 +126,22 @@ export default function GuardDashboard({ navigation }) {
       Alert.alert('Location Tracking', 'Location tracking started.');
     }
   };
+
+  // Animated styles
+  const quickActionsAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: quickActionsOpacity.value,
+    transform: [{ translateY: quickActionsTranslateY.value }],
+  }));
+
+  const upcomingJobsAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: upcomingJobsOpacity.value,
+    transform: [{ translateY: upcomingJobsTranslateY.value }],
+  }));
+
+  const earningsAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: earningsOpacity.value,
+    transform: [{ translateY: earningsTranslateY.value }],
+  }));
 
   const handleEmergencyAlert = async () => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -212,7 +258,7 @@ export default function GuardDashboard({ navigation }) {
               }}
             >
               {/* Quick Actions */}
-              <View style={styles.quickActionsRow}>
+              <Animated.View style={[styles.quickActionsRow, quickActionsAnimatedStyle]}>
                 <QuickActionButton 
                   icon="login" 
                   label="Check In" 
@@ -228,25 +274,57 @@ export default function GuardDashboard({ navigation }) {
                   label="Earnings" 
                   onPress={() => navigation.navigate('EarningsOverview')} 
                 />
-              </View>
+              </Animated.View>
 
               {/* Upcoming Jobs Section */}
-              <View style={styles.sectionHeaderRow}>
-                <Text style={styles.sectionHeader}>Upcoming Jobs</Text>
-                <Text style={styles.viewAllBtn}>View all</Text>
-              </View>
-              {upcomingJobs.length > 0 ? (
-                <View style={styles.jobsListCentered}>
-                  {upcomingJobs.map((job) => (
-                    <JobCard key={job.id} job={job} navigation={navigation} />
-                  ))}
+              <Animated.View style={upcomingJobsAnimatedStyle}>
+                <View style={styles.sectionHeaderRow}>
+                  <Text style={styles.sectionHeader}>Upcoming Jobs</Text>
+                  <Text style={styles.viewAllBtn}>View all</Text>
                 </View>
-              ) : (
-                <View style={styles.jobsPlaceholder}>
-                  <MaterialIcons name="work-outline" size={48} color="#a5b4fc" style={{ marginBottom: 8 }} />
-                  <Text style={styles.jobsText}>No upcoming jobs scheduled</Text>
+                {upcomingJobs.length > 0 ? (
+                  <View style={styles.jobsListCentered}>
+                    {upcomingJobs.map((job) => (
+                      <JobCard key={job.id} job={job} navigation={navigation} />
+                    ))}
+                  </View>
+                ) : (
+                  <View style={styles.jobsPlaceholder}>
+                    <MaterialIcons name="work-outline" size={48} color="#a5b4fc" style={{ marginBottom: 8 }} />
+                    <Text style={styles.jobsText}>No upcoming jobs scheduled</Text>
+                  </View>
+                )}
+              </Animated.View>
+
+              {/* Earnings Section */}
+              <Animated.View style={earningsAnimatedStyle}>
+                <View style={styles.sectionHeaderRow}>
+                  <Text style={styles.sectionHeader}>This Week's Earnings</Text>
+                  <Text style={styles.viewAllBtn}>View details</Text>
                 </View>
-              )}
+                <View style={styles.earningsCard}>
+                  <View style={styles.earningsRow}>
+                    <View style={styles.earningsItem}>
+                      <Text style={styles.earningsLabel}>Total Earned</Text>
+                      <Text style={styles.earningsValue}>${weeklyEarnings.total}</Text>
+                    </View>
+                    <View style={styles.earningsItem}>
+                      <Text style={styles.earningsLabel}>Hours Worked</Text>
+                      <Text style={styles.earningsValue}>{weeklyEarnings.hours}h</Text>
+                    </View>
+                  </View>
+                  <View style={styles.earningsRow}>
+                    <View style={styles.earningsItem}>
+                      <Text style={styles.earningsLabel}>Avg. Rate</Text>
+                      <Text style={styles.earningsValue}>${weeklyEarnings.averageRate}/hr</Text>
+                    </View>
+                    <View style={styles.earningsItem}>
+                      <Text style={styles.earningsLabel}>Next Payment</Text>
+                      <Text style={styles.earningsValue}>{weeklyEarnings.nextPayment}</Text>
+                    </View>
+                  </View>
+                </View>
+              </Animated.View>
             </ScrollView>
           </View>
         </LinearGradient>
@@ -256,6 +334,7 @@ export default function GuardDashboard({ navigation }) {
 }
 
 function QuickActionButton({ icon, label, color = '#e0e7ff', onPress }: QuickActionButtonProps) {
+  const scale = useSharedValue(1);
   const bgColor = color === '#e0e7ff' ? color : color + '22';
   const iconColor = color === '#e0e7ff' ? '#2563eb' : color;
   
@@ -268,47 +347,86 @@ function QuickActionButton({ icon, label, color = '#e0e7ff', onPress }: QuickAct
     earnings: <MaterialIcons name="attach-money" size={48} color={iconColor} />,
   };
 
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
+  const handlePressIn = () => {
+    scale.value = withSpring(0.95, { damping: 15, stiffness: 300 });
+  };
+
+  const handlePressOut = () => {
+    scale.value = withSpring(1, { damping: 15, stiffness: 300 });
+  };
+
   return (
-    <TouchableOpacity style={styles.quickActionWrapper} onPress={onPress} activeOpacity={0.7}>
-      <View style={[styles.quickActionButton, { backgroundColor: bgColor }]}>
+    <TouchableOpacity 
+      style={styles.quickActionWrapper} 
+      onPress={onPress} 
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
+      activeOpacity={1}
+    >
+      <Animated.View style={[styles.quickActionButton, { backgroundColor: bgColor }, animatedStyle]}>
         {iconsMap[icon]}
-      </View>
+      </Animated.View>
       <Text style={styles.quickActionLabel}>{label}</Text>
     </TouchableOpacity>
   );
 }
 
 function JobCard({ job, navigation }: { job: any; navigation: any }) {
+  const scale = useSharedValue(1);
+  
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
+  const handlePressIn = () => {
+    scale.value = withSpring(0.98, { damping: 15, stiffness: 300 });
+  };
+
+  const handlePressOut = () => {
+    scale.value = withSpring(1, { damping: 15, stiffness: 300 });
+  };
+
   return (
-    <View style={styles.jobCardBlue}>
-      <View style={styles.jobHeaderBlue}>
-        <Text style={styles.jobTitleBlue}>{job.title}</Text>
-        <View style={styles.tagRow}>
-          <View style={[styles.tag, styles.tagActiveBlue]}>
-            <Text style={styles.tagTextBlue}>{job.status}</Text>
+    <TouchableOpacity 
+      style={styles.jobCardBlue}
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
+      activeOpacity={1}
+    >
+      <Animated.View style={animatedStyle}>
+        <View style={styles.jobHeaderBlue}>
+          <Text style={styles.jobTitleBlue}>{job.title}</Text>
+          <View style={styles.tagRow}>
+            <View style={[styles.tag, styles.tagActiveBlue]}>
+              <Text style={styles.tagTextBlue}>{job.status}</Text>
+            </View>
           </View>
         </View>
-      </View>
-      <View style={styles.jobDetailRowBlue}>
-        <MaterialIcons name="event" size={16} color="#dbeafe" />
-        <Text style={styles.jobDetailTextBlue}>{job.date}</Text>
-        <MaterialIcons name="access-time" size={16} color="#dbeafe" style={{ marginLeft: 12 }} />
-        <Text style={styles.jobDetailTextBlue}>{job.time}</Text>
-      </View>
-      <View style={styles.jobDetailRowBlue}>
-        <MaterialIcons name="location-on" size={16} color="#dbeafe" />
-        <Text style={styles.jobDetailTextBlue}>{job.location}</Text>
-      </View>
-      <View style={styles.jobFooterBlue}>
-        <Text style={styles.jobPayText}>${job.hourlyPay}/hr</Text>
-        <Text
-          style={styles.trackTextBlue}
-          onPress={() => navigation.navigate('GuardJobDetails', { job })}
-        >
-          View Details
-        </Text>
-      </View>
-    </View>
+        <View style={styles.jobDetailRowBlue}>
+          <MaterialIcons name="event" size={16} color="#dbeafe" />
+          <Text style={styles.jobDetailTextBlue}>{job.date}</Text>
+          <MaterialIcons name="access-time" size={16} color="#dbeafe" style={{ marginLeft: 12 }} />
+          <Text style={styles.jobDetailTextBlue}>{job.time}</Text>
+        </View>
+        <View style={styles.jobDetailRowBlue}>
+          <MaterialIcons name="location-on" size={16} color="#dbeafe" />
+          <Text style={styles.jobDetailTextBlue}>{job.location}</Text>
+        </View>
+        <View style={styles.jobFooterBlue}>
+          <Text style={styles.jobPayText}>${job.hourlyPay}/hr</Text>
+          <Text
+            style={styles.trackTextBlue}
+            onPress={() => navigation.navigate('GuardJobDetails', { job })}
+          >
+            View Details
+          </Text>
+        </View>
+      </Animated.View>
+    </TouchableOpacity>
   );
 }
 
@@ -518,5 +636,39 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginLeft: 'auto',
     textDecorationLine: 'underline',
+  },
+  earningsCard: {
+    backgroundColor: '#ffffff',
+    borderRadius: 16,
+    marginHorizontal: '5%',
+    marginTop: 12,
+    padding: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+  },
+  earningsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+  },
+  earningsItem: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  earningsLabel: {
+    fontSize: 12,
+    color: '#64748b',
+    fontWeight: '500',
+    marginBottom: 4,
+  },
+  earningsValue: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#2563eb',
   },
 });

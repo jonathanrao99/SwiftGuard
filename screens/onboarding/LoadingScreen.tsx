@@ -1,8 +1,13 @@
 import React, { useEffect, useRef } from 'react';
 import { View, StyleSheet, StatusBar } from 'react-native';
 import { VideoView, useVideoPlayer } from 'expo-video';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
-export default function LoadingScreen({ navigation }: { navigation: any }) {
+interface LoadingScreenProps {
+  navigation: NativeStackNavigationProp<any>;
+}
+
+export default function LoadingScreen({ navigation }: LoadingScreenProps) {
   const hasNavigated = useRef(false);
 
   const player = useVideoPlayer(require('../../assets/logovideo.mp4'), (player) => {
@@ -12,13 +17,13 @@ export default function LoadingScreen({ navigation }: { navigation: any }) {
   });
 
   useEffect(() => {
-    // Navigate after exactly 4.8 seconds
+    // Navigate after exactly 3.7 seconds
     const timer = setTimeout(() => {
       if (!hasNavigated.current) {
         hasNavigated.current = true;
         navigation.replace('Onboarding');
       }
-    }, 3700); // 3.7 seconds
+    }, 3700);
 
     return () => {
       clearTimeout(timer);
@@ -42,8 +47,15 @@ export default function LoadingScreen({ navigation }: { navigation: any }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff', justifyContent: 'center', alignItems: 'center' },
-  logoVideo: { width: 320, height: 320, marginBottom: 10 },
-  tagline: { color: '#2E88FA', fontSize: 16, marginTop: 10, textAlign: 'center' },
-  spinner: { marginTop: 10 }
+  container: { 
+    flex: 1, 
+    backgroundColor: '#fff', 
+    justifyContent: 'center', 
+    alignItems: 'center' 
+  },
+  logoVideo: { 
+    width: 320, 
+    height: 320, 
+    marginBottom: 10 
+  },
 }); 

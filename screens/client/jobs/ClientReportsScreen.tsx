@@ -3,8 +3,8 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, StatusBar, Platform, Image } from 'react-native';
 import { MaterialIcons, Feather } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { supabase } from '../../supabaseClient';
-import { COLORS, SPACING } from '../../theme';
+import { supabase } from '../../../supabaseClient';
+import { COLORS, SPACING } from '../../../theme';
 
 interface Incident {
     id: string;

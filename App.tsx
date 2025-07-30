@@ -1,5 +1,4 @@
-// @ts-nocheck
-import React, { FC, lazy, Suspense } from 'react';
+import React, { lazy, Suspense } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { Platform, View, ActivityIndicator } from 'react-native';
@@ -13,6 +12,8 @@ import Toast from 'react-native-toast-message';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { MaterialIcons } from '@expo/vector-icons';
 import { FontAwesome } from '@expo/vector-icons';
+import { GluestackUIProvider } from '@gluestack-ui/themed';
+import { gluestackUIConfig } from './theme/gluestack-config';
 import { TabBarVisibilityProvider } from './components/TabBarVisibilityContext';
 import CustomBottomNav from './components/CustomBottomNav';
 import { AuthProvider } from './contexts/AuthContext';
@@ -22,7 +23,7 @@ import Constants from 'expo-constants';
 // Lazy load screens for better performance
 const LoadingScreen = lazy(() => import('./screens/onboarding/LoadingScreen'));
 const LoginScreen = lazy(() => import('./screens/LoginScreen'));
-const ClientDashboard = lazy(() => import('./screens/client/ClientDashboard'));
+const ClientDashboard = lazy(() => import('./screens/client/home/ClientDashboard'));
 const ForgotPassword = lazy(() => import('./screens/ForgotPassword'));
 const WelcomeScreen = lazy(() => import('./screens/onboarding/WelcomeScreen'));
 const UserTypeSelection = lazy(() => import('./screens/UserTypeSelection'));
@@ -30,26 +31,34 @@ const SignUpClient = lazy(() => import('./screens/SignUpClient'));
 const SignUpGuard = lazy(() => import('./screens/SignUpGuard'));
 const PreferredPayment = lazy(() => import('./screens/PreferredPayment'));
 const OtpVerification = lazy(() => import('./screens/OtpVerification'));
-const PostJob = lazy(() => import('./screens/client/PostJob'));
-const PostJobSpecialized = lazy(() => import('./screens/client/PostJobSpecialized'));
-const PostJobTemplate = lazy(() => import('./screens/client/PostJobTemplate'));
-const ProfileScreen = lazy(() => import('./screens/client/ProfileScreen'));
+const PostJob = lazy(() => import('./screens/client/home/PostJob'));
+const PostJobSpecialized = lazy(() => import('./screens/client/home/PostJobSpecialized'));
+const JobTemplateSelector = lazy(() => import('./components/post-job/JobTemplateSelector').then(module => ({ default: module.JobTemplateSelector })));
+const ProfileScreen = lazy(() => import('./screens/client/profile/ProfileScreen'));
 const OnboardingScreen = lazy(() => import('./screens/onboarding/OnboardingScreen'));
-const GuardProfileScreen = lazy(() => import('./screens/client/GuardCardScreen'));
-const FindGuardsScreen = lazy(() => import('./screens/client/FindGuardsScreen'));
-const ReportsScreen = lazy(() => import('./screens/client/ReportsScreen'));
-const JobsScreen = lazy(() => import('./screens/client/JobsScreen'));
-const AllReviewsScreen = lazy(() => import('./screens/client/GuardReviews'));
-const JobDetailsScreen = lazy(() => import('./screens/client/JobDetailsScreen'));
-const LeaveReviewScreen = lazy(() => import('./screens/client/LeaveReviewScreen'));
+const GuardProfileScreen = lazy(() => import('./screens/client/jobs/GuardCardScreen'));
+const FindGuardsScreen = lazy(() => import('./screens/client/home/FindGuardsScreen'));
+const ReportsScreen = lazy(() => import('./screens/client/home/ReportsScreen'));
+const JobsScreen = lazy(() => import('./screens/client/jobs/JobsScreen'));
+const AllReviewsScreen = lazy(() => import('./screens/client/jobs/GuardReviews'));
+const JobDetailsScreen = lazy(() => import('./screens/client/jobs/JobDetailsScreen'));
+const LeaveReviewScreen = lazy(() => import('./screens/client/jobs/LeaveReviewScreen'));
 const GuardTabs = lazy(() => import('./screens/guard/GuardTabs'));
 const GuardJobDetailsScreen = lazy(() => import('./screens/guard/GuardJobDetailsScreen'));
 const GuardMessagesScreen = lazy(() => import('./screens/guard/GuardMessagesScreen'));
 const GuardChatScreen = lazy(() => import('./screens/guard/GuardChatScreen'));
 const ReportIncidentScreen = lazy(() => import('./screens/guard/ReportIncidentScreen'));
 const GuardEarningsScreen = lazy(() => import('./screens/guard/GuardEarningsScreen'));
-const ClientReportsScreen = lazy(() => import('./screens/client/ClientReportsScreen'));
-const TrackJobScreen = lazy(() => import('./screens/client/TrackJobScreen'));
+const ClientReportsScreen = lazy(() => import('./screens/client/jobs/ClientReportsScreen'));
+const TrackJobScreen = lazy(() => import('./screens/client/home/TrackJobScreen'));
+
+// Profile subpages
+const PersonalInfoScreen = lazy(() => import('./screens/client/profile/PersonalInfoScreen'));
+const AccountScreen = lazy(() => import('./screens/client/profile/AccountScreen'));
+const MySecurityJobsScreen = lazy(() => import('./screens/client/profile/MySecurityJobsScreen'));
+const PaymentMethodsScreen = lazy(() => import('./screens/client/profile/PaymentMethodsScreen'));
+const AddPaymentMethodScreen = lazy(() => import('./screens/client/profile/AddPaymentMethodScreen'));
+const ContactSupportScreen = lazy(() => import('./screens/client/profile/ContactSupportScreen'));
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -101,172 +110,201 @@ export default function App() {
 
   return (
     <ErrorBoundary>
-      <SafeAreaProvider>
-        <GestureHandlerRootView style={{ flex: 1 }}>
-          <BottomSheetModalProvider>
-            <AuthProvider>
-              <StripeProvider publishableKey={STRIPE_PUBLIC_KEY || 'pk_test_51R5tBA05xKnpNtzd6cGTTNnKLlOYPKdFaiJcXAtMHCWNpTSOv7FYwgMYhoNfIBSM27GXDFVoDCNkLGgcMkHclbhj00y61WpU98'}>
-                <NavigationContainer>
-                <Stack.Navigator initialRouteName="Loading" screenOptions={{ headerShown: false }}>
-                  <Stack.Screen 
-                    name="Loading" 
-                    component={LoadingScreen} 
-                    options={{ headerShown: false }} 
-                  />
-                  <Stack.Screen 
-                    name="Onboarding" 
-                    component={OnboardingScreen} 
-                    options={{ headerShown: false }} 
-                  />
-                  <Stack.Screen 
-                    name="Welcome" 
-                    component={WelcomeScreen} 
-                    options={{ headerShown: false }} 
-                  />
-                  <Stack.Screen 
-                    name="UserTypeSelection" 
-                    component={UserTypeSelection} 
-                    options={{ headerShown: false }} 
-                  />
-                  <Stack.Screen 
-                    name="SignUpClient" 
-                    component={SignUpClient} 
-                    options={{ headerShown: false }} 
-                  />
-                  <Stack.Screen 
-                    name="OtpVerification" 
-                    component={OtpVerification} 
-                    options={{ headerShown: false }} 
-                  />
-                  <Stack.Screen 
-                    name="PreferredPayment" 
-                    component={PreferredPayment} 
-                    options={{ headerShown: false }} 
-                  />
-                  <Stack.Screen 
-                    name="SignUpGuard" 
-                    component={SignUpGuard} 
-                    options={{ headerShown: false }} 
-                  />
-                  <Stack.Screen 
-                    name="Login" 
-                    component={LoginScreen} 
-                    options={{ headerShown: false }} 
-                  />
-                  <Stack.Screen 
-                    name="ForgotPassword" 
-                    component={ForgotPassword} 
-                    options={{ headerShown: false }} 
-                  />
-                  <Stack.Screen 
-                    name="Client" 
-                    component={ClientTabs} 
-                    options={{ headerShown: false }} 
-                  />
-                  <Stack.Screen 
-                    name="AllReviews" 
-                    component={AllReviewsScreen} 
-                    options={{ headerShown: false }} 
-                  />
-                  <Stack.Screen 
-                    name="JobDetails" 
-                    component={JobDetailsScreen} 
-                    options={{ headerShown: false }} 
-                  />
-                  <Stack.Screen 
-                    name="LeaveReview" 
-                    component={LeaveReviewScreen} 
-                    options={{ headerShown: false }} 
-                  />
-                  <Stack.Screen 
-                    name="TrackJob" 
-                    component={TrackJobScreen} 
-                    options={{ headerShown: false }} 
-                  />
-                  <Stack.Screen 
-                    name="Reports" 
-                    component={ReportsScreen} 
-                    options={{ headerShown: false }} 
-                  />
-                  <Stack.Screen 
-                    name="ClientReports" 
-                    component={ClientReportsScreen} 
-                    options={{ headerShown: false }} 
-                  />
-                  <Stack.Screen 
-                    name="GuardProfile" 
-                    component={GuardProfileScreen} 
-                    options={{ headerShown: false }} 
-                  />
-                  <Stack.Screen 
-                    name="SecurityDashboard" 
-                    component={GuardTabs} 
-                    options={{ title: 'Security Dashboard' }} 
-                  />
-                  <Stack.Screen 
-                    name="GuardTabs" 
-                    component={GuardTabs} 
-                    options={{ headerShown: false }} 
-                  />
-                  <Stack.Screen 
-                    name="GuardJobDetails" 
-                    component={GuardJobDetailsScreen} 
-                    options={{ headerShown: false }} 
-                  />
-                  <Stack.Screen 
-                    name="GuardMessages" 
-                    component={GuardMessagesScreen} 
-                    options={{ headerShown: false }} 
-                  />
-                  <Stack.Screen 
-                    name="GuardChat" 
-                    component={GuardChatScreen} 
-                    options={{ headerShown: false }} 
-                  />
-                  <Stack.Screen 
-                    name="ReportIncident" 
-                    component={ReportIncidentScreen} 
-                    options={{ headerShown: false }} 
-                  />
-                  <Stack.Screen 
-                    name="GuardEarnings" 
-                    component={GuardEarningsScreen} 
-                    options={{ headerShown: false }} 
-                  />
-                  <Stack.Screen 
-                    name="PostJob" 
-                    component={PostJob} 
-                    options={{ headerShown: false }} 
-                  />
-                  <Stack.Screen 
-                    name="PostJobSpecialized" 
-                    component={PostJobSpecialized} 
-                    options={{ headerShown: false }} 
-                  />
-                  <Stack.Screen 
-                    name="PostJobTemplate" 
-                    component={PostJobTemplate} 
-                    options={{ headerShown: false }} 
-                  />
-                  <Stack.Screen 
-                    name="FindGuards" 
-                    component={FindGuardsScreen} 
-                    options={{ headerShown: false }} 
-                  />
-                  <Stack.Screen 
-                    name="LiveTracking" 
-                    component={LiveTrackingScreen} 
-                    options={{ headerShown: false }} 
-                  />
-                </Stack.Navigator>
-              </NavigationContainer>
-            </StripeProvider>
-          </AuthProvider>
-        </BottomSheetModalProvider>
-        <Toast />
-        <Toaster />
-      </GestureHandlerRootView>
-    </SafeAreaProvider>
+      <GluestackUIProvider config={gluestackUIConfig}>
+        <SafeAreaProvider>
+          <GestureHandlerRootView style={{ flex: 1 }}>
+            <BottomSheetModalProvider>
+              <AuthProvider>
+                <StripeProvider publishableKey={STRIPE_PUBLIC_KEY || 'pk_test_51R5tBA05xKnpNtzd6cGTTNnKLlOYPKdFaiJcXAtMHCWNpTSOv7FYwgMYhoNfIBSM27GXDFVoDCNkLGgcMkHclbhj00y61WpU98'}>
+                  <NavigationContainer>
+                  <Stack.Navigator initialRouteName="Loading" screenOptions={{ headerShown: false }}>
+                    <Stack.Screen 
+                      name="Loading" 
+                      component={LoadingScreen} 
+                      options={{ headerShown: false }} 
+                    />
+                    <Stack.Screen 
+                      name="Onboarding" 
+                      component={OnboardingScreen} 
+                      options={{ headerShown: false }} 
+                    />
+                    <Stack.Screen 
+                      name="Welcome" 
+                      component={WelcomeScreen} 
+                      options={{ headerShown: false }} 
+                    />
+                    <Stack.Screen 
+                      name="UserTypeSelection" 
+                      component={UserTypeSelection} 
+                      options={{ headerShown: false }} 
+                    />
+                    <Stack.Screen 
+                      name="SignUpClient" 
+                      component={SignUpClient} 
+                      options={{ headerShown: false }} 
+                    />
+                    <Stack.Screen 
+                      name="OtpVerification" 
+                      component={OtpVerification} 
+                      options={{ headerShown: false }} 
+                    />
+                    <Stack.Screen 
+                      name="PreferredPayment" 
+                      component={PreferredPayment} 
+                      options={{ headerShown: false }} 
+                    />
+                    <Stack.Screen 
+                      name="SignUpGuard" 
+                      component={SignUpGuard} 
+                      options={{ headerShown: false }} 
+                    />
+                    <Stack.Screen 
+                      name="Login" 
+                      component={LoginScreen} 
+                      options={{ headerShown: false }} 
+                    />
+                    <Stack.Screen 
+                      name="ForgotPassword" 
+                      component={ForgotPassword} 
+                      options={{ headerShown: false }} 
+                    />
+                    <Stack.Screen 
+                      name="Client" 
+                      component={ClientTabs} 
+                      options={{ headerShown: false }} 
+                    />
+                    <Stack.Screen 
+                      name="AllReviews" 
+                      component={AllReviewsScreen} 
+                      options={{ headerShown: false }} 
+                    />
+                    <Stack.Screen 
+                      name="JobDetails" 
+                      component={JobDetailsScreen} 
+                      options={{ headerShown: false }} 
+                    />
+                    <Stack.Screen 
+                      name="LeaveReview" 
+                      component={LeaveReviewScreen} 
+                      options={{ headerShown: false }} 
+                    />
+                    <Stack.Screen 
+                      name="TrackJob" 
+                      component={TrackJobScreen} 
+                      options={{ headerShown: false }} 
+                    />
+                    <Stack.Screen 
+                      name="Reports" 
+                      component={ReportsScreen} 
+                      options={{ headerShown: false }} 
+                    />
+                    <Stack.Screen 
+                      name="ClientReports" 
+                      component={ClientReportsScreen} 
+                      options={{ headerShown: false }} 
+                    />
+                    <Stack.Screen 
+                      name="GuardProfile" 
+                      component={GuardProfileScreen} 
+                      options={{ headerShown: false }} 
+                    />
+                    <Stack.Screen 
+                      name="SecurityDashboard" 
+                      component={GuardTabs} 
+                      options={{ title: 'Security Dashboard' }} 
+                    />
+                    <Stack.Screen 
+                      name="GuardTabs" 
+                      component={GuardTabs} 
+                      options={{ headerShown: false }} 
+                    />
+                    <Stack.Screen 
+                      name="GuardJobDetails" 
+                      component={GuardJobDetailsScreen} 
+                      options={{ headerShown: false }} 
+                    />
+                    <Stack.Screen 
+                      name="GuardMessages" 
+                      component={GuardMessagesScreen} 
+                      options={{ headerShown: false }} 
+                    />
+                    <Stack.Screen 
+                      name="GuardChat" 
+                      component={GuardChatScreen} 
+                      options={{ headerShown: false }} 
+                    />
+                    <Stack.Screen 
+                      name="ReportIncident" 
+                      component={ReportIncidentScreen} 
+                      options={{ headerShown: false }} 
+                    />
+                    <Stack.Screen 
+                      name="GuardEarnings" 
+                      component={GuardEarningsScreen} 
+                      options={{ headerShown: false }} 
+                    />
+                    <Stack.Screen 
+                      name="PostJob" 
+                      component={PostJob} 
+                      options={{ headerShown: false }} 
+                    />
+                            <Stack.Screen
+          name="PostJobSpecialized"
+          component={PostJobSpecialized}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="JobTemplateSelector"
+          component={JobTemplateSelector}
+          options={{ headerShown: false }}
+        />
+                    <Stack.Screen 
+                      name="FindGuards" 
+                      component={FindGuardsScreen} 
+                      options={{ headerShown: false }} 
+                    />
+                    
+                    {/* Profile Subpages */}
+                    <Stack.Screen 
+                      name="PersonalInfo" 
+                      component={PersonalInfoScreen} 
+                      options={{ headerShown: false }} 
+                    />
+                    <Stack.Screen 
+                      name="Account" 
+                      component={AccountScreen} 
+                      options={{ headerShown: false }} 
+                    />
+                    <Stack.Screen 
+                      name="MySecurityJobs" 
+                      component={MySecurityJobsScreen} 
+                      options={{ headerShown: false }} 
+                    />
+                            <Stack.Screen
+          name="PaymentMethods"
+          component={PaymentMethodsScreen}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="AddPaymentMethod"
+          component={AddPaymentMethodScreen}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="ContactSupport"
+          component={ContactSupportScreen}
+          options={{ headerShown: false }}
+        />
+                  </Stack.Navigator>
+                </NavigationContainer>
+                </StripeProvider>
+              </AuthProvider>
+            </BottomSheetModalProvider>
+            <Toast />
+            <Toaster />
+          </GestureHandlerRootView>
+        </SafeAreaProvider>
+      </GluestackUIProvider>
     </ErrorBoundary>
   );
 }

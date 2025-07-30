@@ -1,5 +1,4 @@
-// @ts-nocheck
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -10,17 +9,13 @@ import {
   Platform,
   Dimensions,
   ActivityIndicator,
-  Alert,
-  RefreshControl
 } from 'react-native';
 import { MaterialIcons, AntDesign } from '@expo/vector-icons';
 // @ts-ignore
 import { TabView, TabBar, SceneMap } from 'react-native-tab-view';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { supabase } from '../../supabaseClient';
 import { COLORS, SPACING } from '../../theme';
-import { toast } from 'sonner-native';
 
 interface GuardJobsScreenProps {
   navigation: any;
@@ -65,7 +60,7 @@ const availableJobs = [
   },
 ];
 
-const upcomingJobs = [
+const acceptedJobs = [
   {
     id: '4',
     title: 'Rock Concert Security',
@@ -91,12 +86,12 @@ const upcomingJobs = [
 ];
 
 const AvailableTab = ({ navigation }: { navigation: any }) => {
-  const [loading, setLoading] = useState(false);
-  const [refreshing, setRefreshing] = useState(false);
+  const [loadingStates, setLoadingStates] = useState<{ [key: string]: boolean }>({});
 
   const handleAcceptJob = async (jobId: string) => {
     try {
-      setLoading(true);
+      setLoadingStates(prev => ({ ...prev, [jobId]: true }));
+      
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1000));
       
@@ -106,76 +101,77 @@ const AvailableTab = ({ navigation }: { navigation: any }) => {
       //   .from('job_guards')
       //   .insert([{ job_id: jobId, guard_id: user.id, status: 'accepted' }]);
       
-      toast.success('Job accepted successfully!');
-      // Refresh the list
-      setRefreshing(true);
-      setTimeout(() => setRefreshing(false), 500);
+      console.log('Job accepted successfully:', jobId);
+      // You can add toast notification here
+      // toast.success('Job accepted successfully!');
+      
     } catch (error) {
       console.error('Error accepting job:', error);
-      toast.error('Failed to accept job');
+      // toast.error('Failed to accept job. Please try again.');
     } finally {
-      setLoading(false);
+      setLoadingStates(prev => ({ ...prev, [jobId]: false }));
     }
   };
 
-  const onRefresh = () => {
-    setRefreshing(true);
-    setTimeout(() => setRefreshing(false), 1000);
-  };
-
   return (
-    <ScrollView 
-      contentContainerStyle={styles.listContent} 
-      showsVerticalScrollIndicator={false}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-    >
+    <ScrollView contentContainerStyle={styles.listContent} showsVerticalScrollIndicator={false}>
       {availableJobs.length > 0 ? (
         availableJobs.map(job => (
           <View key={job.id} style={styles.card}>
-            <View style={styles.cardHeader}>
-              <View style={styles.titleRow}>
+            <TouchableOpacity
+              style={styles.cardContent}
+              onPress={() => navigation.navigate('GuardJobDetails', { job })}
+              activeOpacity={0.7}
+            >
+              <View style={styles.cardHeader}>
                 <MaterialIcons name={
                   job.type === 'Nightclub' ? 'nightlife' :
                   job.type === 'Corporate' ? 'business' :
-                  job.type === 'Private Event' ? 'event' :
-                  'security'
+                  'event'
                 } size={20} color="#2563eb" />
                 <Text style={styles.cardTitle}>{job.title}</Text>
+                <View style={[styles.statusPill, styles.statusAvailable]}>
+                  <Text style={[styles.statusText, styles.statusTextAvailable]}>
+                    {job.status}
+                  </Text>
+                </View>
               </View>
-              <View style={[styles.statusPill, styles.statusAvailable]}>
-                <Text style={[styles.statusText, styles.statusTextAvailable]}>
-                  {job.status}
-                </Text>
+
+              <View style={styles.row}>
+                <MaterialIcons name="event" size={16} color="#2563eb" />
+                <Text style={styles.cardDate}>{job.date}</Text>
+                <MaterialIcons name="access-time" size={16} color="#2563eb" style={{ marginLeft: 12 }} />
+                <Text style={styles.cardDate}>{job.time}</Text>
               </View>
-            </View>
 
-            <View style={styles.row}>
-              <MaterialIcons name="event" size={16} color="#2563eb" />
-              <Text style={styles.cardDate}>{job.date}</Text>
-              <MaterialIcons name="access-time" size={16} color="#2563eb" style={{ marginLeft: 12 }} />
-              <Text style={styles.cardDate}>{job.time}</Text>
-            </View>
+              <View style={styles.row}>
+                <MaterialIcons name="location-on" size={16} color="#2563eb" />
+                <Text style={styles.cardLocation}>{job.location}</Text>
+              </View>
 
-            <View style={styles.row}>
-              <MaterialIcons name="location-on" size={16} color="#2563eb" />
-              <Text style={styles.cardLocation}>{job.location}</Text>
-            </View>
-
-            <View style={styles.row}>
-              <MaterialIcons name="attach-money" size={16} color="#2563eb" />
-              <Text style={styles.cardPay}>${job.hourlyPay}/hr</Text>
-              <MaterialIcons name="group" size={16} color="#2563eb" style={{ marginLeft: 12 }} />
-              <Text style={styles.cardGuards}>{job.numGuards} guard{job.numGuards > 1 ? 's' : ''} needed</Text>
-            </View>
+              <View style={styles.jobDetails}>
+                <View style={styles.detailItem}>
+                  <MaterialIcons name="attach-money" size={16} color="#2563eb" />
+                  <Text style={styles.detailText}>${job.hourlyPay}/hr</Text>
+                </View>
+                <View style={styles.detailItem}>
+                  <MaterialIcons name="people" size={16} color="#2563eb" />
+                  <Text style={styles.detailText}>{job.numGuards} guards needed</Text>
+                </View>
+              </View>
+            </TouchableOpacity>
 
             <TouchableOpacity
-              style={styles.acceptButton}
+              style={[styles.acceptButton, loadingStates[job.id] && styles.acceptButtonLoading]}
               onPress={() => handleAcceptJob(job.id)}
-              disabled={loading}
+              disabled={loadingStates[job.id]}
               activeOpacity={0.7}
             >
-              {loading ? (
-                <ActivityIndicator size="small" color="#ffffff" />
+              {loadingStates[job.id] ? (
+                <View style={styles.loadingContainer}>
+                  <ActivityIndicator size="small" color="#ffffff" />
+                  <Text style={styles.acceptButtonText}>Accepting...</Text>
+                </View>
               ) : (
                 <Text style={styles.acceptButtonText}>Accept Job</Text>
               )}
@@ -184,95 +180,79 @@ const AvailableTab = ({ navigation }: { navigation: any }) => {
         ))
       ) : (
         <View style={styles.emptyState}>
-          <MaterialIcons name="work-outline" size={48} color="#a5b4fc" />
           <Text style={styles.emptyText}>No available jobs found.</Text>
-          <Text style={styles.emptySubtext}>Check back later for new opportunities!</Text>
         </View>
       )}
     </ScrollView>
   );
 };
 
-const UpcomingTab = ({ navigation }: { navigation: any }) => {
-  const [refreshing, setRefreshing] = useState(false);
-
-  const onRefresh = () => {
-    setRefreshing(true);
-    setTimeout(() => setRefreshing(false), 1000);
-  };
-
-  return (
-    <ScrollView 
-      contentContainerStyle={styles.listContent} 
-      showsVerticalScrollIndicator={false}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-    >
-      {upcomingJobs.length > 0 ? (
-        upcomingJobs.map(job => (
-          <TouchableOpacity
-            key={job.id}
-            style={styles.card}
-            onPress={() => navigation.navigate('GuardJobDetails', { job })}
-            activeOpacity={0.7}
-          >
-            <View style={styles.cardHeader}>
-              <View style={styles.titleRow}>
-                <MaterialIcons name={
-                  job.type === 'Nightclub' ? 'nightlife' :
-                  job.type === 'Corporate' ? 'business' :
-                  job.type === 'Private Event' ? 'event' :
-                  'security'
-                } size={20} color="#2563eb" />
-                <Text style={styles.cardTitle}>{job.title}</Text>
-              </View>
-              <View style={[styles.statusPill, styles.statusAccepted]}>
-                <Text style={[styles.statusText, styles.statusTextAccepted]}>
-                  {job.status}
-                </Text>
-              </View>
+const AcceptedTab = ({ navigation }: { navigation: any }) => (
+  <ScrollView contentContainerStyle={styles.listContent} showsVerticalScrollIndicator={false}>
+    {acceptedJobs.length > 0 ? (
+      acceptedJobs.map(job => (
+        <TouchableOpacity
+          key={job.id}
+          style={styles.card}
+          onPress={() => navigation.navigate('GuardJobDetails', { job })}
+          activeOpacity={0.7}
+        >
+          <View style={styles.cardHeader}>
+            <MaterialIcons name={
+              job.type === 'Nightclub' ? 'nightlife' :
+              job.type === 'Corporate' ? 'business' :
+              'event'
+            } size={20} color="#2563eb" />
+            <Text style={styles.cardTitle}>{job.title}</Text>
+            <View style={[styles.statusPill, styles.statusAccepted]}>
+              <Text style={[styles.statusText, styles.statusTextAccepted]}>
+                {job.status}
+              </Text>
             </View>
+          </View>
 
-            <View style={styles.row}>
-              <MaterialIcons name="event" size={16} color="#2563eb" />
-              <Text style={styles.cardDate}>{job.date}</Text>
-              <MaterialIcons name="access-time" size={16} color="#2563eb" style={{ marginLeft: 12 }} />
-              <Text style={styles.cardDate}>{job.time}</Text>
-            </View>
+          <View style={styles.row}>
+            <MaterialIcons name="event" size={16} color="#2563eb" />
+            <Text style={styles.cardDate}>{job.date}</Text>
+            <MaterialIcons name="access-time" size={16} color="#2563eb" style={{ marginLeft: 12 }} />
+            <Text style={styles.cardDate}>{job.time}</Text>
+          </View>
 
-            <View style={styles.row}>
-              <MaterialIcons name="location-on" size={16} color="#2563eb" />
-              <Text style={styles.cardLocation}>{job.location}</Text>
-            </View>
+          <View style={styles.row}>
+            <MaterialIcons name="location-on" size={16} color="#2563eb" />
+            <Text style={styles.cardLocation}>{job.location}</Text>
+          </View>
 
-            <View style={styles.row}>
+          <View style={styles.jobDetails}>
+            <View style={styles.detailItem}>
               <MaterialIcons name="attach-money" size={16} color="#2563eb" />
-              <Text style={styles.cardPay}>${job.hourlyPay}/hr</Text>
-              <MaterialIcons name="group" size={16} color="#2563eb" style={{ marginLeft: 12 }} />
-              <Text style={styles.cardGuards}>{job.numGuards} guard{job.numGuards > 1 ? 's' : ''} assigned</Text>
+              <Text style={styles.detailText}>${job.hourlyPay}/hr</Text>
             </View>
-          </TouchableOpacity>
-        ))
-      ) : (
-        <View style={styles.emptyState}>
-          <MaterialIcons name="schedule" size={48} color="#a5b4fc" />
-          <Text style={styles.emptyText}>No upcoming jobs found.</Text>
-          <Text style={styles.emptySubtext}>Accept jobs from the Available tab to see them here.</Text>
-        </View>
-      )}
-    </ScrollView>
-  );
-};
+            <View style={styles.detailItem}>
+              <MaterialIcons name="people" size={16} color="#2563eb" />
+              <Text style={styles.detailText}>{job.numGuards} guards needed</Text>
+            </View>
+          </View>
+        </TouchableOpacity>
+      ))
+    ) : (
+      <View style={styles.emptyState}>
+        <Text style={styles.emptyText}>No accepted jobs found.</Text>
+      </View>
+    )}
+  </ScrollView>
+);
 
 export default function GuardJobsScreen({ navigation }: GuardJobsScreenProps) {
   const [index, setIndex] = useState(0);
   const [routes] = useState([
     { key: 'available', title: 'Available' },
-    { key: 'upcoming', title: 'Upcoming' },
+    { key: 'accepted', title: 'Accepted' },
   ]);
 
   const renderScene = SceneMap({
     available: () => <AvailableTab navigation={navigation} />,
-    upcoming: () => <UpcomingTab navigation={navigation} />,
+    accepted: () => <AcceptedTab navigation={navigation} />,
   });
 
   const renderTabBar = (props: any) => (
@@ -294,7 +274,7 @@ export default function GuardJobsScreen({ navigation }: GuardJobsScreenProps) {
         colors={['#ffffff', '#e0f2ff']}
         style={{ flex: 1 }}
       >
-        {/* Header matching client Jobs screen styling */}
+        {/* Header matching ClientJobsScreen styling */}
         <View style={styles.header}>
           <View style={{ width: 24 }} />
           <Text style={styles.headerTitle}>Jobs</Text>
@@ -314,149 +294,60 @@ export default function GuardJobsScreen({ navigation }: GuardJobsScreenProps) {
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: COLORS.white,
-  },
+  safeArea: { flex: 1, backgroundColor: 'transparent' },
+  container: { flex: 1, backgroundColor: '#ffffff' },
+  
+  // Header styling matching ClientJobsScreen
   header: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: SPACING.md,
-    paddingTop: SPACING.lg,
-    paddingBottom: SPACING.sm,
+    justifyContent: 'space-between',
+    paddingHorizontal: SPACING.xl,
+    paddingTop: Platform.OS === 'android' ? SPACING.sm: SPACING.xxl,
+    paddingBottom: SPACING.xs,
+    borderBottomColor: COLORS.border,
     backgroundColor: COLORS.white,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
   },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: COLORS.textPrimary,
-  },
+  headerTitle: { fontSize: 20, fontWeight: '600', color: COLORS.textDark },
+  
+  // Tab View styles
   tabBar: {
     backgroundColor: COLORS.white,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
     elevation: 0,
     shadowOpacity: 0,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
   },
   indicator: {
     backgroundColor: COLORS.primary,
-    height: 3,
+    height: 2,
   },
   tabLabel: {
     fontSize: 14,
     fontWeight: '600',
+    textTransform: 'none',
   },
-  listContent: { 
-    paddingBottom: 100, 
-    paddingHorizontal: 16, 
-    paddingTop: 16 
-  },
-  card: { 
-    backgroundColor: '#ffffff', 
-    borderRadius: 12, 
-    padding: 12, 
-    marginBottom: 10, 
-    shadowColor: '#000', 
-    shadowOpacity: 0.06, 
-    shadowRadius: 8, 
-    shadowOffset: { width: 0, height: 2 }, 
-    elevation: 2,
-    borderWidth: 1,
-    borderColor: '#f1f5f9'
-  },
-  cardHeader: {
-    marginBottom: 8
-  },
-  titleRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start'
-  },
-  iconContainer: {
-    width: 32,
-    height: 32,
-    borderRadius: 8,
-    backgroundColor: '#eff6ff',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 8
-  },
-  titleContainer: {
-    flex: 1
-  },
-  cardTitle: { 
-    fontSize: 15, 
-    fontWeight: '700', 
-    color: '#111827',
-    marginBottom: 2,
-    lineHeight: 18
-  },
-  typePill: { 
-    backgroundColor: '#dbeafe', 
-    paddingHorizontal: 8, 
-    paddingVertical: 2, 
-    borderRadius: 8,
-    alignSelf: 'flex-start'
-  },
-  typePillText: { 
-    color: '#2563eb', 
-    fontSize: 11, 
-    fontWeight: '600' 
-  },
-  statusPill: {
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 8,
-    alignSelf: 'flex-start',
-    marginTop: 4,
-  },
-  statusText: {
-    fontSize: 11,
-    fontWeight: '600',
-  },
-  statusAvailable: {
-    backgroundColor: '#d1fae5',
-    color: '#059669',
-  },
-  statusAccepted: {
-    backgroundColor: '#e0f2fe',
-    color: '#1d4ed8',
-  },
-  statusTextAvailable: {
-    color: '#059669',
-  },
-  statusTextAccepted: {
-    color: '#1d4ed8',
-  },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 4,
-  },
-  cardDate: {
-    fontSize: 13,
-    color: '#374151',
-    marginLeft: 4,
-  },
-  cardLocation: {
-    fontSize: 13,
-    color: '#374151',
-    marginLeft: 4,
-  },
-  cardPay: {
-    fontSize: 13,
-    color: '#2563eb',
-    marginLeft: 4,
-    fontWeight: '600',
-  },
-  cardGuards: {
-    fontSize: 13,
-    color: '#2563eb',
-    marginLeft: 4,
-    fontWeight: '600',
-  },
+  
+  // Content styles
+  listContent: { paddingBottom: 100, paddingHorizontal: 16, paddingTop: 16 },
+  card: { backgroundColor: '#ffffff', borderRadius: 16, padding: 16, marginBottom: 16, shadowColor: '#000', shadowOpacity: 0.08, shadowRadius: 8, shadowOffset: { width: 0, height: 4 }, elevation: 4 },
+  cardHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 8, justifyContent: 'space-between' },
+  cardTitle: { fontSize: 16, fontWeight: 'bold', color: '#111827', marginLeft: 8, flex: 1 },
+  row: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
+  cardDate: { fontSize: 14, color: '#2563eb', marginLeft: 6 },
+  cardLocation: { fontSize: 14, color: '#2563eb', marginLeft: 6 },
+  jobDetails: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 8 },
+  detailItem: { flexDirection: 'row', alignItems: 'center' },
+  detailText: { fontSize: 14, color: '#2563eb', marginLeft: 6 },
+  statusPill: { borderRadius: 16, paddingVertical: 4, paddingHorizontal: 12 },
+  statusAvailable: { backgroundColor: '#dbeafe' },
+  statusAccepted: { backgroundColor: '#d1fae5' },
+  statusText: { fontSize: 12, fontWeight: 'bold' },
+  statusTextAvailable: { color: '#2563eb' },
+  statusTextAccepted: { color: '#059669' },
+  emptyState: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32 },
+  emptyText: { fontSize: 16, color: '#64748b', textAlign: 'center', marginBottom: 16 },
+  cardContent: { flex: 1 },
   acceptButton: {
     backgroundColor: COLORS.primary,
     borderRadius: 8,
@@ -467,41 +358,20 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 6,
     shadowOffset: { width: 0, height: 2 },
-    elevation: 3
+    elevation: 3,
+  },
+  acceptButtonLoading: {
+    backgroundColor: '#9ca3af',
   },
   acceptButtonText: {
-    color: COLORS.white,
+    color: '#ffffff',
     fontSize: 16,
     fontWeight: '600',
   },
-  titleRow: {
+  loadingContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    flex: 1,
-  },
-  cardTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#111827',
-    marginLeft: 8,
-    flex: 1,
-  },
-  emptyState: {
-    alignItems: 'center',
-    paddingTop: 60,
-    paddingHorizontal: 32
-  },
-  emptyText: { 
-    color: '#6b7280', 
-    textAlign: 'center', 
-    fontSize: 18,
-    fontWeight: '600',
-    marginTop: 16
-  },
-  emptySubtext: {
-    fontSize: 14,
-    color: '#9ca3af',
-    textAlign: 'center',
-    marginTop: 4,
+    justifyContent: 'center',
+    gap: 8,
   },
 });

@@ -10,8 +10,8 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
-import { theme } from '../../design-system';
-import { NavigationProps, GuardTracking, Job, User } from '../../types';
+import { theme } from '../../../design-system';
+import { NavigationProps, GuardTracking, Job, User } from '../../../types';
 
 interface LiveTrackingProps {
   navigation: NavigationProps;

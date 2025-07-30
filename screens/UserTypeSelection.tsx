@@ -8,7 +8,6 @@ export default function UserTypeSelection({ navigation }) {
     <>
       <StatusBar translucent backgroundColor="transparent" barStyle="dark-content" />
     <View style={styles.container}>
-      <Image source={require('../assets/logo.png')} style={styles.logoImage} />
       <Text style={styles.header}>Welcome to SwiftGuard</Text>
       <Text style={styles.subheader}>Secure. Reliable. Fast.</Text>
       <Text style={styles.description}>Select your account type below to get started and tailor your experience:</Text>

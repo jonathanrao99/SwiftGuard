@@ -4,7 +4,7 @@ import { MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Foundation } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Audio } from 'expo-av';
-import { supabase } from '../../supabaseClient';
+import { supabase } from '../../../supabaseClient';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 // Fallback to any for RouteProp if not found
 // import type { RouteProp } from '@react-navigation/native';

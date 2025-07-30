@@ -1,14 +1,16 @@
-# SwiftGuard - Comprehensive Documentation
+# SwiftGuard - Complete Documentation
 
 ## Table of Contents
 1. [Introduction](#introduction)
-2. [Application Enhancements & Features](#application-enhancements--features)
-3. [Security Improvements](#security-improvements)
-4. [Performance Optimizations](#performance-optimizations)
-5. [Critical Issues & Resolutions](#critical-issues--resolutions)
-6. [Technical Architecture](#technical-architecture)
-7. [Setup & Dependencies](#setup--dependencies)
-8. [Future Improvements](#future-improvements)
+2. [Project Overview](#project-overview)
+3. [Technical Architecture](#technical-architecture)
+4. [Database Schema](#database-schema)
+5. [Authentication & Security](#authentication--security)
+6. [UI/UX Modernization](#uiux-modernization)
+7. [Performance Optimizations](#performance-optimizations)
+8. [Development Setup](#development-setup)
+9. [Current Status & Issues](#current-status--issues)
+10. [Future Roadmap](#future-roadmap)
 
 ---
 
@@ -28,52 +30,54 @@ SwiftGuard is a professional security management platform built with React Nativ
 
 ---
 
-## Application Enhancements & Features
+## Project Overview
 
-### 1. Reviews and Ratings
+### Application Enhancements & Features
+
+#### 1. Reviews and Ratings
 - **Database**: New `reviews` table for guard ratings and client reviews
 - **Client-side**: `LeaveReviewScreen` for submitting star ratings and text reviews
 - **Display**: `GuardCardScreen` and `GuardReviews.tsx` show average ratings and detailed reviews
 
-### 2. Incident Reporting
+#### 2. Incident Reporting
 - **Database**: `incidents` table for logging security incidents
 - **Guard-side**: `ReportIncidentScreen` for submitting incident details with photos
 - **Dashboard Integration**: Quick action button on `GuardDashboard`
 - **Client-side**: `ClientReportsScreen` for viewing job-related incidents
 
-### 3. Live Guard Tracking
+#### 3. Live Guard Tracking
 - **Database Schema**: Added `guard_latitude`, `guard_longitude`, `last_location_update` to `jobs` table
 - **Guard-side**: `LocationTrackingService` with background location updates
 - **Client-side**: `TrackJobScreen` displays live guard location on map
 - **Integration**: "Track Guard" buttons on `ClientDashboard` and `JobDetailsScreen`
 
-### 4. Emergency Alerts
+#### 4. Emergency Alerts
 - **Database**: `emergency_alerts` table for recording emergency events
 - **Guard-side**: Emergency button on `GuardDashboard` records alerts with location
 - **Client-side**: `ClientEmergencyAlertsScreen` for viewing and managing alerts
 
-### 5. Messaging Completion
+#### 5. Messaging Completion
 - **Database**: `messages` table for storing chat conversations
 - **Real-time**: Supabase Realtime integration in `GuardChatScreen`
 - **Thread Management**: `GuardMessagesScreen` displays chat threads with latest messages
 
-### 6. Payments
+#### 6. Payments
 - **Database Schema**: Added `payment_status` and `payment_intent_id` to `jobs` table
 - **Guard Payouts**: Supabase Edge Function (`create-stripe-account`) for Stripe Connect
 - **User Profile**: Added `stripe_account_id` to `users` table
 - **Integration**: "Connect Stripe Account" button on `GuardProfileScreen`
 
-### 7. Deeper Analytics
+#### 7. Deeper Analytics
 - **Database Function**: `get_guard_average_rating` for efficient rating calculations
 - **Client Analytics**: `ClientSpendingAnalyticsScreen` for spending summaries
 - **Guard Analytics**: `GuardEarningsScreen` for total earnings display
 
-### 8. Offline Capabilities
+#### 8. Offline Capabilities
 - **Dependencies**: `@react-native-async-storage/async-storage` and `@react-native-community/netinfo`
 - **Service**: `OfflineSyncService` for storing pending data locally
 - **Synchronization**: Automatic sync to Supabase when connectivity is restored
 
-### 9. Gamification for Guards
+#### 9. Gamification for Guards
 - **Database**: `achievements_master` and `guard_achievements` tables
 - **Seeding**: Sample badge data (e.g., "Job Starter," "Top Rated Guard")
 - **Awarding Logic**: Supabase Edge Function (`award-achievements`) for criteria checking
@@ -81,7 +85,75 @@ SwiftGuard is a professional security management platform built with React Nativ
 
 ---
 
-## Security Improvements
+## Technical Architecture
+
+### Frontend Architecture
+- **Framework**: React Native with TypeScript
+- **Navigation**: React Navigation with custom floating tab bar
+- **State Management**: React hooks and context (AuthContext)
+- **Theming**: Centralized design system in `design-system/index.ts`
+- **Error Handling**: Global ErrorBoundary component
+
+### Backend Architecture
+- **Database**: Supabase (PostgreSQL)
+- **Authentication**: Supabase Auth
+- **Storage**: Supabase Storage for photos and files
+- **Real-time**: Supabase Realtime for live updates
+- **Edge Functions**: Custom functions for complex operations
+
+### Key Components
+
+#### Authentication System
+- **Context**: `contexts/AuthContext.tsx`
+- **Screens**: Login, SignUp (Client/Guard), OTP Verification
+- **Features**: Role-based access, session management, real-time auth state
+
+#### Dashboard System
+- **Layout**: `components/dashboard/DashboardLayout.tsx`
+- **Client Dashboard**: `screens/client/home/ClientDashboard.tsx`
+- **Guard Dashboard**: `screens/guard/GuardDashboard.tsx`
+- **Features**: Real-time stats, quick actions, job management
+
+#### Security Features
+- **Incident Reporting**: `screens/guard/IncidentReport.tsx`
+- **Live Tracking**: `screens/client/home/LiveTracking.tsx`
+- **Checkpoint System**: `screens/guard/Checkpoint.tsx`
+- **Emergency Alerts**: Integrated into guard dashboard
+
+#### Communication System
+- **Messaging**: `screens/guard/GuardChatScreen.tsx`
+- **Threads**: `screens/guard/GuardMessagesScreen.tsx`
+- **Real-time**: Supabase Realtime integration
+
+---
+
+## Database Schema
+
+### Core Tables
+- **users**: User profiles, roles, Stripe accounts
+- **jobs**: Job postings, requirements, status
+- **job_guards**: Job assignments, check-in/out times
+- **reviews**: Guard ratings and client feedback
+- **incidents**: Security incident reports
+- **emergency_alerts**: Emergency notifications
+- **messages**: Chat conversations
+- **achievements_master**: Available achievements
+- **guard_achievements**: Earned achievements
+
+### Security Features
+- **Row Level Security (RLS)**: Comprehensive access policies
+- **Indexes**: Optimized for real-time queries
+- **Triggers**: Automatic notifications and updates
+
+### API Integrations
+- **Stripe**: Payment processing and guard payouts
+- **Expo Location**: GPS tracking and geofencing
+- **Expo Image Picker**: Photo capture for incidents and checkpoints
+- **Supabase**: Complete backend-as-a-service
+
+---
+
+## Authentication & Security
 
 ### 🚨 Critical Issues Fixed
 
@@ -103,7 +175,7 @@ SwiftGuard is a professional security management platform built with React Nativ
 ### 🛡️ New Security Features
 
 #### Real-Time Guard Tracking
-- **Location**: `screens/client/LiveTracking.tsx`
+- **Location**: `screens/client/home/LiveTracking.tsx`
 - **Features**:
   - Real-time GPS monitoring of guards
   - Battery level tracking
@@ -146,66 +218,117 @@ SwiftGuard is a professional security management platform built with React Nativ
   - Certification expiry alerts
   - Professional credential management
 
-### 📱 Dashboard Improvements
+---
 
-#### Unified Layout System
-- **Component**: `components/dashboard/DashboardLayout.tsx`
-- **Features**:
-  - Consistent header with user status
-  - Professional color schemes
-  - Real-time stats display
-  - Pull-to-refresh functionality
+## UI/UX Modernization
 
-#### Guard Dashboard (`screens/guard/GuardDashboard.tsx`)
-- **Security Status**: Real-time duty status with check-in/out
-- **Quick Actions**: Emergency button, incident reporting, checkpoint verification
-- **License Monitoring**: Automatic alerts for expiring credentials
-- **Available Jobs**: Smart job recommendations
-- **Performance Tracking**: Hours, ratings, and completion stats
+### ✅ Completed Work
 
-#### Client Dashboard (`screens/client/ClientDashboard.tsx`)
-- **Security Overview**: Real-time monitoring of active guards
-- **Live Tracking**: Direct access to guard locations
-- **Emergency Management**: Emergency contact system
-- **Job Management**: Streamlined job posting and monitoring
+#### 1. **Dependencies Installed**
+```bash
+✅ @gluestack-ui/themed @gluestack-style/react @gluestack-ui/config
+✅ nativewind tailwindcss
+✅ react-native-super-grid react-native-skeleton-placeholder
+```
 
-### 🗄️ Database Enhancements
+#### 2. **Configuration Files Created**
+- ✅ `tailwind.config.js` - NativeWind configuration
+- ✅ `theme/gluestack-config.ts` - Gluestack UI theme with SwiftGuard colors
+- ✅ `nativewind-env.d.ts` - TypeScript declarations
+- ✅ Updated `babel.config.js` - Added NativeWind plugin
 
-#### New Security Tables
-**File**: `supabase/migrations/20250101000000_security_features.sql`
+#### 3. **Onboarding Screens Updated**
+- ✅ **LoadingScreen.tsx** - Removed `@ts-nocheck`, added proper TypeScript
+- ✅ **WelcomeScreen.tsx** - Modernized with Gluestack UI components
+- ✅ **OnboardingScreen.tsx** - Improved structure and TypeScript
 
-1. **incidents**: Comprehensive incident reporting
-2. **shift_checkpoints**: Location-verified checkpoint system
-3. **guard_tracking**: Real-time GPS tracking
-4. **emergency_alerts**: Panic button and emergency system
-5. **messages**: Guard-client communication
-6. **notifications**: System-wide notification management
+#### 4. **App.tsx Updated**
+- ✅ Removed `@ts-nocheck`
+- ✅ Added Gluestack UI provider
+- ✅ Improved TypeScript typing
 
-#### Enhanced Existing Tables
-- **users**: Added location tracking, battery level, online status
-- **jobs**: Added geofencing, checkpoint locations, emergency procedures
-- **job_guards**: Added check-in/out times, performance ratings, notes
+### 🎨 Platform-Aware Design Principles
 
-#### Security Features
-- **Row Level Security (RLS)**: Comprehensive policies for data access
-- **Indexes**: Optimized for real-time queries
-- **Triggers**: Automatic notifications and updates
+#### 1. Typography (React Native-compatible)
+```typescript
+export const typography = {
+  heading: { fontSize: 24, fontWeight: '700' },
+  subheading: { fontSize: 18, fontWeight: '600' },
+  body: { fontSize: 14, fontWeight: '400' }
+};
+```
 
-### 🎨 Design System
+#### 2. Spacing & Layout
+```typescript
+const spacing = {
+  xs: 4, sm: 8, md: 12, lg: 16, xl: 24, xxl: 32
+};
+```
 
-#### Professional Color Palette
-- **Primary**: Security-focused blue tones (`#2563eb`)
-- **Accent**: Indigo (`#6366f1`)
-- **Success**: Green (`#22c55e`)
-- **Warning**: Amber (`#fbbf24`)
-- **Background**: White (`#ffffff`), Light Blue (`#eef2ff`)
-- **Text**: Dark (`#222222`), Muted (`#64748b`)
+#### 3. Color System
+```typescript
+const colors = {
+  primary: '#1E40AF',
+  accent: '#3B82F6',
+  background: '#F9FAFB',
+  surface: '#FFFFFF',
+  textPrimary: '#111827',
+  textSecondary: '#6B7280',
+  success: '#22C55E',
+  warning: '#F97316',
+};
+```
 
-#### Component Library
-- **Cards**: Elevated design with proper shadows
-- **Buttons**: Primary, secondary, danger variants
-- **Badges**: Status indicators with semantic colors
-- **Inputs**: Consistent styling with focus states
+#### 4. Cards & Containers
+```typescript
+shadowColor: '#000',
+shadowOffset: { width: 0, height: 2 },
+shadowOpacity: 0.1,
+shadowRadius: 4,
+elevation: 3,
+borderRadius: 12
+```
+
+#### 5. Buttons & Interactions
+```typescript
+backgroundColor: colors.primary,
+borderRadius: 12,
+paddingVertical: 12,
+alignItems: 'center',
+```
+
+### 🎯 Modern UI Components
+
+#### Gluestack UI Integration
+```typescript
+import { Button, VStack, HStack, Box, Text } from '@gluestack-ui/themed'
+
+<VStack space="xl" className="flex-1 items-center justify-center p-5">
+  <Button size="lg" variant="solid" action="primary">
+    <Button.Text>Get Started</Button.Text>
+  </Button>
+</VStack>
+```
+
+#### NativeWind Styling
+```typescript
+<View className="flex-1 bg-white p-5">
+  <Text className="text-lg font-bold text-blue-600 text-center">
+    Hire Security. Faster, Smarter, Safer
+  </Text>
+</View>
+```
+
+#### React Native Reusables
+```typescript
+import { PullToRefresh, Skeleton } from 'react-native-reusables'
+
+<PullToRefresh onRefresh={handleRefresh}>
+  <ScrollView>
+    {/* Content */}
+  </ScrollView>
+</PullToRefresh>
+```
 
 ---
 
@@ -229,24 +352,10 @@ This section outlines the performance optimizations implemented in SwiftGuard an
 - Added proper TypeScript interfaces and types
 - Improved type safety and error detection
 
-**Files Updated:**
-- `screens/client/FindGuardsScreen.tsx` - Full TypeScript migration
-- `services/LocationTrackingService.ts` - Class-based approach
-- `services/OfflineSyncService.ts` - Improved error handling
-
 #### 2. Code Splitting & Lazy Loading
 - Implemented React.lazy() for all screen components
 - Added Suspense boundaries for better loading experience
 - Reduced initial bundle size by loading screens on-demand
-
-**Implementation:**
-```typescript
-// Before
-import FindGuardsScreen from './screens/client/FindGuardsScreen';
-
-// After
-const FindGuardsScreen = lazy(() => import('./screens/client/FindGuardsScreen'));
-```
 
 #### 3. Package Optimization
 **Removed Unused Dependencies:**
@@ -262,28 +371,10 @@ const FindGuardsScreen = lazy(() => import('./screens/client/FindGuardsScreen'))
 - Optimized Lottie animations by removing unnecessary properties
 - Generated asset manifest for better tracking
 
-**Usage:**
-```bash
-npm run optimize-assets
-```
-
 #### 5. Performance Monitoring
 - Created performance monitoring utility (`utils/performance.ts`)
 - Added hooks for screen and component performance tracking
 - Implemented API response time monitoring
-
-**Usage:**
-```typescript
-import { useScreenPerformance, useApiPerformance } from '../utils/performance';
-
-// In screens
-useScreenPerformance('FindGuardsScreen');
-
-// In API calls
-const endApiTimer = useApiPerformance('fetchGuards')();
-// ... API call
-endApiTimer();
-```
 
 ### 📈 Performance Monitoring
 
@@ -293,23 +384,53 @@ endApiTimer();
 - **API Response Time**: Network request performance
 - **Memory Usage**: Component memory footprint
 
-#### Monitoring Tools
-```typescript
-import { performanceMonitor } from '../utils/performance';
+### 🎯 Performance Targets
 
-// Get all metrics
-const metrics = performanceMonitor.getAllMetrics();
+#### Current Targets
+- **Initial Load**: < 3 seconds
+- **Screen Transitions**: < 500ms
+- **API Responses**: < 2 seconds
+- **Bundle Size**: < 50MB
 
-// Get average metrics
-const averages = performanceMonitor.getAverageMetrics();
+---
 
-// Export for analytics
-const exportData = performanceMonitor.exportMetrics();
+## Development Setup
+
+### Key Dependencies
+```json
+{
+  "@react-navigation/native": "^6.x.x",
+  "@react-navigation/bottom-tabs": "^6.x.x",
+  "@expo/vector-icons": "^13.x.x",
+  "expo-location": "^16.x.x",
+  "expo-image-picker": "^14.x.x",
+  "@stripe/stripe-react-native": "^0.x.x",
+  "@supabase/supabase-js": "^2.x.x",
+  "@react-native-async-storage/async-storage": "^1.x.x",
+  "@react-native-community/netinfo": "^9.x.x"
+}
 ```
 
-### 🔧 Development Scripts
+### Environment Setup
+1. **Clone Repository**: `git clone [repository-url]`
+2. **Install Dependencies**: `npm install` or `yarn install`
+3. **Configure Supabase**: Update `supabaseClient.ts` with your keys
+4. **Set Environment Variables**: Configure Stripe and other API keys
+5. **Start Development**: `expo start`
 
-#### New NPM Scripts
+### Database Setup
+```bash
+cd supabase
+supabase start
+supabase db reset
+```
+
+### Permissions Required
+- **Camera**: For photo capture in incidents and checkpoints
+- **Location**: For GPS tracking and geofencing
+- **Storage**: For photo uploads to Supabase
+
+### Development Scripts
 ```bash
 # Asset optimization
 npm run optimize-assets
@@ -328,54 +449,35 @@ npm run clean
 npm run build:analyze
 ```
 
-### 📋 Best Practices
+### Modern Dependencies to Install
 
-#### 1. Component Optimization
-- Use `React.memo()` for expensive components
-- Implement proper dependency arrays in `useEffect`
-- Avoid inline object/function creation in render
+#### Phase 1: Complete NativeWind Setup
+```bash
+npm install @tanstack/react-query @tanstack/react-query-devtools
+npm install zustand
+npm install react-hook-form @hookform/resolvers zod
+npm install react-native-encrypted-storage
+npm install @sentry/react-native
+```
 
-#### 2. Image Optimization
-- Use appropriate image formats (WebP for web)
-- Implement lazy loading for images
-- Compress images before bundling
+#### Phase 2: Enhanced UI Components
+```bash
+npm install react-native-reusables
+npm install @gluestack-ui/themed @gluestack-style/react @gluestack-ui/config
+npm install nativewind tailwindcss
+```
 
-#### 3. State Management
-- Use local state when possible
-- Implement proper state updates
-- Avoid unnecessary re-renders
-
-#### 4. Network Optimization
-- Implement request caching
-- Use pagination for large datasets
-- Optimize API response payloads
-
-### 🎯 Performance Targets
-
-#### Current Targets
-- **Initial Load**: < 3 seconds
-- **Screen Transitions**: < 500ms
-- **API Responses**: < 2 seconds
-- **Bundle Size**: < 50MB
-
-### 🚀 Future Optimizations
-
-#### Planned Improvements
-1. **Virtual Scrolling**: For large lists
-2. **Background Processing**: For heavy computations
-3. **Progressive Loading**: For complex screens
-4. **Service Worker**: For offline functionality
-5. **Bundle Splitting**: Further reduce initial load
-
-#### Performance Budget
-- **JavaScript**: < 2MB initial bundle
-- **Images**: < 5MB total
-- **Animations**: < 1MB total
-- **Fonts**: < 500KB total
+#### Phase 3: Performance & Security
+```bash
+npm install react-native-fast-image
+npm install react-native-skeleton-placeholder
+npm install expo-crypto
+npm install expo-error-reporter
+```
 
 ---
 
-## Critical Issues & Resolutions
+## Current Status & Issues
 
 ### ✅ **Issues Resolved**
 
@@ -444,7 +546,7 @@ npm run build:analyze
 
 ##### **1.2 Live Tracking System**
 ```typescript
-// File: screens/client/LiveTracking.tsx
+// File: screens/client/home/LiveTracking.tsx
 // Status: Uses mock data
 // Action: Replace with real-time Supabase data
 ```
@@ -551,130 +653,7 @@ npm run build:analyze
 
 ---
 
-## Technical Architecture
-
-### Frontend Architecture
-- **Framework**: React Native with TypeScript
-- **Navigation**: React Navigation with custom floating tab bar
-- **State Management**: React hooks and context (AuthContext)
-- **Theming**: Centralized design system in `design-system/index.ts`
-- **Error Handling**: Global ErrorBoundary component
-
-### Backend Architecture
-- **Database**: Supabase (PostgreSQL)
-- **Authentication**: Supabase Auth
-- **Storage**: Supabase Storage for photos and files
-- **Real-time**: Supabase Realtime for live updates
-- **Edge Functions**: Custom functions for complex operations
-
-### Key Components
-
-#### Authentication System
-- **Context**: `contexts/AuthContext.tsx`
-- **Screens**: Login, SignUp (Client/Guard), OTP Verification
-- **Features**: Role-based access, session management, real-time auth state
-
-#### Dashboard System
-- **Layout**: `components/dashboard/DashboardLayout.tsx`
-- **Client Dashboard**: `screens/client/ClientDashboard.tsx`
-- **Guard Dashboard**: `screens/guard/GuardDashboard.tsx`
-- **Features**: Real-time stats, quick actions, job management
-
-#### Security Features
-- **Incident Reporting**: `screens/guard/IncidentReport.tsx`
-- **Live Tracking**: `screens/client/LiveTracking.tsx`
-- **Checkpoint System**: `screens/guard/Checkpoint.tsx`
-- **Emergency Alerts**: Integrated into guard dashboard
-
-#### Communication System
-- **Messaging**: `screens/guard/GuardChatScreen.tsx`
-- **Threads**: `screens/guard/GuardMessagesScreen.tsx`
-- **Real-time**: Supabase Realtime integration
-
-### Database Schema
-
-#### Core Tables
-- **users**: User profiles, roles, Stripe accounts
-- **jobs**: Job postings, requirements, status
-- **job_guards**: Job assignments, check-in/out times
-- **reviews**: Guard ratings and client feedback
-- **incidents**: Security incident reports
-- **emergency_alerts**: Emergency notifications
-- **messages**: Chat conversations
-- **achievements_master**: Available achievements
-- **guard_achievements**: Earned achievements
-
-#### Security Features
-- **Row Level Security (RLS)**: Comprehensive access policies
-- **Indexes**: Optimized for real-time queries
-- **Triggers**: Automatic notifications and updates
-
-### API Integrations
-- **Stripe**: Payment processing and guard payouts
-- **Expo Location**: GPS tracking and geofencing
-- **Expo Image Picker**: Photo capture for incidents and checkpoints
-- **Supabase**: Complete backend-as-a-service
-
----
-
-## Setup & Dependencies
-
-### Key Dependencies
-```json
-{
-  "@react-navigation/native": "^6.x.x",
-  "@react-navigation/bottom-tabs": "^6.x.x",
-  "@expo/vector-icons": "^13.x.x",
-  "expo-location": "^16.x.x",
-  "expo-image-picker": "^14.x.x",
-  "@stripe/stripe-react-native": "^0.x.x",
-  "@supabase/supabase-js": "^2.x.x",
-  "@react-native-async-storage/async-storage": "^1.x.x",
-  "@react-native-community/netinfo": "^9.x.x"
-}
-```
-
-### Environment Setup
-1. **Clone Repository**: `git clone [repository-url]`
-2. **Install Dependencies**: `npm install` or `yarn install`
-3. **Configure Supabase**: Update `supabaseClient.ts` with your keys
-4. **Set Environment Variables**: Configure Stripe and other API keys
-5. **Start Development**: `expo start`
-
-### Database Setup
-```bash
-cd supabase
-supabase start
-supabase db reset
-```
-
-### Permissions Required
-- **Camera**: For photo capture in incidents and checkpoints
-- **Location**: For GPS tracking and geofencing
-- **Storage**: For photo uploads to Supabase
-
-### Development Scripts
-```bash
-# Asset optimization
-npm run optimize-assets
-
-# Type checking
-npm run type-check
-
-# Linting
-npm run lint
-npm run lint:fix
-
-# Clean install
-npm run clean
-
-# Build with cache analysis
-npm run build:analyze
-```
-
----
-
-## Future Improvements
+## Future Roadmap
 
 ### Short-term Goals (Next 3 Months)
 1. **Complete TypeScript Migration**: Remove all @ts-nocheck directives
@@ -721,6 +700,8 @@ SwiftGuard has evolved from a basic job posting app into a comprehensive securit
 - Gamification system for guard engagement
 - Performance optimizations and monitoring
 - Security improvements and best practices
+- Modern UI/UX with Gluestack UI and NativeWind
+- Platform-aware design principles
 
 ### 🔄 **In Progress**
 - Complete backend integration (replacing mock data)

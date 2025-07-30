@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React, { useEffect, useState } from 'react';
 import {
   View,
@@ -7,7 +6,6 @@ import {
   StatusBar,
   Dimensions,
   StyleSheet,
-  Platform,
 } from 'react-native';
 import Animated, {
   interpolateColor,
@@ -17,19 +15,65 @@ import Animated, {
 } from 'react-native-reanimated';
 import Onboarding from 'react-native-onboarding-swiper';
 import LottieView from 'lottie-react-native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 const { width, height } = Dimensions.get('window');
-const bgColors = ['#ffffff', '#e0e7ff', '#2563eb'];
-const barStyles = ['dark-content', 'dark-content', 'light-content'];
 
-const Title = ({ children, color }) => (
-  <Text style={[styles.title, color && { color }]}>{children}</Text>
-);
-const Subtitle = ({ children, color }) => (
-  <Text style={[styles.subtitle, color && { color }]}>{children}</Text>
-);
+interface OnboardingScreenProps {
+  navigation: NativeStackNavigationProp<any>;
+}
 
-export default function OnboardingScreen({ navigation }) {
+interface OnboardingPage {
+  image: React.ReactNode;
+  title: React.ReactNode;
+  subtitle: React.ReactNode;
+}
+
+interface TitleProps {
+  children: React.ReactNode;
+  color?: string;
+}
+
+interface SubtitleProps {
+  children: React.ReactNode;
+  color?: string;
+}
+
+interface DotProps {
+  selected: boolean;
+  page: number;
+}
+
+const BACKGROUND_COLORS = ['#ffffff', '#e0e7ff', '#2563eb'] as const;
+const BAR_STYLES = ['dark-content', 'dark-content', 'light-content'] as const;
+
+function Title({ children, color }: TitleProps) {
+  return (
+    <Text style={[styles.title, color && { color }]}>
+      {children}
+    </Text>
+  );
+}
+
+function Subtitle({ children, color }: SubtitleProps) {
+  return (
+    <Text style={[styles.subtitle, color && { color }]}>
+      {children}
+    </Text>
+  );
+}
+
+function Dot({ selected, page }: DotProps) {
+  const backgroundColor = selected 
+    ? (page === 2 ? '#9ca3af' : '#2563eb')
+    : '#d1d5db';
+
+  return (
+    <View style={[styles.dot, { backgroundColor }]} />
+  );
+}
+
+export default function OnboardingScreen({ navigation }: OnboardingScreenProps) {
   const [page, setPage] = useState(0);
   const progress = useSharedValue(0);
 
@@ -42,20 +86,11 @@ export default function OnboardingScreen({ navigation }) {
     backgroundColor: interpolateColor(
       progress.value,
       [0, 1, 2],
-      bgColors
+      BACKGROUND_COLORS
     ),
   }));
 
-  // Dot picks gray on slide 3, blue otherwise
-  const Dot = ({ selected }) => {
-    let backgroundColor = '#d1d5db';
-    if (selected) {
-      backgroundColor = page === 2 ? '#9ca3af' : '#2563eb';
-    }
-    return <View style={[styles.dot, { backgroundColor }]} />;
-  };
-
-  const pages = [
+  const pages: OnboardingPage[] = [
     {
       image: (
         <LottieView
@@ -106,32 +141,38 @@ export default function OnboardingScreen({ navigation }) {
     },
   ];
 
+  const handleSkip = () => navigation.replace('Welcome');
+  const handleDone = () => navigation.replace('Welcome');
+
   return (
     <Animated.View style={[styles.container, animatedBgStyle]}>
       <StatusBar
         translucent
         backgroundColor="transparent"
-        barStyle={barStyles[page]}
+        barStyle={BAR_STYLES[page]}
       />
 
       <Onboarding
         pages={pages}
-        DotComponent={Dot}
+        DotComponent={(props) => <Dot {...props} page={page} />}
         controlStatusBar={false}
         bottomBarHighlight={false}
         bottomBarColor="transparent"
         pageIndexCallback={setPage}
-        onSkip={() => navigation.replace('Welcome')}
-        onDone={() => navigation.replace('Welcome')}
-
+        onSkip={handleSkip}
+        onDone={handleDone}
         SkipButtonComponent={(props) => (
           <TouchableOpacity {...props} style={styles.navBtn}>
-            <Text style={styles.navBtnText}>Skip</Text>
+            <Text style={styles.navBtnText}>
+              Skip
+            </Text>
           </TouchableOpacity>
         )}
         NextButtonComponent={(props) => (
           <TouchableOpacity {...props} style={styles.navBtn}>
-            <Text style={styles.navBtnText}>Next</Text>
+            <Text style={styles.navBtnText}>
+              Next
+            </Text>
           </TouchableOpacity>
         )}
         DoneButtonComponent={(props) => (
@@ -176,7 +217,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 18,
     paddingVertical: 8,
     marginHorizontal: 4,
-    marginBottom: Platform.OS === 'ios' ? 20 : 10,
+    marginBottom: 10,
     borderRadius: 6,
     backgroundColor: 'transparent',
   },

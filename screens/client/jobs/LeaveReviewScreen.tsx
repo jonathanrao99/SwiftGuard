@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { View, Text, TextInput, StyleSheet, TouchableOpacity, Alert, StatusBar } from 'react-native';
-import { supabase } from '../../supabaseClient';
+import { supabase } from '../../../supabaseClient';
 
 const LeaveReviewScreen = ({ route, navigation }) => {
     const { jobId, guardId } = route.params;

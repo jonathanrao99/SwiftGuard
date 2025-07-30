@@ -13,15 +13,15 @@ import {
   TextInput,
 } from 'react-native';
 import { useForm, Controller } from 'react-hook-form';
-import { COLORS, SPACING } from '../../theme';
+import { COLORS, SPACING } from '../../../theme';
 import { MaterialIcons, Feather } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import Toast from 'react-native-toast-message';
-import { supabase } from '../../supabaseClient';
+import { supabase } from '../../../supabaseClient';
 
 // Types
-import { JobTemplate } from '../../components/post-job/JobTemplateSelector';
+import { JobTemplate } from '../../../components/post-job/JobTemplateSelector';
 
 interface PostJobSpecializedFormData {
   title: string;

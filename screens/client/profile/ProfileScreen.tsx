@@ -3,11 +3,11 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, StatusBar, Platform, Pressable } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { MaterialIcons, FontAwesome5 } from '@expo/vector-icons';
-import { supabase } from '../../supabaseClient';
-import { useAuth } from '../../contexts/AuthContext';
+import { supabase } from '../../../supabaseClient';
+import { useAuth } from '../../../contexts/AuthContext';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { COLORS, SPACING } from '../../theme';
+import { COLORS, SPACING } from '../../../theme';
 import Animated, { 
   useSharedValue, 
   useAnimatedStyle, 
@@ -47,7 +47,7 @@ const spacing = {
   xxl: 32,
 };
 
-export default function GuardProfileScreen({ navigation }) {
+export default function ProfileScreen({ navigation }) {
   const { user, signOut } = useAuth();
   const [darkMode, setDarkMode] = useState(false);
 
@@ -94,31 +94,6 @@ export default function GuardProfileScreen({ navigation }) {
     navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
   };
 
-  const handleConnectStripe = async () => {
-    const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();
-    if (authError || !authUser) {
-      Alert.alert('Error', 'You must be logged in to connect Stripe.');
-      return;
-    }
-
-    try {
-      const { data, error } = await supabase.functions.invoke('create-stripe-account', {
-        body: { userId: authUser.id },
-      });
-
-      if (error) throw error;
-
-      if (data && data.url) {
-        Linking.openURL(data.url);
-      } else {
-        Alert.alert('Error', 'Failed to get Stripe onboarding URL.');
-      }
-    } catch (error: any) {
-      console.error('Error connecting Stripe:', error);
-      Alert.alert('Error', error.message || 'Failed to connect Stripe account. Please try again.');
-    }
-  };
-
   // Animated styles
   const headerAnimatedStyle = useAnimatedStyle(() => ({
     opacity: headerOpacity.value,
@@ -160,7 +135,7 @@ export default function GuardProfileScreen({ navigation }) {
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
-          {/* User Info Section */}
+                    {/* User Info Section */}
           <Animated.View style={userInfoAnimatedStyle}>
             <Pressable style={styles.userInfoCard} android_ripple={{ color: colors.border }}>
               <TouchableOpacity 
@@ -185,76 +160,76 @@ export default function GuardProfileScreen({ navigation }) {
           <View style={styles.divider} />
 
           {/* General Settings Section */}
-          <Animated.View style={menuItemsAnimatedStyle}>
-            <View style={styles.sectionContainer}>
-              <Text style={styles.sectionTitle}>General</Text>
-              
-              <Pressable style={styles.menuItemCard} android_ripple={{ color: colors.border }}>
-                <TouchableOpacity style={styles.menuItem} activeOpacity={0.7} onPress={() => navigation.navigate('Account')}>
-                  <View style={styles.menuItemLeft}>
-                    <MaterialIcons name="settings" size={20} color={colors.primary} />
-                    <Text style={styles.menuItemText}>Account</Text>
-                  </View>
-                  <MaterialIcons name="chevron-right" size={20} color={colors.textSecondary} />
-                </TouchableOpacity>
-              </Pressable>
-            </View>
+                      <Animated.View style={menuItemsAnimatedStyle}>
+              <View style={styles.sectionContainer}>
+                <Text style={styles.sectionTitle}>General</Text>
+                
+                <Pressable style={styles.menuItemCard} android_ripple={{ color: colors.border }}>
+                  <TouchableOpacity style={styles.menuItem} activeOpacity={0.7} onPress={() => navigation.navigate('Account')}>
+                    <View style={styles.menuItemLeft}>
+                      <MaterialIcons name="settings" size={20} color={colors.primary} />
+                      <Text style={styles.menuItemText}>Account</Text>
+                    </View>
+                    <MaterialIcons name="chevron-right" size={20} color={colors.textSecondary} />
+                  </TouchableOpacity>
+                </Pressable>
+              </View>
 
-            <View style={styles.divider} />
+          <View style={styles.divider} />
 
-            {/* Security Services Section */}
-            <View style={styles.sectionContainer}>
-              <Text style={styles.sectionTitle}>Security Services</Text>
-              
-              <Pressable style={styles.menuItemCard} android_ripple={{ color: colors.border }}>
+          {/* Security Services Section */}
+          <View style={styles.sectionContainer}>
+            <Text style={styles.sectionTitle}>Security Services</Text>
+            
+            <Pressable style={styles.menuItemCard} android_ripple={{ color: colors.border }}>
                 <TouchableOpacity style={styles.menuItem} activeOpacity={0.7} onPress={() => navigation.navigate('MySecurityJobs')}>
-                  <View style={styles.menuItemLeft}>
-                    <FontAwesome5 name="list-alt" size={18} color={colors.primary} />
-                    <Text style={styles.menuItemText}>My Security Jobs</Text>
-                  </View>
-                  <MaterialIcons name="chevron-right" size={20} color={colors.textSecondary} />
-                </TouchableOpacity>
-              </Pressable>
+                <View style={styles.menuItemLeft}>
+                  <FontAwesome5 name="list-alt" size={18} color={colors.primary} />
+                  <Text style={styles.menuItemText}>My Security Jobs</Text>
+                </View>
+                <MaterialIcons name="chevron-right" size={20} color={colors.textSecondary} />
+              </TouchableOpacity>
+            </Pressable>
 
-              <Pressable style={styles.menuItemCard} android_ripple={{ color: colors.border }}>
+            <Pressable style={styles.menuItemCard} android_ripple={{ color: colors.border }}>
                 <TouchableOpacity style={styles.menuItem} activeOpacity={0.7} onPress={() => navigation.navigate('PaymentMethods')}>
-                  <View style={styles.menuItemLeft}>
-                    <FontAwesome5 name="credit-card" size={18} color={colors.primary} />
-                    <Text style={styles.menuItemText}>Payment Methods</Text>
-                  </View>
-                  <MaterialIcons name="chevron-right" size={20} color={colors.textSecondary} />
-                </TouchableOpacity>
-              </Pressable>
-            </View>
+                <View style={styles.menuItemLeft}>
+                  <FontAwesome5 name="credit-card" size={18} color={colors.primary} />
+                  <Text style={styles.menuItemText}>Payment Methods</Text>
+                </View>
+                <MaterialIcons name="chevron-right" size={20} color={colors.textSecondary} />
+              </TouchableOpacity>
+            </Pressable>
+          </View>
 
-            <View style={styles.divider} />
+          <View style={styles.divider} />
 
-            {/* Support Section */}
-            <View style={styles.sectionContainer}>
-              <Text style={styles.sectionTitle}>Support</Text>
-              
-              <Pressable style={styles.menuItemCard} android_ripple={{ color: colors.border }}>
+          {/* Support Section */}
+          <View style={styles.sectionContainer}>
+            <Text style={styles.sectionTitle}>Support</Text>
+            
+            <Pressable style={styles.menuItemCard} android_ripple={{ color: colors.border }}>
                 <TouchableOpacity style={styles.menuItem} activeOpacity={0.7} onPress={() => navigation.navigate('ContactSupport')}>
-                  <View style={styles.menuItemLeft}>
-                    <MaterialIcons name="headset-mic" size={20} color={colors.primary} />
-                    <Text style={styles.menuItemText}>Contact Support</Text>
-                  </View>
-                  <MaterialIcons name="chevron-right" size={20} color={colors.textSecondary} />
-                </TouchableOpacity>
-              </Pressable>
-            </View>
+                <View style={styles.menuItemLeft}>
+                  <MaterialIcons name="headset-mic" size={20} color={colors.primary} />
+                  <Text style={styles.menuItemText}>Contact Support</Text>
+                </View>
+                <MaterialIcons name="chevron-right" size={20} color={colors.textSecondary} />
+              </TouchableOpacity>
+            </Pressable>
+          </View>
           </Animated.View>
 
           <View style={styles.divider} />
 
           {/* Logout Button */}
           <Animated.View style={logoutButtonAnimatedStyle}>
-            <Pressable style={styles.logoutButton} android_ripple={{ color: colors.primary }}>
-              <TouchableOpacity style={styles.logoutButtonInner} activeOpacity={0.7} onPress={handleLogout}>
-                <MaterialIcons name="logout" size={20} color={colors.surface} style={{ marginRight: spacing.sm }} />
-                <Text style={styles.logoutText}>Logout</Text>
-              </TouchableOpacity>
-            </Pressable>
+          <Pressable style={styles.logoutButton} android_ripple={{ color: colors.primary }}>
+            <TouchableOpacity style={styles.logoutButtonInner} activeOpacity={0.7} onPress={handleLogout}>
+              <MaterialIcons name="logout" size={20} color={colors.surface} style={{ marginRight: spacing.sm }} />
+              <Text style={styles.logoutText}>Logout</Text>
+            </TouchableOpacity>
+          </Pressable>
           </Animated.View>
         </ScrollView>
       </LinearGradient>
@@ -379,24 +354,4 @@ const styles = StyleSheet.create({
     color: colors.surface,
     fontWeight: '600',
   },
-  userInfoCard: {
-    backgroundColor: colors.surface,
-    borderRadius: 12,
-    marginBottom: spacing.md,
-    shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  menuItemCard: {
-    backgroundColor: colors.surface,
-    borderRadius: 12,
-    marginBottom: spacing.sm,
-    shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-});  
+}); 

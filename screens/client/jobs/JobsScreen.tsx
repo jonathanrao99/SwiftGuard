@@ -14,7 +14,7 @@ import { MaterialIcons, AntDesign } from '@expo/vector-icons';
 import { TabView, TabBar, SceneMap } from 'react-native-tab-view';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { COLORS, SPACING } from '../../theme';
+import { COLORS, SPACING } from '../../../theme';
 
 interface JobsScreenProps {
   navigation: any;
@@ -107,7 +107,7 @@ const ScheduledTab = ({ navigation }: { navigation: any }) => (
         <Text style={styles.emptyText}>No scheduled jobs found.</Text>
         <TouchableOpacity
           style={styles.emptyButton}
-          onPress={() => navigation.navigate('PostJob')}
+          onPress={() => navigation.navigate('JobTemplateSelector')}
           activeOpacity={0.7}
         >
           <Text style={styles.emptyButtonText}>Post a Job</Text>
@@ -197,7 +197,7 @@ export default function JobsScreen({ navigation }: JobsScreenProps) {
         <View style={styles.header}>
           <View style={{ width: 24 }} />
           <Text style={styles.headerTitle}>Jobs</Text>
-          <TouchableOpacity onPress={() => navigation.navigate('PostJob')}>
+          <TouchableOpacity onPress={() => navigation.navigate('JobTemplateSelector')}>
             <AntDesign name="pluscircle" size={24} color={COLORS.primary} />
           </TouchableOpacity>
         </View>

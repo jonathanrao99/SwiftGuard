@@ -10,6 +10,7 @@ import {
   Platform,
 } from 'react-native';
 import { MaterialIcons, Feather } from '@expo/vector-icons';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS, SPACING } from '../../theme';
 
 const { width } = Dimensions.get('window');
@@ -250,7 +251,7 @@ export const JobTemplateSelector: React.FC<JobTemplateSelectorProps> = ({ naviga
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
       <StatusBar translucent={false} backgroundColor={COLORS.white} barStyle="dark-content" />
       
       {/* Header */}
@@ -262,62 +263,68 @@ export const JobTemplateSelector: React.FC<JobTemplateSelectorProps> = ({ naviga
         <View style={{ width: 24 }} />
       </View>
 
-      <ScrollView 
-        style={styles.scrollView}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.contentContainer}
-      >
-        <View style={styles.templatesList}>
-          {jobTemplates.map((template) => (
-            <TouchableOpacity
-              key={template.id}
-              style={[
-                styles.jobCard,
-                selectedTemplate?.id === template.id && styles.selectedCard
-              ]}
-              onPress={() => handleTemplateSelect(template)}
-              activeOpacity={0.7}
-            >
-              <View style={styles.iconWrapper}>
-                <MaterialIcons name={template.icon} size={20} color={COLORS.primary} />
-              </View>
-              
-              <View style={styles.jobInfo}>
-                <Text style={styles.jobTitle}>{template.title}</Text>
-                <Text style={styles.subtext}>{template.subtext}</Text>
-              </View>
-              
-              <View style={styles.cardActions}>
-                {selectedTemplate?.id === template.id && (
-                  <View style={styles.selectedIndicator}>
-                    
-                  </View>
-                )}
-                <MaterialIcons name="chevron-right" size={18} color="#9CA3AF" />
-              </View>
-            </TouchableOpacity>
-          ))}
-        </View>
-      </ScrollView>
+      <View style={styles.container}>
+        <ScrollView 
+          style={styles.scrollView}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.contentContainer}
+        >
+          <View style={styles.templatesList}>
+            {jobTemplates.map((template) => (
+              <TouchableOpacity
+                key={template.id}
+                style={[
+                  styles.jobCard,
+                  selectedTemplate?.id === template.id && styles.selectedCard
+                ]}
+                onPress={() => handleTemplateSelect(template)}
+                activeOpacity={0.7}
+              >
+                <View style={styles.iconWrapper}>
+                  <MaterialIcons name={template.icon} size={20} color={COLORS.primary} />
+                </View>
+                
+                <View style={styles.jobInfo}>
+                  <Text style={styles.jobTitle}>{template.title}</Text>
+                  <Text style={styles.subtext}>{template.subtext}</Text>
+                </View>
+                
+                <View style={styles.cardActions}>
+                  {selectedTemplate?.id === template.id && (
+                    <View style={styles.selectedIndicator}>
+                      
+                    </View>
+                  )}
+                  <MaterialIcons name="chevron-right" size={18} color="#9CA3AF" />
+                </View>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </ScrollView>
 
-      {/* Floating CTA Button */}
-      {selectedTemplate && (
-        <View style={styles.floatingCta}>
-          <TouchableOpacity style={styles.continueButton} onPress={handleContinue}>
-            <Text style={styles.continueButtonText}>
-              Continue with '{selectedTemplate.title}'
-            </Text>
-          </TouchableOpacity>
-        </View>
-      )}
-    </View>
+        {/* Floating CTA Button */}
+        {selectedTemplate && (
+          <View style={styles.floatingCta}>
+            <TouchableOpacity style={styles.continueButton} onPress={handleContinue}>
+              <Text style={styles.continueButtonText}>
+                Continue with '{selectedTemplate.title}'
+              </Text>
+            </TouchableOpacity>
+          </View>
+        )}
+      </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
+  safeArea: { 
+    flex: 1, 
+    backgroundColor: '#ffffff' 
+  },
+  container: { 
+    flex: 1, 
+    backgroundColor: '#ffffff' 
   },
   header: {
     flexDirection: 'row',

@@ -16,27 +16,27 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { useForm, Controller } from 'react-hook-form';
-import { COLORS, SPACING } from '../../theme';
+import { COLORS, SPACING } from '../../../theme';
 import { MaterialIcons, Feather } from '@expo/vector-icons';
-import { LocationAutocomplete } from '../../components/LocationAutocomplete';
-import { DateTimePair } from '../../components/DateTimePair';
-import { CounterInput } from '../../components/CounterInput';
+import { LocationAutocomplete } from '../../../components/LocationAutocomplete';
+import { DateTimePair } from '../../../components/DateTimePair';
+import { CounterInput } from '../../../components/CounterInput';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Calendar } from 'react-native-calendars';
 import DropDownPicker from 'react-native-dropdown-picker';
 import { Picker } from '@react-native-picker/picker';
-import { EventDetailsSection } from '../../components/post-job/EventDetailsSection';
-import { PayAndRequirementsSection } from '../../components/post-job/PayAndRequirementsSection';
-import { ContactReviewSection } from '../../components/post-job/ContactReviewSection';
-import { StepIndicator } from '../../components/post-job/StepIndicator';
+import { EventDetailsSection } from '../../../components/post-job/EventDetailsSection';
+import { PayAndRequirementsSection } from '../../../components/post-job/PayAndRequirementsSection';
+import { ContactReviewSection } from '../../../components/post-job/ContactReviewSection';
+import { StepIndicator } from '../../../components/post-job/StepIndicator';
 import Toast from 'react-native-toast-message';
-import { getEventDetailsSummary } from '../../components/post-job/EventDetailsSection';
-import { getPayAndRequirementsSummary } from '../../components/post-job/PayAndRequirementsSection';
-import { getContactReviewSummary } from '../../components/post-job/ContactReviewSection';
+import { getEventDetailsSummary } from '../../../components/post-job/EventDetailsSection';
+import { getPayAndRequirementsSummary } from '../../../components/post-job/PayAndRequirementsSection';
+import { getContactReviewSummary } from '../../../components/post-job/ContactReviewSection';
 import BottomSheetStepper, { BottomSheetStepperRef, StepComponentProps } from 'bottom-sheet-stepper';
 import { useStripe } from '@stripe/stripe-react-native';
-import { supabase } from '../../supabaseClient';
+import { supabase } from '../../../supabaseClient';
 
 // Types
 interface PostJobFormData {

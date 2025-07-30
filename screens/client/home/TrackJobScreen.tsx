@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Dimensions, StatusBar, Platform, TouchableOpacity } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import { supabase } from '../../supabaseClient';
+import { supabase } from '../../../supabaseClient';
 import * as Location from 'expo-location';
 
 const { width, height } = Dimensions.get('window');

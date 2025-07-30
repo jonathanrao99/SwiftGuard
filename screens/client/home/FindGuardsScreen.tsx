@@ -15,8 +15,8 @@ import {
 import { MaterialIcons, MaterialCommunityIcons, Feather } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { COLORS, SPACING } from '../../theme';
-import { NavigationProps } from '../../types';
+import { COLORS, SPACING } from '../../../theme';
+import { NavigationProps } from '../../../types';
 
 interface Guard {
   id: string;

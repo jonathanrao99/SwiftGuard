@@ -110,8 +110,8 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
       </Modal>
       <View style={styles.safe}>
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.container}>
-          <Text style={styles.header}>Sign In</Text>
-          <Text style={styles.subheader}>Welcome back, Please enter your account details below.</Text>
+          <Text style={styles.header}>Welcome back,</Text>
+          <Text style={styles.subheader}>Please enter your account details below.</Text>
 
           {/* Role selection moved below welcome text */}
           <View style={styles.roleContainer}>
