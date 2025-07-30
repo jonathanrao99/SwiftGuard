@@ -19,14 +19,20 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import Toast from 'react-native-toast-message';
 import { supabase } from '../../../supabaseClient';
+import { useAuth } from '../../../contexts/AuthContext';
 
 // Types
 import { JobTemplate } from '../../../components/post-job/JobTemplateSelector';
+import { LocationAutocomplete } from '../../../components/LocationAutocomplete';
+import { DateSelector } from '../../../components/DateSelector';
+import { TimeSelector } from '../../../components/TimeSelector';
+import { DaySelector } from '../../../components/DaySelector';
 
 interface PostJobSpecializedFormData {
   title: string;
   location: string;
   startDate: string;
+  endDate?: string;
   startTime: string;
   endTime: string;
   hourlyPay: string;
@@ -50,6 +56,7 @@ interface PostJobSpecializedProps {
 
 const PostJobSpecialized: React.FC<PostJobSpecializedProps> = ({ navigation, route }) => {
   const { selectedTemplate } = route.params;
+  const { user } = useAuth();
   
   // Handle case where selectedTemplate is null (when navigating from JobDetailsScreen)
   const template = selectedTemplate || {
@@ -80,11 +87,14 @@ const PostJobSpecialized: React.FC<PostJobSpecializedProps> = ({ navigation, rou
   // State
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [recurringMode, setRecurringMode] = useState<string>('One-time');
+  const [selectedDays, setSelectedDays] = useState<string[]>([]);
 
   // Form watchers
   const watchedLocation = watch('location');
   const watchedNumGuards = watch('numGuards');
   const watchedHourlyPay = watch('hourlyPay');
+  const watchedStartDate = watch('startDate');
+  const watchedEndDate = watch('endDate');
 
   // Initialize form with template defaults
   useEffect(() => {
@@ -109,32 +119,93 @@ const PostJobSpecialized: React.FC<PostJobSpecializedProps> = ({ navigation, rou
     navigation.goBack();
   };
 
+  const handleDayToggle = (day: string) => {
+    setSelectedDays(prev => 
+      prev.includes(day) 
+        ? prev.filter(d => d !== day)
+        : [...prev, day]
+    );
+  };
+
+  const formatSelectedDays = () => {
+    if (selectedDays.length === 0) return '';
+    
+    const dayLabels = {
+      monday: 'Mon',
+      tuesday: 'Tue', 
+      wednesday: 'Wed',
+      thursday: 'Thu',
+      friday: 'Fri',
+      saturday: 'Sat',
+      sunday: 'Sun'
+    };
+    
+    return selectedDays.map(day => dayLabels[day as keyof typeof dayLabels]).join(', ');
+  };
+
+  const getSelectedDaysBetweenDates = () => {
+    if (!watchedStartDate || !watchedEndDate || selectedDays.length === 0) return [];
+    
+    const startDate = new Date(watchedStartDate);
+    const endDate = new Date(watchedEndDate);
+    const selectedDaysSet = new Set(selectedDays);
+    const dates: string[] = [];
+    
+    const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+    
+    for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
+      const dayName = dayNames[d.getDay()];
+      if (selectedDaysSet.has(dayName)) {
+        const formattedDate = d.toLocaleDateString('en-US', {
+          day: 'numeric',
+          month: 'short'
+        });
+        dates.push(formattedDate);
+      }
+    }
+    
+    return dates;
+  };
+
   const submitJob = async (data: PostJobSpecializedFormData) => {
     try {
       setIsSubmitting(true);
 
+      if (!user?.id) {
+        Alert.alert('Error', 'User not authenticated. Please log in again.');
+        return;
+      }
+
+      // Calculate start and end timestamps
+      const startDateTime = new Date(`${data.startDate}T${data.startTime}`);
+      let endDateTime = new Date(`${data.startDate}T${data.endTime}`);
+      
+      // If end time is earlier than start time, assume it's the next day
+      if (endDateTime <= startDateTime) {
+        endDateTime = new Date(`${data.startDate}T${data.endTime}`);
+        endDateTime.setDate(endDateTime.getDate() + 1);
+      }
+
       const jobData = {
+        client_id: user.id,
         title: data.title,
         description: template.defaultSettings.description,
         location: data.location,
-        hourly_pay: parseFloat(data.hourlyPay),
+        pay: parseFloat(data.hourlyPay),
         num_guards: data.numGuards,
-        gender_pref: 'No Preference',
-        uniform: '',
-        equipment: '',
+        start_time: startDateTime.toISOString(),
+        end_time: endDateTime.toISOString(),
+        status: 'open',
         manager_name: data.managerName,
         manager_phone: data.managerPhone,
         manager_email: data.managerEmail,
-        start_date: data.startDate,
-        start_time: data.startTime,
-        end_time: data.endTime,
-        duration: 4, // Default 4 hours
         venue_type: data.venueType,
-        recurring_mode: recurringMode,
         guest_count: data.guestCount,
         special_instructions: data.specialInstructions,
-        status: 'pending',
-        client_id: 'current-user-id', // Replace with actual user ID
+        recurring_mode: recurringMode,
+        recurring_days: recurringMode === 'Recurring' ? selectedDays : [],
+        start_date: data.startDate,
+        end_date: data.endDate || data.startDate,
       };
 
       const { data: job, error } = await supabase
@@ -155,7 +226,14 @@ const PostJobSpecialized: React.FC<PostJobSpecializedProps> = ({ navigation, rou
         text2: 'Your security job has been posted and is now visible to guards.',
       });
 
-      navigation.navigate('Jobs');
+      navigation.navigate('JobPostedSuccess', {
+        jobDetails: {
+          title: data.title,
+          location: data.location,
+          pay: data.hourlyPay,
+          num_guards: data.numGuards,
+        }
+      });
     } catch (error) {
       console.error('Error posting job:', error);
       Alert.alert('Error', 'Failed to post job. Please try again.');
@@ -168,6 +246,11 @@ const PostJobSpecialized: React.FC<PostJobSpecializedProps> = ({ navigation, rou
     const validation = await trigger();
     if (!validation) {
       Alert.alert('Validation Error', 'Please fill in all required fields.');
+      return;
+    }
+
+    if (recurringMode === 'Recurring' && selectedDays.length === 0) {
+      Alert.alert('Validation Error', 'Please select at least one day for recurring jobs.');
       return;
     }
 
@@ -305,72 +388,16 @@ const PostJobSpecialized: React.FC<PostJobSpecializedProps> = ({ navigation, rou
               name="location"
               rules={{ required: 'Location is required' }}
               render={({ field: { onChange, value } }) => (
-                <TextInput
-                  style={styles.input}
+                <LocationAutocomplete
+                  onSelectAddress={onChange}
                   value={value}
-                  onChangeText={onChange}
-                  placeholder="Enter venue address"
                 />
               )}
             />
             {errors.location && <Text style={styles.errorText}>{errors.location.message}</Text>}
           </View>
 
-          {/* Date and Time */}
-          <View style={styles.fieldGroup}>
-            <Text style={styles.fieldLabel}>Date *</Text>
-            <Controller
-              control={control}
-              name="startDate"
-              rules={{ required: 'Start date is required' }}
-              render={({ field: { onChange, value } }) => (
-                <TextInput
-                  style={styles.input}
-                  value={value}
-                  onChangeText={onChange}
-                  placeholder="MM/DD/YYYY"
-                />
-              )}
-            />
-          </View>
-
-          <View style={styles.row}>
-            <View style={[styles.fieldGroup, styles.halfWidth]}>
-              <Text style={styles.fieldLabel}>Start Time *</Text>
-              <Controller
-                control={control}
-                name="startTime"
-                rules={{ required: 'Start time is required' }}
-                render={({ field: { onChange, value } }) => (
-                  <TextInput
-                    style={styles.input}
-                    value={value}
-                    onChangeText={onChange}
-                    placeholder="19:00"
-                  />
-                )}
-              />
-            </View>
-
-            <View style={[styles.fieldGroup, styles.halfWidth]}>
-              <Text style={styles.fieldLabel}>End Time *</Text>
-              <Controller
-                control={control}
-                name="endTime"
-                rules={{ required: 'End time is required' }}
-                render={({ field: { onChange, value } }) => (
-                  <TextInput
-                    style={styles.input}
-                    value={value}
-                    onChangeText={onChange}
-                    placeholder="23:00"
-                  />
-                )}
-              />
-            </View>
-          </View>
-
-          {/* Recurring Job */}
+          {/* Job Type Toggle - Moved above date field */}
           <View style={styles.fieldGroup}>
             <Text style={styles.fieldLabel}>Job Type</Text>
             <View style={styles.recurringOptions}>
@@ -385,6 +412,119 @@ const PostJobSpecialized: React.FC<PostJobSpecializedProps> = ({ navigation, rou
                   </Text>
                 </TouchableOpacity>
               ))}
+            </View>
+          </View>
+
+          {/* Date and Time Fields */}
+          {recurringMode === 'One-time' ? (
+            // One-time job: single date field
+            <View style={styles.fieldGroup}>
+              <Controller
+                control={control}
+                name="startDate"
+                rules={{ required: 'Start date is required' }}
+                render={({ field: { onChange, value } }) => (
+                  <DateSelector
+                    value={value}
+                    onChange={onChange}
+                    label="Date *"
+                    error={errors.startDate?.message}
+                  />
+                )}
+              />
+            </View>
+          ) : (
+            // Recurring job: start and end date fields
+            <>
+              <View style={styles.row}>
+                <View style={[styles.fieldGroup, styles.halfWidth]}>
+                  <Controller
+                    control={control}
+                    name="startDate"
+                    rules={{ required: 'Start date is required' }}
+                    render={({ field: { onChange, value } }) => (
+                      <DateSelector
+                        value={value}
+                        onChange={onChange}
+                        label="Start Date *"
+                        error={errors.startDate?.message}
+                      />
+                    )}
+                  />
+                </View>
+
+                <View style={[styles.fieldGroup, styles.halfWidth]}>
+                  <Controller
+                    control={control}
+                    name="endDate"
+                    rules={{ required: 'End date is required' }}
+                    render={({ field: { onChange, value } }) => (
+                      <DateSelector
+                        value={value}
+                        onChange={onChange}
+                        label="End Date *"
+                        error={errors.endDate?.message}
+                      />
+                    )}
+                  />
+                </View>
+              </View>
+
+              {/* Day Selector for Recurring Jobs */}
+              <DaySelector
+                selectedDays={selectedDays}
+                onDayToggle={handleDayToggle}
+                label="Select Days *"
+              />
+
+              {/* Display selected days between dates */}
+              {watchedStartDate && watchedEndDate && selectedDays.length > 0 && (
+                <View style={styles.selectedDaysContainer}>
+                  <Text style={styles.selectedDaysLabel}>Selected Dates:</Text>
+                  <View style={styles.selectedDaysList}>
+                    {getSelectedDaysBetweenDates().map((date, index) => (
+                      <View key={index} style={styles.selectedDayChip}>
+                        <Text style={styles.selectedDayText}>{date}</Text>
+                      </View>
+                    ))}
+                  </View>
+                </View>
+              )}
+            </>
+          )}
+
+          {/* Time Fields */}
+          <View style={styles.row}>
+            <View style={[styles.fieldGroup, styles.halfWidth]}>
+              <Controller
+                control={control}
+                name="startTime"
+                rules={{ required: 'Start time is required' }}
+                render={({ field: { onChange, value } }) => (
+                  <TimeSelector
+                    value={value}
+                    onChange={onChange}
+                    label="Start Time *"
+                    error={errors.startTime?.message}
+                  />
+                )}
+              />
+            </View>
+
+            <View style={[styles.fieldGroup, styles.halfWidth]}>
+              <Controller
+                control={control}
+                name="endTime"
+                rules={{ required: 'End time is required' }}
+                render={({ field: { onChange, value } }) => (
+                  <TimeSelector
+                    value={value}
+                    onChange={onChange}
+                    label="End Time *"
+                    error={errors.endTime?.message}
+                  />
+                )}
+              />
             </View>
           </View>
 
@@ -663,6 +803,33 @@ const styles = StyleSheet.create({
     color: COLORS.textSecondary,
   },
   recurringOptionTextSelected: {
+    color: COLORS.primary,
+    fontWeight: '600',
+  },
+  selectedDaysContainer: {
+    marginBottom: SPACING.lg,
+  },
+  selectedDaysLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: COLORS.textDark,
+    marginBottom: SPACING.xs,
+  },
+  selectedDaysList: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: SPACING.xs,
+  },
+  selectedDayChip: {
+    backgroundColor: COLORS.primary + '10',
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: SPACING.xs,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: COLORS.primary,
+  },
+  selectedDayText: {
+    fontSize: 12,
     color: COLORS.primary,
     fontWeight: '600',
   },

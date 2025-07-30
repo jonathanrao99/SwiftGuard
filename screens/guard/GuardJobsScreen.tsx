@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -9,6 +9,8 @@ import {
   Platform,
   Dimensions,
   ActivityIndicator,
+  RefreshControl,
+  Alert,
 } from 'react-native';
 import { MaterialIcons, AntDesign } from '@expo/vector-icons';
 // @ts-ignore
@@ -16,132 +18,106 @@ import { TabView, TabBar, SceneMap } from 'react-native-tab-view';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS, SPACING } from '../../theme';
+import { supabase } from '../../supabaseClient';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface GuardJobsScreenProps {
   navigation: any;
 }
 
+interface Job {
+  id: string;
+  title: string;
+  description: string;
+  location: string;
+  pay: number;
+  num_guards: number;
+  start_time: string;
+  end_time: string;
+  status: string;
+  client_id: string;
+  manager_name?: string;
+  manager_phone?: string;
+  manager_email?: string;
+  venue_type?: string;
+  guest_count?: number;
+  special_instructions?: string;
+  recurring_mode?: string;
+  recurring_days?: string[];
+  start_date?: string;
+  end_date?: string;
+  created_at: string;
+}
+
 const { width } = Dimensions.get('window');
 
-// Sample data for demonstration
-const availableJobs = [
-  {
-    id: '1',
-    title: 'New Year\'s Eve Club Security',
-    type: 'Nightclub',
-    status: 'Available',
-    date: 'Dec 31, 2024',
-    time: '10:00 PM - 2:00 AM',
-    location: 'Club Euphoria, Downtown',
-    hourlyPay: 30,
-    numGuards: 2,
-  },
-  {
-    id: '2',
-    title: 'Tech Conference Security',
-    type: 'Corporate',
-    status: 'Available',
-    date: 'Jan 15, 2025',
-    time: '8:00 AM - 6:00 PM',
-    location: 'TechCorp Headquarters, Midtown',
-    hourlyPay: 35,
-    numGuards: 3,
-  },
-  {
-    id: '3',
-    title: 'Wedding Reception Security',
-    type: 'Private Event',
-    status: 'Available',
-    date: 'Jan 20, 2025',
-    time: '6:00 PM - 12:00 AM',
-    location: 'Grand Hotel Ballroom, Uptown',
-    hourlyPay: 28,
-    numGuards: 1,
-  },
-];
+const AvailableTab = ({ navigation, jobs, loading, onRefresh, onAcceptJob }: { 
+  navigation: any; 
+  jobs: Job[]; 
+  loading: boolean;
+  onRefresh: () => void;
+  onAcceptJob: (jobId: string) => Promise<void>;
+}) => {
+  const availableJobs = jobs.filter(job => job.status === 'open');
 
-const acceptedJobs = [
-  {
-    id: '4',
-    title: 'Rock Concert Security',
-    type: 'Concert',
-    status: 'Accepted',
-    date: 'Jan 10, 2025',
-    time: '7:00 PM - 11:00 PM',
-    location: 'Arena Stadium, Westside',
-    hourlyPay: 32,
-    numGuards: 5,
-  },
-  {
-    id: '5',
-    title: 'Corporate Gala Security',
-    type: 'Corporate',
-    status: 'Accepted',
-    date: 'Jan 25, 2025',
-    time: '6:00 PM - 10:00 PM',
-    location: 'Business Center, Downtown',
-    hourlyPay: 40,
-    numGuards: 4,
-  },
-];
-
-const AvailableTab = ({ navigation }: { navigation: any }) => {
-  const [loadingStates, setLoadingStates] = useState<{ [key: string]: boolean }>({});
-
-  const handleAcceptJob = async (jobId: string) => {
-    try {
-      setLoadingStates(prev => ({ ...prev, [jobId]: true }));
-      
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // In real implementation, this would be:
-      // const { data: { user } } = await supabase.auth.getUser();
-      // const { error } = await supabase
-      //   .from('job_guards')
-      //   .insert([{ job_id: jobId, guard_id: user.id, status: 'accepted' }]);
-      
-      console.log('Job accepted successfully:', jobId);
-      // You can add toast notification here
-      // toast.success('Job accepted successfully!');
-      
-    } catch (error) {
-      console.error('Error accepting job:', error);
-      // toast.error('Failed to accept job. Please try again.');
-    } finally {
-      setLoadingStates(prev => ({ ...prev, [jobId]: false }));
-    }
-  };
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={COLORS.primary} />
+        <Text style={styles.loadingText}>Loading available jobs...</Text>
+      </View>
+    );
+  }
 
   return (
-    <ScrollView contentContainerStyle={styles.listContent} showsVerticalScrollIndicator={false}>
+    <ScrollView 
+      contentContainerStyle={styles.listContent} 
+      showsVerticalScrollIndicator={false}
+      refreshControl={
+        <RefreshControl refreshing={loading} onRefresh={onRefresh} />
+      }
+    >
       {availableJobs.length > 0 ? (
-        availableJobs.map(job => (
-          <View key={job.id} style={styles.card}>
+        availableJobs.map(job => {
+          const startDate = new Date(job.start_time);
+          const endDate = new Date(job.end_time);
+          const formattedDate = startDate.toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric',
+          });
+          const formattedTime = `${startDate.toLocaleTimeString('en-US', {
+            hour: 'numeric',
+            minute: '2-digit',
+            hour12: true,
+          })} - ${endDate.toLocaleTimeString('en-US', {
+            hour: 'numeric',
+            minute: '2-digit',
+            hour12: true,
+          })}`;
+
+          return (
             <TouchableOpacity
-              style={styles.cardContent}
+              key={job.id}
+              style={styles.card}
               onPress={() => navigation.navigate('GuardJobDetails', { job })}
               activeOpacity={0.7}
             >
               <View style={styles.cardHeader}>
-                <MaterialIcons name={
-                  job.type === 'Nightclub' ? 'nightlife' :
-                  job.type === 'Corporate' ? 'business' :
-                  'event'
-                } size={20} color="#2563eb" />
+                <MaterialIcons name="event" size={20} color="#2563eb" />
                 <Text style={styles.cardTitle}>{job.title}</Text>
                 <View style={[styles.statusPill, styles.statusAvailable]}>
                   <Text style={[styles.statusText, styles.statusTextAvailable]}>
-                    {job.status}
+                    Available
                   </Text>
                 </View>
               </View>
 
               <View style={styles.row}>
                 <MaterialIcons name="event" size={16} color="#2563eb" />
-                <Text style={styles.cardDate}>{job.date}</Text>
+                <Text style={styles.cardDate}>{formattedDate}</Text>
                 <MaterialIcons name="access-time" size={16} color="#2563eb" style={{ marginLeft: 12 }} />
-                <Text style={styles.cardDate}>{job.time}</Text>
+                <Text style={styles.cardDate}>{formattedTime}</Text>
               </View>
 
               <View style={styles.row}>
@@ -149,118 +125,270 @@ const AvailableTab = ({ navigation }: { navigation: any }) => {
                 <Text style={styles.cardLocation}>{job.location}</Text>
               </View>
 
-              <View style={styles.jobDetails}>
-                <View style={styles.detailItem}>
-                  <MaterialIcons name="attach-money" size={16} color="#2563eb" />
-                  <Text style={styles.detailText}>${job.hourlyPay}/hr</Text>
+              <View style={styles.row}>
+                <MaterialIcons name="attach-money" size={16} color="#2563eb" />
+                <Text style={styles.cardPay}>${job.pay}/hr</Text>
+                <MaterialIcons name="people" size={16} color="#2563eb" style={{ marginLeft: 12 }} />
+                <Text style={styles.cardGuards}>{job.num_guards} guard{job.num_guards > 1 ? 's' : ''} needed</Text>
+              </View>
+
+              {job.manager_name && (
+                <View style={styles.row}>
+                  <MaterialIcons name="person" size={16} color="#2563eb" />
+                  <Text style={styles.cardManager}>Manager: {job.manager_name}</Text>
                 </View>
-                <View style={styles.detailItem}>
-                  <MaterialIcons name="people" size={16} color="#2563eb" />
-                  <Text style={styles.detailText}>{job.numGuards} guards needed</Text>
-                </View>
+              )}
+
+              <View style={styles.cardActions}>
+                <TouchableOpacity
+                  style={styles.acceptButton}
+                  onPress={() => onAcceptJob(job.id)}
+                >
+                  <LinearGradient
+                    colors={["#059669", "#10B981"]}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    style={styles.gradientButton}
+                  >
+                    <MaterialIcons name="check" size={16} color="white" />
+                    <Text style={styles.buttonText}>Accept Job</Text>
+                  </LinearGradient>
+                </TouchableOpacity>
               </View>
             </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.acceptButton, loadingStates[job.id] && styles.acceptButtonLoading]}
-              onPress={() => handleAcceptJob(job.id)}
-              disabled={loadingStates[job.id]}
-              activeOpacity={0.7}
-            >
-              {loadingStates[job.id] ? (
-                <View style={styles.loadingContainer}>
-                  <ActivityIndicator size="small" color="#ffffff" />
-                  <Text style={styles.acceptButtonText}>Accepting...</Text>
-                </View>
-              ) : (
-                <Text style={styles.acceptButtonText}>Accept Job</Text>
-              )}
-            </TouchableOpacity>
-          </View>
-        ))
+          );
+        })
       ) : (
-        <View style={styles.emptyState}>
-          <Text style={styles.emptyText}>No available jobs found.</Text>
+        <View style={styles.emptyContainer}>
+          <MaterialIcons name="work-off" size={64} color="#CBD5E1" />
+          <Text style={styles.emptyTitle}>No Available Jobs</Text>
+          <Text style={styles.emptySubtitle}>
+            There are currently no security jobs available. Check back later for new opportunities.
+          </Text>
         </View>
       )}
     </ScrollView>
   );
 };
 
-const AcceptedTab = ({ navigation }: { navigation: any }) => (
-  <ScrollView contentContainerStyle={styles.listContent} showsVerticalScrollIndicator={false}>
-    {acceptedJobs.length > 0 ? (
-      acceptedJobs.map(job => (
-        <TouchableOpacity
-          key={job.id}
-          style={styles.card}
-          onPress={() => navigation.navigate('GuardJobDetails', { job })}
-          activeOpacity={0.7}
-        >
-          <View style={styles.cardHeader}>
-            <MaterialIcons name={
-              job.type === 'Nightclub' ? 'nightlife' :
-              job.type === 'Corporate' ? 'business' :
-              'event'
-            } size={20} color="#2563eb" />
-            <Text style={styles.cardTitle}>{job.title}</Text>
-            <View style={[styles.statusPill, styles.statusAccepted]}>
-              <Text style={[styles.statusText, styles.statusTextAccepted]}>
-                {job.status}
-              </Text>
-            </View>
-          </View>
+const AcceptedTab = ({ navigation, jobs, loading, onRefresh }: { 
+  navigation: any; 
+  jobs: Job[]; 
+  loading: boolean;
+  onRefresh: () => void;
+}) => {
+  const acceptedJobs = jobs.filter(job => 
+    job.status === 'assigned' || job.status === 'in_progress' || job.status === 'completed'
+  );
 
-          <View style={styles.row}>
-            <MaterialIcons name="event" size={16} color="#2563eb" />
-            <Text style={styles.cardDate}>{job.date}</Text>
-            <MaterialIcons name="access-time" size={16} color="#2563eb" style={{ marginLeft: 12 }} />
-            <Text style={styles.cardDate}>{job.time}</Text>
-          </View>
-
-          <View style={styles.row}>
-            <MaterialIcons name="location-on" size={16} color="#2563eb" />
-            <Text style={styles.cardLocation}>{job.location}</Text>
-          </View>
-
-          <View style={styles.jobDetails}>
-            <View style={styles.detailItem}>
-              <MaterialIcons name="attach-money" size={16} color="#2563eb" />
-              <Text style={styles.detailText}>${job.hourlyPay}/hr</Text>
-            </View>
-            <View style={styles.detailItem}>
-              <MaterialIcons name="people" size={16} color="#2563eb" />
-              <Text style={styles.detailText}>{job.numGuards} guards needed</Text>
-            </View>
-          </View>
-        </TouchableOpacity>
-      ))
-    ) : (
-      <View style={styles.emptyState}>
-        <Text style={styles.emptyText}>No accepted jobs found.</Text>
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={COLORS.primary} />
+        <Text style={styles.loadingText}>Loading accepted jobs...</Text>
       </View>
-    )}
-  </ScrollView>
-);
+    );
+  }
+
+  return (
+    <ScrollView 
+      contentContainerStyle={styles.listContent} 
+      showsVerticalScrollIndicator={false}
+      refreshControl={
+        <RefreshControl refreshing={loading} onRefresh={onRefresh} />
+      }
+    >
+      {acceptedJobs.length > 0 ? (
+        acceptedJobs.map(job => {
+          const startDate = new Date(job.start_time);
+          const endDate = new Date(job.end_time);
+          const formattedDate = startDate.toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric',
+          });
+          const formattedTime = `${startDate.toLocaleTimeString('en-US', {
+            hour: 'numeric',
+            minute: '2-digit',
+            hour12: true,
+          })} - ${endDate.toLocaleTimeString('en-US', {
+            hour: 'numeric',
+            minute: '2-digit',
+            hour12: true,
+          })}`;
+
+          return (
+            <TouchableOpacity
+              key={job.id}
+              style={styles.card}
+              onPress={() => navigation.navigate('GuardJobDetails', { job })}
+              activeOpacity={0.7}
+            >
+              <View style={styles.cardHeader}>
+                <MaterialIcons name="event" size={20} color="#059669" />
+                <Text style={styles.cardTitle}>{job.title}</Text>
+                <View style={[styles.statusPill, 
+                  job.status === 'assigned' ? styles.statusAssigned :
+                  job.status === 'in_progress' ? styles.statusInProgress :
+                  styles.statusCompleted
+                ]}>
+                  <Text style={[styles.statusText, 
+                    job.status === 'assigned' ? styles.statusTextAssigned :
+                    job.status === 'in_progress' ? styles.statusTextInProgress :
+                    styles.statusTextCompleted
+                  ]}>
+                    {job.status === 'assigned' ? 'Assigned' :
+                     job.status === 'in_progress' ? 'In Progress' :
+                     job.status === 'completed' ? 'Completed' : job.status}
+                  </Text>
+                </View>
+              </View>
+
+              <View style={styles.row}>
+                <MaterialIcons name="event" size={16} color="#059669" />
+                <Text style={styles.cardDate}>{formattedDate}</Text>
+                <MaterialIcons name="access-time" size={16} color="#059669" style={{ marginLeft: 12 }} />
+                <Text style={styles.cardDate}>{formattedTime}</Text>
+              </View>
+
+              <View style={styles.row}>
+                <MaterialIcons name="location-on" size={16} color="#059669" />
+                <Text style={styles.cardLocation}>{job.location}</Text>
+              </View>
+
+              <View style={styles.row}>
+                <MaterialIcons name="attach-money" size={16} color="#059669" />
+                <Text style={styles.cardPay}>${job.pay}/hr</Text>
+                <MaterialIcons name="people" size={16} color="#059669" style={{ marginLeft: 12 }} />
+                <Text style={styles.cardGuards}>{job.num_guards} guard{job.num_guards > 1 ? 's' : ''} needed</Text>
+              </View>
+
+              {job.manager_name && (
+                <View style={styles.row}>
+                  <MaterialIcons name="person" size={16} color="#059669" />
+                  <Text style={styles.cardManager}>Manager: {job.manager_name}</Text>
+                </View>
+              )}
+            </TouchableOpacity>
+          );
+        })
+      ) : (
+        <View style={styles.emptyContainer}>
+          <MaterialIcons name="assignment" size={64} color="#CBD5E1" />
+          <Text style={styles.emptyTitle}>No Accepted Jobs</Text>
+          <Text style={styles.emptySubtitle}>
+            You haven't accepted any jobs yet. Browse available jobs to get started.
+          </Text>
+        </View>
+      )}
+    </ScrollView>
+  );
+};
 
 export default function GuardJobsScreen({ navigation }: GuardJobsScreenProps) {
+  const { user } = useAuth();
   const [index, setIndex] = useState(0);
+  const [jobs, setJobs] = useState<Job[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [acceptingJob, setAcceptingJob] = useState<string | null>(null);
+
   const [routes] = useState([
     { key: 'available', title: 'Available' },
     { key: 'accepted', title: 'Accepted' },
   ]);
 
-  const renderScene = SceneMap({
-    available: () => <AvailableTab navigation={navigation} />,
-    accepted: () => <AcceptedTab navigation={navigation} />,
-  });
+  const fetchJobs = async () => {
+    try {
+      if (!user?.id) {
+        console.log('No user ID available');
+        return;
+      }
+
+      // Fetch all jobs that are available or assigned to this guard
+      const { data, error } = await supabase
+        .from('jobs')
+        .select('*')
+        .or(`status.eq.open,status.eq.assigned,status.eq.in_progress,status.eq.completed`)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching jobs:', error);
+        return;
+      }
+
+      console.log('Fetched jobs for guard:', data);
+      setJobs(data || []);
+    } catch (error) {
+      console.error('Error fetching jobs:', error);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchJobs();
+  }, [user?.id]);
+
+  const handleRefresh = () => {
+    setRefreshing(true);
+    fetchJobs();
+  };
+
+  const handleAcceptJob = async (jobId: string) => {
+    try {
+      setAcceptingJob(jobId);
+      
+      if (!user?.id) {
+        Alert.alert('Error', 'User not authenticated');
+        return;
+      }
+
+      // Update the job status to assigned and add the guard
+      const { error } = await supabase
+        .from('jobs')
+        .update({ 
+          status: 'assigned',
+          guard_id: user.id 
+        })
+        .eq('id', jobId);
+
+      if (error) {
+        console.error('Error accepting job:', error);
+        Alert.alert('Error', 'Failed to accept job. Please try again.');
+        return;
+      }
+
+      Alert.alert('Success', 'Job accepted successfully!');
+      
+      // Refresh the jobs list
+      fetchJobs();
+    } catch (error) {
+      console.error('Error accepting job:', error);
+      Alert.alert('Error', 'Failed to accept job. Please try again.');
+    } finally {
+      setAcceptingJob(null);
+    }
+  };
+
+  const renderScene = ({ route }: { route: any }) => {
+    switch (route.key) {
+      case 'available':
+        return <AvailableTab navigation={navigation} jobs={jobs} loading={loading} onRefresh={handleRefresh} onAcceptJob={handleAcceptJob} />;
+      case 'accepted':
+        return <AcceptedTab navigation={navigation} jobs={jobs} loading={loading} onRefresh={handleRefresh} />;
+      default:
+        return null;
+    }
+  };
 
   const renderTabBar = (props: any) => (
     <TabBar
       {...props}
       indicatorStyle={styles.indicator}
       style={styles.tabBar}
-      labelStyle={styles.tabLabel}
+      labelStyle={styles.label}
       activeColor={COLORS.primary}
       inactiveColor={COLORS.textSecondary}
     />
@@ -270,47 +398,48 @@ export default function GuardJobsScreen({ navigation }: GuardJobsScreenProps) {
     <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
       <StatusBar translucent={false} backgroundColor={COLORS.white} barStyle="dark-content" />
       
-      <LinearGradient
-        colors={['#ffffff', '#e0f2ff']}
-        style={{ flex: 1 }}
-      >
-        {/* Header matching ClientJobsScreen styling */}
-        <View style={styles.header}>
-          <View style={{ width: 24 }} />
-          <Text style={styles.headerTitle}>Jobs</Text>
-          <View style={{ width: 24 }} />
+      {/* Header */}
+      <View style={styles.header}>
+        <View style={styles.headerLeft}>
+          <Text style={styles.headerTitle}>Available Jobs</Text>
         </View>
+      </View>
 
-        <TabView
-          navigationState={{ index, routes }}
-          renderScene={renderScene}
-          renderTabBar={renderTabBar}
-          onIndexChange={setIndex}
-          initialLayout={{ width }}
-        />
-      </LinearGradient>
+      <TabView
+        navigationState={{ index, routes }}
+        renderScene={renderScene}
+        onIndexChange={setIndex}
+        initialLayout={{ width }}
+        renderTabBar={renderTabBar}
+      />
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: 'transparent' },
-  container: { flex: 1, backgroundColor: '#ffffff' },
-  
-  // Header styling matching ClientJobsScreen
+  safeArea: {
+    flex: 1,
+    backgroundColor: COLORS.white,
+  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: SPACING.xl,
-    paddingTop: Platform.OS === 'android' ? SPACING.sm: SPACING.xxl,
-    paddingBottom: SPACING.xs,
+    paddingHorizontal: SPACING.lg,
+    paddingTop: Platform.OS === 'android' ? SPACING.sm * 1.2 : SPACING.xl * 1.2,
+    paddingBottom: SPACING.sm,
+    borderBottomWidth: 1,
     borderBottomColor: COLORS.border,
     backgroundColor: COLORS.white,
   },
-  headerTitle: { fontSize: 20, fontWeight: '600', color: COLORS.textDark },
-  
-  // Tab View styles
+  headerLeft: {
+    flex: 1,
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: COLORS.textDark,
+  },
   tabBar: {
     backgroundColor: COLORS.white,
     elevation: 0,
@@ -320,58 +449,155 @@ const styles = StyleSheet.create({
   },
   indicator: {
     backgroundColor: COLORS.primary,
-    height: 2,
+    height: 3,
   },
-  tabLabel: {
-    fontSize: 14,
+  label: {
     fontWeight: '600',
     textTransform: 'none',
   },
-  
-  // Content styles
-  listContent: { paddingBottom: 100, paddingHorizontal: 16, paddingTop: 16 },
-  card: { backgroundColor: '#ffffff', borderRadius: 16, padding: 16, marginBottom: 16, shadowColor: '#000', shadowOpacity: 0.08, shadowRadius: 8, shadowOffset: { width: 0, height: 4 }, elevation: 4 },
-  cardHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 8, justifyContent: 'space-between' },
-  cardTitle: { fontSize: 16, fontWeight: 'bold', color: '#111827', marginLeft: 8, flex: 1 },
-  row: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
-  cardDate: { fontSize: 14, color: '#2563eb', marginLeft: 6 },
-  cardLocation: { fontSize: 14, color: '#2563eb', marginLeft: 6 },
-  jobDetails: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 8 },
-  detailItem: { flexDirection: 'row', alignItems: 'center' },
-  detailText: { fontSize: 14, color: '#2563eb', marginLeft: 6 },
-  statusPill: { borderRadius: 16, paddingVertical: 4, paddingHorizontal: 12 },
-  statusAvailable: { backgroundColor: '#dbeafe' },
-  statusAccepted: { backgroundColor: '#d1fae5' },
-  statusText: { fontSize: 12, fontWeight: 'bold' },
-  statusTextAvailable: { color: '#2563eb' },
-  statusTextAccepted: { color: '#059669' },
-  emptyState: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32 },
-  emptyText: { fontSize: 16, color: '#64748b', textAlign: 'center', marginBottom: 16 },
-  cardContent: { flex: 1 },
-  acceptButton: {
-    backgroundColor: COLORS.primary,
-    borderRadius: 8,
-    paddingVertical: 12,
-    alignItems: 'center',
-    marginTop: 12,
-    shadowColor: COLORS.primary,
-    shadowOpacity: 0.3,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 3,
-  },
-  acceptButtonLoading: {
-    backgroundColor: '#9ca3af',
-  },
-  acceptButtonText: {
-    color: '#ffffff',
-    fontSize: 16,
-    fontWeight: '600',
+  listContent: {
+    padding: SPACING.lg,
   },
   loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: SPACING.xl * 2,
+  },
+  loadingText: {
+    marginTop: SPACING.md,
+    fontSize: 16,
+    color: COLORS.textSecondary,
+  },
+  card: {
+    backgroundColor: COLORS.white,
+    borderRadius: 12,
+    padding: SPACING.lg,
+    marginBottom: SPACING.md,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: SPACING.sm,
+  },
+  cardTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: COLORS.textDark,
+    flex: 1,
+    marginLeft: SPACING.xs,
+  },
+  statusPill: {
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: SPACING.xs,
+    borderRadius: 12,
+  },
+  statusAvailable: {
+    backgroundColor: '#DBEAFE',
+  },
+  statusAssigned: {
+    backgroundColor: '#FEF3C7',
+  },
+  statusInProgress: {
+    backgroundColor: '#D1FAE5',
+  },
+  statusCompleted: {
+    backgroundColor: '#D1FAE5',
+  },
+  statusText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  statusTextAvailable: {
+    color: '#1E40AF',
+  },
+  statusTextAssigned: {
+    color: '#D97706',
+  },
+  statusTextInProgress: {
+    color: '#059669',
+  },
+  statusTextCompleted: {
+    color: '#059669',
+  },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: SPACING.xs,
+  },
+  cardDate: {
+    fontSize: 14,
+    color: COLORS.textSecondary,
+    marginLeft: SPACING.xs,
+  },
+  cardLocation: {
+    fontSize: 14,
+    color: COLORS.textSecondary,
+    marginLeft: SPACING.xs,
+    flex: 1,
+  },
+  cardPay: {
+    fontSize: 14,
+    color: COLORS.textSecondary,
+    marginLeft: SPACING.xs,
+  },
+  cardGuards: {
+    fontSize: 14,
+    color: COLORS.textSecondary,
+    marginLeft: SPACING.xs,
+  },
+  cardManager: {
+    fontSize: 14,
+    color: COLORS.textSecondary,
+    marginLeft: SPACING.xs,
+  },
+  cardActions: {
+    marginTop: SPACING.md,
+    alignItems: 'flex-end',
+  },
+  acceptButton: {
+    borderRadius: 8,
+    overflow: 'hidden',
+  },
+  gradientButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
+    paddingVertical: SPACING.sm,
+    paddingHorizontal: SPACING.md,
+    gap: SPACING.xs,
+  },
+  buttonText: {
+    color: COLORS.white,
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: SPACING.xl * 2,
+  },
+  emptyTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: COLORS.textDark,
+    marginTop: SPACING.md,
+    marginBottom: SPACING.sm,
+  },
+  emptySubtitle: {
+    fontSize: 14,
+    color: COLORS.textSecondary,
+    textAlign: 'center',
+    lineHeight: 20,
+    marginBottom: SPACING.lg,
+    paddingHorizontal: SPACING.lg,
   },
 });

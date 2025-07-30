@@ -168,7 +168,7 @@ export const jobTemplates: JobTemplate[] = [
     title: 'Corporate Security',
     description: 'Security for corporate events, meetings, and business functions',
     subtext: 'Corporate events & business functions',
-    icon: 'business-center',
+    icon: 'business',
     color: '#3B82F6',
     defaultSettings: {
       title: 'Corporate Security',

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -8,6 +8,8 @@ import {
   StatusBar,
   Platform,
   Dimensions,
+  ActivityIndicator,
+  RefreshControl,
 } from 'react-native';
 import { MaterialIcons, AntDesign } from '@expo/vector-icons';
 // @ts-ignore
@@ -15,171 +17,334 @@ import { TabView, TabBar, SceneMap } from 'react-native-tab-view';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS, SPACING } from '../../../theme';
+import { supabase } from '../../../supabaseClient';
+import { useAuth } from '../../../contexts/AuthContext';
 
 interface JobsScreenProps {
   navigation: any;
 }
 
+interface Job {
+  id: string;
+  title: string;
+  description: string;
+  location: string;
+  pay: number;
+  num_guards: number;
+  start_time: string;
+  end_time: string;
+  status: string;
+  manager_name?: string;
+  manager_phone?: string;
+  manager_email?: string;
+  venue_type?: string;
+  guest_count?: number;
+  special_instructions?: string;
+  recurring_mode?: string;
+  recurring_days?: string[];
+  start_date?: string;
+  end_date?: string;
+  created_at: string;
+}
+
 const { width } = Dimensions.get('window');
 
-// Sample data for demonstration
-const scheduledJobs = [
-  {
-    id: '1',
-    title: 'New Year\'s Eve Club Security',
-    type: 'Nightclub',
-    status: 'Scheduled',
-    date: 'Dec 25, 2024',
-    time: '10:00 PM - 2:00 AM',
-    location: 'Club Euphoria, Downtown',
-  },
-  {
-    id: '2',
-    title: 'Tech Conference Security',
-    type: 'Corporate',
-    status: 'Scheduled',
-    date: 'Dec 28, 2024',
-    time: '6:00 PM - 10:00 PM',
-    location: 'TechCorp Headquarters, Midtown',
-  },
-];
+const ScheduledTab = ({ navigation, jobs, loading, onRefresh }: { 
+  navigation: any; 
+  jobs: Job[]; 
+  loading: boolean;
+  onRefresh: () => void;
+}) => {
+  const scheduledJobs = jobs.filter(job => 
+    job.status === 'open' || job.status === 'assigned' || job.status === 'in_progress'
+  );
 
-const completedJobs = [
-  {
-    id: '3',
-    title: 'Wedding Reception Security',
-    type: 'Private Event',
-    status: 'Completed',
-    date: 'Dec 20, 2024',
-    time: '8:00 PM - 12:00 AM',
-    location: 'Grand Hotel Ballroom, Uptown',
-  },
-  {
-    id: '4',
-    title: 'Rock Concert Security',
-    type: 'Concert',
-    status: 'Completed',
-    date: 'Dec 15, 2024',
-    time: '7:00 PM - 11:00 PM',
-    location: 'Arena Stadium, Westside',
-  },
-];
-
-const ScheduledTab = ({ navigation }: { navigation: any }) => (
-  <ScrollView contentContainerStyle={styles.listContent} showsVerticalScrollIndicator={false}>
-    {scheduledJobs.length > 0 ? (
-      scheduledJobs.map(job => (
-        <TouchableOpacity
-          key={job.id}
-          style={styles.card}
-          onPress={() => navigation.navigate('JobDetails', { job })}
-          activeOpacity={0.7}
-        >
-          <View style={styles.cardHeader}>
-            <MaterialIcons name={
-              job.type === 'Nightclub' ? 'nightlife' :
-              job.type === 'Corporate' ? 'business' :
-              'event'
-            } size={20} color="#2563eb" />
-            <Text style={styles.cardTitle}>{job.title}</Text>
-            <View style={[styles.statusPill, styles.statusScheduled]}>
-              <Text style={[styles.statusText, styles.statusTextScheduled]}>
-                {job.status}
-              </Text>
-            </View>
-          </View>
-
-          <View style={styles.row}>
-            <MaterialIcons name="event" size={16} color="#2563eb" />
-            <Text style={styles.cardDate}>{job.date}</Text>
-            <MaterialIcons name="access-time" size={16} color="#2563eb" style={{ marginLeft: 12 }} />
-            <Text style={styles.cardDate}>{job.time}</Text>
-          </View>
-
-          <View style={styles.row}>
-            <MaterialIcons name="location-on" size={16} color="#2563eb" />
-            <Text style={styles.cardLocation}>{job.location}</Text>
-          </View>
-        </TouchableOpacity>
-      ))
-    ) : (
-      <View style={styles.emptyState}>
-        <Text style={styles.emptyText}>No scheduled jobs found.</Text>
-        <TouchableOpacity
-          style={styles.emptyButton}
-          onPress={() => navigation.navigate('JobTemplateSelector')}
-          activeOpacity={0.7}
-        >
-          <Text style={styles.emptyButtonText}>Post a Job</Text>
-        </TouchableOpacity>
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={COLORS.primary} />
+        <Text style={styles.loadingText}>Loading jobs...</Text>
       </View>
-    )}
-  </ScrollView>
-);
+    );
+  }
 
-const CompletedTab = ({ navigation }: { navigation: any }) => (
-  <ScrollView contentContainerStyle={styles.listContent} showsVerticalScrollIndicator={false}>
-    {completedJobs.length > 0 ? (
-      completedJobs.map(job => (
-        <TouchableOpacity
-          key={job.id}
-          style={styles.card}
-          onPress={() => navigation.navigate('JobDetails', { job })}
-          activeOpacity={0.7}
-        >
-          <View style={styles.cardHeader}>
-            <MaterialIcons name={
-              job.type === 'Nightclub' ? 'nightlife' :
-              job.type === 'Corporate' ? 'business' :
-              'event'
-            } size={20} color="#2563eb" />
-            <Text style={styles.cardTitle}>{job.title}</Text>
-            <View style={[styles.statusPill, styles.statusCompleted]}>
-              <Text style={[styles.statusText, styles.statusTextCompleted]}>
-                {job.status}
-              </Text>
-            </View>
-          </View>
+  return (
+    <ScrollView 
+      contentContainerStyle={styles.listContent} 
+      showsVerticalScrollIndicator={false}
+      refreshControl={
+        <RefreshControl refreshing={loading} onRefresh={onRefresh} />
+      }
+    >
+      {scheduledJobs.length > 0 ? (
+        scheduledJobs.map(job => {
+          const startDate = new Date(job.start_time);
+          const endDate = new Date(job.end_time);
+          const formattedDate = startDate.toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric',
+          });
+          const formattedTime = `${startDate.toLocaleTimeString('en-US', {
+            hour: 'numeric',
+            minute: '2-digit',
+            hour12: true,
+          })} - ${endDate.toLocaleTimeString('en-US', {
+            hour: 'numeric',
+            minute: '2-digit',
+            hour12: true,
+          })}`;
 
-          <View style={styles.row}>
-            <MaterialIcons name="event" size={16} color="#2563eb" />
-            <Text style={styles.cardDate}>{job.date}</Text>
-            <MaterialIcons name="access-time" size={16} color="#2563eb" style={{ marginLeft: 12 }} />
-            <Text style={styles.cardDate}>{job.time}</Text>
-          </View>
+          return (
+            <TouchableOpacity
+              key={job.id}
+              style={styles.card}
+              onPress={() => navigation.navigate('JobDetails', { job })}
+              activeOpacity={0.7}
+            >
+              <View style={styles.cardHeader}>
+                <MaterialIcons name="event" size={20} color="#2563eb" />
+                <Text style={styles.cardTitle}>{job.title}</Text>
+                <View style={[styles.statusPill, 
+                  job.status === 'open' ? styles.statusOpen :
+                  job.status === 'assigned' ? styles.statusAssigned :
+                  styles.statusInProgress
+                ]}>
+                  <Text style={[styles.statusText, 
+                    job.status === 'open' ? styles.statusTextOpen :
+                    job.status === 'assigned' ? styles.statusTextAssigned :
+                    styles.statusTextInProgress
+                  ]}>
+                    {job.status === 'open' ? 'Open' :
+                     job.status === 'assigned' ? 'Assigned' :
+                     job.status === 'in_progress' ? 'In Progress' : job.status}
+                  </Text>
+                </View>
+              </View>
 
-          <View style={styles.row}>
-            <MaterialIcons name="location-on" size={16} color="#2563eb" />
-            <Text style={styles.cardLocation}>{job.location}</Text>
-          </View>
-        </TouchableOpacity>
-      ))
-    ) : (
-      <View style={styles.emptyState}>
-        <Text style={styles.emptyText}>No completed jobs found.</Text>
+              <View style={styles.row}>
+                <MaterialIcons name="event" size={16} color="#2563eb" />
+                <Text style={styles.cardDate}>{formattedDate}</Text>
+                <MaterialIcons name="access-time" size={16} color="#2563eb" style={{ marginLeft: 12 }} />
+                <Text style={styles.cardDate}>{formattedTime}</Text>
+              </View>
+
+              <View style={styles.row}>
+                <MaterialIcons name="location-on" size={16} color="#2563eb" />
+                <Text style={styles.cardLocation}>{job.location}</Text>
+              </View>
+
+              <View style={styles.row}>
+                <MaterialIcons name="attach-money" size={16} color="#2563eb" />
+                <Text style={styles.cardPay}>${job.pay}/hr</Text>
+                <MaterialIcons name="people" size={16} color="#2563eb" style={{ marginLeft: 12 }} />
+                <Text style={styles.cardGuards}>{job.num_guards} guard{job.num_guards > 1 ? 's' : ''} needed</Text>
+              </View>
+
+              {job.manager_name && (
+                <View style={styles.row}>
+                  <MaterialIcons name="person" size={16} color="#2563eb" />
+                  <Text style={styles.cardManager}>Manager: {job.manager_name}</Text>
+                </View>
+              )}
+            </TouchableOpacity>
+          );
+        })
+      ) : (
+        <View style={styles.emptyContainer}>
+          <MaterialIcons name="work-off" size={64} color="#CBD5E1" />
+          <Text style={styles.emptyTitle}>No Scheduled Jobs</Text>
+          <Text style={styles.emptySubtitle}>
+            You haven't posted any jobs yet. Create your first security job to get started.
+          </Text>
+          <TouchableOpacity
+            style={styles.emptyButton}
+            onPress={() => navigation.navigate('JobTemplateSelector')}
+          >
+            <LinearGradient
+              colors={["#2563eb", "#6366f1"]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.gradientButton}
+            >
+              <MaterialIcons name="add" size={20} color="white" />
+              <Text style={styles.buttonText}>Post Your First Job</Text>
+            </LinearGradient>
+          </TouchableOpacity>
+        </View>
+      )}
+    </ScrollView>
+  );
+};
+
+const CompletedTab = ({ navigation, jobs, loading, onRefresh }: { 
+  navigation: any; 
+  jobs: Job[]; 
+  loading: boolean;
+  onRefresh: () => void;
+}) => {
+  const completedJobs = jobs.filter(job => job.status === 'completed');
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={COLORS.primary} />
+        <Text style={styles.loadingText}>Loading jobs...</Text>
       </View>
-    )}
-  </ScrollView>
-);
+    );
+  }
+
+  return (
+    <ScrollView 
+      contentContainerStyle={styles.listContent} 
+      showsVerticalScrollIndicator={false}
+      refreshControl={
+        <RefreshControl refreshing={loading} onRefresh={onRefresh} />
+      }
+    >
+      {completedJobs.length > 0 ? (
+        completedJobs.map(job => {
+          const startDate = new Date(job.start_time);
+          const endDate = new Date(job.end_time);
+          const formattedDate = startDate.toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric',
+          });
+          const formattedTime = `${startDate.toLocaleTimeString('en-US', {
+            hour: 'numeric',
+            minute: '2-digit',
+            hour12: true,
+          })} - ${endDate.toLocaleTimeString('en-US', {
+            hour: 'numeric',
+            minute: '2-digit',
+            hour12: true,
+          })}`;
+
+          return (
+            <TouchableOpacity
+              key={job.id}
+              style={styles.card}
+              onPress={() => navigation.navigate('JobDetails', { job })}
+              activeOpacity={0.7}
+            >
+              <View style={styles.cardHeader}>
+                <MaterialIcons name="event" size={20} color="#059669" />
+                <Text style={styles.cardTitle}>{job.title}</Text>
+                <View style={[styles.statusPill, styles.statusCompleted]}>
+                  <Text style={[styles.statusText, styles.statusTextCompleted]}>
+                    Completed
+                  </Text>
+                </View>
+              </View>
+
+              <View style={styles.row}>
+                <MaterialIcons name="event" size={16} color="#059669" />
+                <Text style={styles.cardDate}>{formattedDate}</Text>
+                <MaterialIcons name="access-time" size={16} color="#059669" style={{ marginLeft: 12 }} />
+                <Text style={styles.cardDate}>{formattedTime}</Text>
+              </View>
+
+              <View style={styles.row}>
+                <MaterialIcons name="location-on" size={16} color="#059669" />
+                <Text style={styles.cardLocation}>{job.location}</Text>
+              </View>
+
+              <View style={styles.row}>
+                <MaterialIcons name="attach-money" size={16} color="#059669" />
+                <Text style={styles.cardPay}>${job.pay}/hr</Text>
+                <MaterialIcons name="people" size={16} color="#059669" style={{ marginLeft: 12 }} />
+                <Text style={styles.cardGuards}>{job.num_guards} guard{job.num_guards > 1 ? 's' : ''} needed</Text>
+              </View>
+
+              {job.manager_name && (
+                <View style={styles.row}>
+                  <MaterialIcons name="person" size={16} color="#059669" />
+                  <Text style={styles.cardManager}>Manager: {job.manager_name}</Text>
+                </View>
+              )}
+            </TouchableOpacity>
+          );
+        })
+      ) : (
+        <View style={styles.emptyContainer}>
+          <MaterialIcons name="check-circle" size={64} color="#CBD5E1" />
+          <Text style={styles.emptyTitle}>No Completed Jobs</Text>
+          <Text style={styles.emptySubtitle}>
+            Completed jobs will appear here once your security jobs are finished.
+          </Text>
+        </View>
+      )}
+    </ScrollView>
+  );
+};
 
 export default function JobsScreen({ navigation }: JobsScreenProps) {
+  const { user } = useAuth();
   const [index, setIndex] = useState(0);
+  const [jobs, setJobs] = useState<Job[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
   const [routes] = useState([
     { key: 'scheduled', title: 'Scheduled' },
     { key: 'completed', title: 'Completed' },
   ]);
 
-  const renderScene = SceneMap({
-    scheduled: () => <ScheduledTab navigation={navigation} />,
-    completed: () => <CompletedTab navigation={navigation} />,
-  });
+  const fetchJobs = async () => {
+    try {
+      if (!user?.id) {
+        console.log('No user ID available');
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from('jobs')
+        .select('*')
+        .eq('client_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching jobs:', error);
+        return;
+      }
+
+      console.log('Fetched jobs:', data);
+      setJobs(data || []);
+    } catch (error) {
+      console.error('Error fetching jobs:', error);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchJobs();
+  }, [user?.id]);
+
+  const handleRefresh = () => {
+    setRefreshing(true);
+    fetchJobs();
+  };
+
+  const renderScene = ({ route }: { route: any }) => {
+    switch (route.key) {
+      case 'scheduled':
+        return <ScheduledTab navigation={navigation} jobs={jobs} loading={loading} onRefresh={handleRefresh} />;
+      case 'completed':
+        return <CompletedTab navigation={navigation} jobs={jobs} loading={loading} onRefresh={handleRefresh} />;
+      default:
+        return null;
+    }
+  };
 
   const renderTabBar = (props: any) => (
     <TabBar
       {...props}
       indicatorStyle={styles.indicator}
       style={styles.tabBar}
-      labelStyle={styles.tabLabel}
+      labelStyle={styles.label}
       activeColor={COLORS.primary}
       inactiveColor={COLORS.textSecondary}
     />
@@ -189,49 +354,57 @@ export default function JobsScreen({ navigation }: JobsScreenProps) {
     <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
       <StatusBar translucent={false} backgroundColor={COLORS.white} barStyle="dark-content" />
       
-      <LinearGradient
-        colors={['#ffffff', '#e0f2ff']}
-        style={{ flex: 1 }}
-      >
-        {/* Header matching PostJob screen styling */}
-        <View style={styles.header}>
-          <View style={{ width: 24 }} />
-          <Text style={styles.headerTitle}>Jobs</Text>
-          <TouchableOpacity onPress={() => navigation.navigate('JobTemplateSelector')}>
-            <AntDesign name="pluscircle" size={24} color={COLORS.primary} />
-          </TouchableOpacity>
+      {/* Header */}
+      <View style={styles.header}>
+        <View style={styles.headerLeft}>
+          <Text style={styles.headerTitle}>My Jobs</Text>
         </View>
+        <TouchableOpacity
+          style={styles.headerButton}
+          onPress={() => navigation.navigate('JobTemplateSelector')}
+        >
+          <MaterialIcons name="add" size={24} color="#222" />
+        </TouchableOpacity>
+      </View>
 
-        <TabView
-          navigationState={{ index, routes }}
-          renderScene={renderScene}
-          renderTabBar={renderTabBar}
-          onIndexChange={setIndex}
-          initialLayout={{ width }}
-        />
-      </LinearGradient>
+      <TabView
+        navigationState={{ index, routes }}
+        renderScene={renderScene}
+        onIndexChange={setIndex}
+        initialLayout={{ width }}
+        renderTabBar={renderTabBar}
+      />
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: 'transparent' },
-  container: { flex: 1, backgroundColor: '#ffffff' },
-  
-  // Header styling matching PostJob screen
+  safeArea: {
+    flex: 1,
+    backgroundColor: COLORS.white,
+  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: SPACING.lg,
     paddingTop: Platform.OS === 'android' ? SPACING.sm * 1.2 : SPACING.xl * 1.2,
-    paddingBottom: SPACING.xs,
+    paddingBottom: SPACING.sm,
+    borderBottomWidth: 1,
     borderBottomColor: COLORS.border,
     backgroundColor: COLORS.white,
   },
-  headerTitle: { fontSize: 20, fontWeight: '600', color: COLORS.textDark },
-  
-  // Tab View styles
+  headerLeft: {
+    flex: 1,
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: COLORS.textDark,
+  },
+  headerButton: {
+    padding: SPACING.xs,
+  },
   tabBar: {
     backgroundColor: COLORS.white,
     elevation: 0,
@@ -241,30 +414,151 @@ const styles = StyleSheet.create({
   },
   indicator: {
     backgroundColor: COLORS.primary,
-    height: 2,
+    height: 3,
   },
-  tabLabel: {
-    fontSize: 14,
+  label: {
     fontWeight: '600',
     textTransform: 'none',
   },
-  
-  // Content styles
-  listContent: { paddingBottom: 100, paddingHorizontal: 16, paddingTop: 16 },
-  card: { backgroundColor: '#ffffff', borderRadius: 16, padding: 16, marginBottom: 16, shadowColor: '#000', shadowOpacity: 0.08, shadowRadius: 8, shadowOffset: { width: 0, height: 4 }, elevation: 4 },
-  cardHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 8, justifyContent: 'space-between' },
-  cardTitle: { fontSize: 16, fontWeight: 'bold', color: '#111827', marginLeft: 8, flex: 1 },
-  row: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
-  cardDate: { fontSize: 14, color: '#2563eb', marginLeft: 6 },
-  cardLocation: { fontSize: 14, color: '#2563eb', marginLeft: 6 },
-  statusPill: { borderRadius: 16, paddingVertical: 4, paddingHorizontal: 12 },
-  statusScheduled: { backgroundColor: '#dbeafe' },
-  statusCompleted: { backgroundColor: '#d1fae5' },
-  statusText: { fontSize: 12, fontWeight: 'bold' },
-  statusTextScheduled: { color: '#2563eb' },
-  statusTextCompleted: { color: '#059669' },
-  emptyState: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32 },
-  emptyText: { fontSize: 16, color: '#64748b', textAlign: 'center', marginBottom: 16 },
-  emptyButton: { backgroundColor: '#2563eb', borderRadius: 8, paddingVertical: 12, paddingHorizontal: 24 },
-  emptyButtonText: { color: '#ffffff', fontSize: 16, fontWeight: '500' },
+  listContent: {
+    padding: SPACING.lg,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: SPACING.xl * 2,
+  },
+  loadingText: {
+    marginTop: SPACING.md,
+    fontSize: 16,
+    color: COLORS.textSecondary,
+  },
+  card: {
+    backgroundColor: COLORS.white,
+    borderRadius: 12,
+    padding: SPACING.lg,
+    marginBottom: SPACING.md,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: SPACING.sm,
+  },
+  cardTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: COLORS.textDark,
+    flex: 1,
+    marginLeft: SPACING.xs,
+  },
+  statusPill: {
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: SPACING.xs,
+    borderRadius: 12,
+  },
+  statusOpen: {
+    backgroundColor: '#DBEAFE',
+  },
+  statusAssigned: {
+    backgroundColor: '#FEF3C7',
+  },
+  statusInProgress: {
+    backgroundColor: '#D1FAE5',
+  },
+  statusCompleted: {
+    backgroundColor: '#D1FAE5',
+  },
+  statusText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  statusTextOpen: {
+    color: '#1E40AF',
+  },
+  statusTextAssigned: {
+    color: '#D97706',
+  },
+  statusTextInProgress: {
+    color: '#059669',
+  },
+  statusTextCompleted: {
+    color: '#059669',
+  },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: SPACING.xs,
+  },
+  cardDate: {
+    fontSize: 14,
+    color: COLORS.textSecondary,
+    marginLeft: SPACING.xs,
+  },
+  cardLocation: {
+    fontSize: 14,
+    color: COLORS.textSecondary,
+    marginLeft: SPACING.xs,
+    flex: 1,
+  },
+  cardPay: {
+    fontSize: 14,
+    color: COLORS.textSecondary,
+    marginLeft: SPACING.xs,
+  },
+  cardGuards: {
+    fontSize: 14,
+    color: COLORS.textSecondary,
+    marginLeft: SPACING.xs,
+  },
+  cardManager: {
+    fontSize: 14,
+    color: COLORS.textSecondary,
+    marginLeft: SPACING.xs,
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: SPACING.xl * 2,
+  },
+  emptyTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: COLORS.textDark,
+    marginTop: SPACING.md,
+    marginBottom: SPACING.sm,
+  },
+  emptySubtitle: {
+    fontSize: 14,
+    color: COLORS.textSecondary,
+    textAlign: 'center',
+    lineHeight: 20,
+    marginBottom: SPACING.lg,
+    paddingHorizontal: SPACING.lg,
+  },
+  emptyButton: {
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  gradientButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.lg,
+    gap: SPACING.sm,
+  },
+  buttonText: {
+    color: COLORS.white,
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
 }); 

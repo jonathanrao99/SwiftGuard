@@ -33,6 +33,7 @@ const PreferredPayment = lazy(() => import('./screens/PreferredPayment'));
 const OtpVerification = lazy(() => import('./screens/OtpVerification'));
 const PostJob = lazy(() => import('./screens/client/home/PostJob'));
 const PostJobSpecialized = lazy(() => import('./screens/client/home/PostJobSpecialized'));
+const JobPostedSuccessScreen = lazy(() => import('./screens/client/home/JobPostedSuccessScreen'));
 const JobTemplateSelector = lazy(() => import('./components/post-job/JobTemplateSelector').then(module => ({ default: module.JobTemplateSelector })));
 const ProfileScreen = lazy(() => import('./screens/client/profile/ProfileScreen'));
 const OnboardingScreen = lazy(() => import('./screens/onboarding/OnboardingScreen'));
@@ -258,11 +259,16 @@ export default function App() {
           component={JobTemplateSelector}
           options={{ headerShown: false }}
         />
-                    <Stack.Screen 
-                      name="FindGuards" 
-                      component={FindGuardsScreen} 
-                      options={{ headerShown: false }} 
-                    />
+        <Stack.Screen
+          name="JobPostedSuccess"
+          component={JobPostedSuccessScreen}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen 
+          name="FindGuards" 
+          component={FindGuardsScreen} 
+          options={{ headerShown: false }} 
+        />
                     
                     {/* Profile Subpages */}
                     <Stack.Screen 

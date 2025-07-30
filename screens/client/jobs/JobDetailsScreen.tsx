@@ -110,7 +110,7 @@ export default function JobDetailsScreen({ route, navigation }: JobDetailsScreen
       case 'Nightclub':
         return 'nightlife';
       case 'Corporate':
-        return 'business-center';
+        return 'business';
       case 'Private Event':
         return 'event';
       case 'Concert':

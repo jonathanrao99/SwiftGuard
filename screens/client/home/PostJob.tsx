@@ -37,6 +37,7 @@ import { getContactReviewSummary } from '../../../components/post-job/ContactRev
 import BottomSheetStepper, { BottomSheetStepperRef, StepComponentProps } from 'bottom-sheet-stepper';
 import { useStripe } from '@stripe/stripe-react-native';
 import { supabase } from '../../../supabaseClient';
+import { JobService, JobData } from '../../../services/JobService';
 
 // Types
 interface PostJobFormData {
@@ -82,7 +83,7 @@ const venueTypeIcons: Record<string, keyof typeof MaterialIcons.glyphMap> = {
   'Bar': 'local-bar',
   'Private Event': 'event',
   'Concert': 'music-note',
-  'Corporate': 'business-center',
+  'Corporate': 'business',
   'Other': 'more-horiz',
 };
 
@@ -286,50 +287,28 @@ const PostJob: React.FC<PostJobProps> = ({ navigation }) => {
   const scrollViewRef = useRef<ScrollView>(null);
 
   const onSubmit = async (data: PostJobFormData) => {
-    const finalValidation = await trigger();
-    if (!finalValidation) {
-      handleInvalidPress();
-      Alert.alert('Validation Error', 'Please ensure all required fields are filled correctly.');
-      return;
-    }
-
     setIsSubmitting(true);
-
     try {
       // Get the current user's ID
       const { data: { user }, error: userError } = await supabase.auth.getUser();
       if (userError) throw userError;
       if (!user) throw new Error('No authenticated user found');
 
-      const payload = {
-        client_id: user.id,
-        ...data,
-        startTime,
-        endTime,
-        duration,
-        numGuards: watchedNumGuards,
-        venueType: venueType === 'Other' ? data.customVenueType : venueType,
-        recurringMode,
-        eventDates: recurringMode === 'One-time' ? selectedDates :
-                    recurringMode === 'Recurring' && recurringPatternType === 'weekly' ? selectedWeekdays :
-                    recurringMode === 'Recurring' && recurringPatternType === 'monthly' ? {} : [],
-        recurringPatternType: recurringMode === 'Recurring' ? recurringPatternType : undefined,
-        numWeeks: recurringMode === 'Recurring' && recurringPatternType === 'weekly' ? watchedNumWeeks : undefined,
-        numMonths: recurringMode === 'Recurring' && recurringPatternType === 'monthly' ? watchedNumMonths : undefined,
-        requirements: Object.keys(requirements).filter(key => requirements[key]),
-        otherRequirement: requirements.other ? data.otherRequirement : undefined,
-        totalAmount: parseFloat(estimatedCost.replace('$', '')),
-        status: 'pending'
+      // Build the job payload
+      const jobPayload: JobData = {
+        title: data.title || (venueType !== 'Other' ? venueType : data.customVenueType || 'Custom Security Job'),
+        description: data.description || '',
+        location: data.location || '',
+        pay: parseFloat(data.hourlyPay),
+        start_time: startTime,
+        end_time: endTime,
+        num_guards: data.numGuards,
+        client_id: user?.id, // Make sure user is available from context/auth
       };
 
-      // Save job to database
-      const { data: jobData, error: jobError } = await supabase
-        .from('jobs')
-        .insert([payload])
-        .select()
-        .single();
-
-      if (jobError) throw jobError;
+      // Create job using JobService
+      const job = await JobService.createJob(jobPayload);
+      if (!job) throw new Error('Failed to create job.');
 
       Toast.show({
         type: 'success',
@@ -338,7 +317,6 @@ const PostJob: React.FC<PostJobProps> = ({ navigation }) => {
         position: 'bottom',
         visibilityTime: 2500,
       });
-      
       navigation.navigate('Client');
     } catch (error: any) {
       console.error('Error posting job:', error);

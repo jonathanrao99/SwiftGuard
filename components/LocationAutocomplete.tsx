@@ -6,9 +6,10 @@ import { COLORS, SPACING } from '../theme';
 
 type LocationAutocompleteProps = {
   onSelectAddress: (address: string) => void;
+  value?: string;
 };
 
-export function LocationAutocomplete({ onSelectAddress }: LocationAutocompleteProps) {
+export function LocationAutocomplete({ onSelectAddress, value }: LocationAutocompleteProps) {
   const [query, setQuery] = useState('');
   const [suggestions, setSuggestions] = useState<any[]>([]);
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
@@ -27,8 +28,14 @@ export function LocationAutocomplete({ onSelectAddress }: LocationAutocompletePr
     };
   }, []);
 
+  useEffect(() => {
+    if (typeof value === 'string') {
+      setQuery(value);
+    }
+  }, [value]);
+
   const handleChange = (text: string) => {
-    setQuery(text);
+    if (typeof value !== 'string') setQuery(text);
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(async () => {
       if (text.length > 2 && GOOGLE_PLACES_API_KEY) {
@@ -37,7 +44,6 @@ export function LocationAutocomplete({ onSelectAddress }: LocationAutocompletePr
         fetchControllerRef.current = controller;
         try {
           const url = `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(text)}&key=${GOOGLE_PLACES_API_KEY}&components=country:us&types=address`;
-          // no-op
           const res = await fetch(
             url,
             { signal: controller.signal }
@@ -58,7 +64,7 @@ export function LocationAutocomplete({ onSelectAddress }: LocationAutocompletePr
   };
 
   const handleSelect = (address: string) => {
-    setQuery(address);
+    if (typeof value !== 'string') setQuery(address);
     setSuggestions([]);
     onSelectAddress(address);
   };
@@ -69,7 +75,7 @@ export function LocationAutocomplete({ onSelectAddress }: LocationAutocompletePr
         <TextInput
           style={styles.input}
           placeholder="Location"
-          value={query}
+          value={typeof value === 'string' ? value : query}
           onChangeText={handleChange}
           accessibilityLabel="Location input"
         />
