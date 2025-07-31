@@ -12,7 +12,7 @@ import {
   RefreshControl,
   Alert,
 } from 'react-native';
-import { MaterialIcons, AntDesign } from '@expo/vector-icons';
+import { MaterialIcons, AntDesign, Ionicons, FontAwesome5 } from '@expo/vector-icons';
 // @ts-ignore
 import { TabView, TabBar, SceneMap } from 'react-native-tab-view';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -84,13 +84,12 @@ const AvailableTab = ({ navigation, jobs, loading, onRefresh, onAcceptJob }: {
           const formattedDate = startDate.toLocaleDateString('en-US', {
             month: 'short',
             day: 'numeric',
-            year: 'numeric',
           });
           const formattedTime = `${startDate.toLocaleTimeString('en-US', {
             hour: 'numeric',
             minute: '2-digit',
             hour12: true,
-          })} - ${endDate.toLocaleTimeString('en-US', {
+          })} – ${endDate.toLocaleTimeString('en-US', {
             hour: 'numeric',
             minute: '2-digit',
             hour12: true,
@@ -99,62 +98,87 @@ const AvailableTab = ({ navigation, jobs, loading, onRefresh, onAcceptJob }: {
           return (
             <TouchableOpacity
               key={job.id}
-              style={styles.card}
+              style={styles.ultraCard}
               onPress={() => navigation.navigate('GuardJobDetails', { job })}
-              activeOpacity={0.7}
+              activeOpacity={0.9}
             >
-              <View style={styles.cardHeader}>
-                <MaterialIcons name="event" size={20} color="#2563eb" />
-                <Text style={styles.cardTitle}>{job.title}</Text>
-                <View style={[styles.statusPill, styles.statusAvailable]}>
-                  <Text style={[styles.statusText, styles.statusTextAvailable]}>
-                    Available
-                  </Text>
+              <LinearGradient
+                colors={['#ffffff', '#f8fafc']}
+                style={styles.cardGradient}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 0, y: 1 }}
+              >
+                <View style={styles.cardHeader}>
+                  <View style={styles.titleSection}>
+                    <Text style={styles.jobTitle}>{job.title}</Text>
+                    <View style={styles.locationRow}>
+                      <Ionicons name="location" size={14} color="#64748b" />
+                      <Text style={styles.locationText} numberOfLines={1}>{job.location}</Text>
+                    </View>
+                  </View>
+                  <View style={styles.statusChip}>
+                    <FontAwesome5 
+                      name="unlock" 
+                      size={10} 
+                      color="white" 
+                    />
+                    <Text style={styles.statusText}>Available</Text>
+                  </View>
                 </View>
-              </View>
 
-              <View style={styles.row}>
-                <MaterialIcons name="event" size={16} color="#2563eb" />
-                <Text style={styles.cardDate}>{formattedDate}</Text>
-                <MaterialIcons name="access-time" size={16} color="#2563eb" style={{ marginLeft: 12 }} />
-                <Text style={styles.cardDate}>{formattedTime}</Text>
-              </View>
+                <View style={styles.cardBody}>
+                  <View style={styles.infoGrid}>
+                    <View style={styles.infoItem}>
+                      <View style={styles.infoIcon}>
+                        <MaterialIcons name="event" size={16} color="#3b82f6" />
+                      </View>
+                      <View style={styles.infoContent}>
+                        <Text style={styles.infoLabel}>Date</Text>
+                        <Text style={styles.infoValue}>{formattedDate}</Text>
+                      </View>
+                    </View>
+                    
+                    <View style={styles.infoItem}>
+                      <View style={styles.infoIcon}>
+                        <MaterialIcons name="access-time" size={16} color="#3b82f6" />
+                      </View>
+                      <View style={styles.infoContent}>
+                        <Text style={styles.infoLabel}>Time</Text>
+                        <Text style={styles.infoValue}>{formattedTime}</Text>
+                      </View>
+                    </View>
+                  </View>
 
-              <View style={styles.row}>
-                <MaterialIcons name="location-on" size={16} color="#2563eb" />
-                <Text style={styles.cardLocation}>{job.location}</Text>
-              </View>
-
-              <View style={styles.row}>
-                <MaterialIcons name="attach-money" size={16} color="#2563eb" />
-                <Text style={styles.cardPay}>${job.pay}/hr</Text>
-                <MaterialIcons name="people" size={16} color="#2563eb" style={{ marginLeft: 12 }} />
-                <Text style={styles.cardGuards}>{job.num_guards} guard{job.num_guards > 1 ? 's' : ''} needed</Text>
-              </View>
-
-              {job.manager_name && (
-                <View style={styles.row}>
-                  <MaterialIcons name="person" size={16} color="#2563eb" />
-                  <Text style={styles.cardManager}>Manager: {job.manager_name}</Text>
+                  <View style={styles.cardFooter}>
+                    <View style={styles.paySection}>
+                      <Text style={styles.payAmount}>${job.pay}</Text>
+                      <Text style={styles.payUnit}>/hr</Text>
+                    </View>
+                    
+                    <View style={styles.guardsSection}>
+                      <FontAwesome5 name="users" size={14} color="#64748b" />
+                      <Text style={styles.guardsText}>{job.num_guards} guard{job.num_guards > 1 ? 's' : ''} needed</Text>
+                    </View>
+                  </View>
                 </View>
-              )}
 
-              <View style={styles.cardActions}>
-                <TouchableOpacity
-                  style={styles.acceptButton}
-                  onPress={() => onAcceptJob(job.id)}
-                >
-                  <LinearGradient
-                    colors={["#059669", "#10B981"]}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 0 }}
-                    style={styles.gradientButton}
+                <View style={styles.acceptButtonContainer}>
+                  <TouchableOpacity
+                    style={styles.acceptButton}
+                    onPress={() => onAcceptJob(job.id)}
                   >
-                    <MaterialIcons name="check" size={16} color="white" />
-                    <Text style={styles.buttonText}>Accept Job</Text>
-                  </LinearGradient>
-                </TouchableOpacity>
-              </View>
+                    <LinearGradient
+                      colors={["#1d4ed8", "#2563eb", "#3b82f6"]}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 0 }}
+                      style={styles.gradientButton}
+                    >
+                      <MaterialIcons name="check" size={16} color="white" />
+                      <Text style={styles.buttonText}>Accept Job</Text>
+                    </LinearGradient>
+                  </TouchableOpacity>
+                </View>
+              </LinearGradient>
             </TouchableOpacity>
           );
         })
@@ -205,13 +229,12 @@ const AcceptedTab = ({ navigation, jobs, loading, onRefresh }: {
           const formattedDate = startDate.toLocaleDateString('en-US', {
             month: 'short',
             day: 'numeric',
-            year: 'numeric',
           });
           const formattedTime = `${startDate.toLocaleTimeString('en-US', {
             hour: 'numeric',
             minute: '2-digit',
             hour12: true,
-          })} - ${endDate.toLocaleTimeString('en-US', {
+          })} – ${endDate.toLocaleTimeString('en-US', {
             hour: 'numeric',
             minute: '2-digit',
             hour12: true,
@@ -220,55 +243,80 @@ const AcceptedTab = ({ navigation, jobs, loading, onRefresh }: {
           return (
             <TouchableOpacity
               key={job.id}
-              style={styles.card}
+              style={styles.ultraCard}
               onPress={() => navigation.navigate('GuardJobDetails', { job })}
-              activeOpacity={0.7}
+              activeOpacity={0.9}
             >
-              <View style={styles.cardHeader}>
-                <MaterialIcons name="event" size={20} color="#059669" />
-                <Text style={styles.cardTitle}>{job.title}</Text>
-                <View style={[styles.statusPill, 
-                  job.status === 'assigned' ? styles.statusAssigned :
-                  job.status === 'in_progress' ? styles.statusInProgress :
-                  styles.statusCompleted
-                ]}>
-                  <Text style={[styles.statusText, 
-                    job.status === 'assigned' ? styles.statusTextAssigned :
-                    job.status === 'in_progress' ? styles.statusTextInProgress :
-                    styles.statusTextCompleted
+              <LinearGradient
+                colors={['#ffffff', '#f8fafc']}
+                style={styles.cardGradient}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 0, y: 1 }}
+              >
+                <View style={styles.cardHeader}>
+                  <View style={styles.titleSection}>
+                    <Text style={styles.jobTitle}>{job.title}</Text>
+                    <View style={styles.locationRow}>
+                      <Ionicons name="location" size={14} color="#64748b" />
+                      <Text style={styles.locationText} numberOfLines={1}>{job.location}</Text>
+                    </View>
+                  </View>
+                  <View style={[
+                    styles.statusChip,
+                    job.status === 'assigned' ? styles.statusAssigned :
+                    job.status === 'in_progress' ? styles.statusInProgress :
+                    styles.statusCompleted
                   ]}>
-                    {job.status === 'assigned' ? 'Assigned' :
-                     job.status === 'in_progress' ? 'In Progress' :
-                     job.status === 'completed' ? 'Completed' : job.status}
-                  </Text>
+                    <FontAwesome5 
+                      name={job.status === 'assigned' ? 'shield-alt' : 
+                           job.status === 'in_progress' ? 'clock' : 'check-circle'} 
+                      size={10} 
+                      color="white" 
+                    />
+                    <Text style={styles.statusText}>
+                      {job.status === 'assigned' ? 'Assigned' :
+                       job.status === 'in_progress' ? 'In Progress' :
+                       job.status === 'completed' ? 'Completed' : job.status}
+                    </Text>
+                  </View>
                 </View>
-              </View>
 
-              <View style={styles.row}>
-                <MaterialIcons name="event" size={16} color="#059669" />
-                <Text style={styles.cardDate}>{formattedDate}</Text>
-                <MaterialIcons name="access-time" size={16} color="#059669" style={{ marginLeft: 12 }} />
-                <Text style={styles.cardDate}>{formattedTime}</Text>
-              </View>
+                <View style={styles.cardBody}>
+                  <View style={styles.infoGrid}>
+                    <View style={styles.infoItem}>
+                      <View style={styles.infoIcon}>
+                        <MaterialIcons name="event" size={16} color="#3b82f6" />
+                      </View>
+                      <View style={styles.infoContent}>
+                        <Text style={styles.infoLabel}>Date</Text>
+                        <Text style={styles.infoValue}>{formattedDate}</Text>
+                      </View>
+                    </View>
+                    
+                    <View style={styles.infoItem}>
+                      <View style={styles.infoIcon}>
+                        <MaterialIcons name="access-time" size={16} color="#3b82f6" />
+                      </View>
+                      <View style={styles.infoContent}>
+                        <Text style={styles.infoLabel}>Time</Text>
+                        <Text style={styles.infoValue}>{formattedTime}</Text>
+                      </View>
+                    </View>
+                  </View>
 
-              <View style={styles.row}>
-                <MaterialIcons name="location-on" size={16} color="#059669" />
-                <Text style={styles.cardLocation}>{job.location}</Text>
-              </View>
-
-              <View style={styles.row}>
-                <MaterialIcons name="attach-money" size={16} color="#059669" />
-                <Text style={styles.cardPay}>${job.pay}/hr</Text>
-                <MaterialIcons name="people" size={16} color="#059669" style={{ marginLeft: 12 }} />
-                <Text style={styles.cardGuards}>{job.num_guards} guard{job.num_guards > 1 ? 's' : ''} needed</Text>
-              </View>
-
-              {job.manager_name && (
-                <View style={styles.row}>
-                  <MaterialIcons name="person" size={16} color="#059669" />
-                  <Text style={styles.cardManager}>Manager: {job.manager_name}</Text>
+                  <View style={styles.cardFooter}>
+                    <View style={styles.paySection}>
+                      <Text style={styles.payAmount}>${job.pay}</Text>
+                      <Text style={styles.payUnit}>/hr</Text>
+                    </View>
+                    
+                    <View style={styles.guardsSection}>
+                      <FontAwesome5 name="users" size={14} color="#64748b" />
+                      <Text style={styles.guardsText}>{job.num_guards} guard{job.num_guards > 1 ? 's' : ''} needed</Text>
+                    </View>
+                  </View>
                 </View>
-              )}
+              </LinearGradient>
             </TouchableOpacity>
           );
         })
@@ -400,9 +448,7 @@ export default function GuardJobsScreen({ navigation }: GuardJobsScreenProps) {
       
       {/* Header */}
       <View style={styles.header}>
-        <View style={styles.headerLeft}>
-          <Text style={styles.headerTitle}>Available Jobs</Text>
-        </View>
+        <Text style={styles.headerTitle}>Jobs</Text>
       </View>
 
       <TabView
@@ -422,18 +468,13 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.white,
   },
   header: {
-    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
     paddingHorizontal: SPACING.lg,
     paddingTop: Platform.OS === 'android' ? SPACING.sm * 1.2 : SPACING.xl * 1.2,
-    paddingBottom: SPACING.sm,
-    borderBottomWidth: 1,
+    paddingBottom: SPACING.xs,
     borderBottomColor: COLORS.border,
     backgroundColor: COLORS.white,
-  },
-  headerLeft: {
-    flex: 1,
   },
   headerTitle: {
     fontSize: 20,
@@ -469,115 +510,181 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: COLORS.textSecondary,
   },
-  card: {
+  // Modern Card Styles (similar to client JobsScreen)
+  ultraCard: {
     backgroundColor: COLORS.white,
-    borderRadius: 12,
-    padding: SPACING.lg,
+    borderRadius: 16,
     marginBottom: SPACING.md,
-    borderWidth: 1,
-    borderColor: COLORS.border,
+    marginHorizontal: SPACING.xs,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
-    shadowRadius: 4,
+    shadowRadius: 8,
     elevation: 3,
+    overflow: 'hidden',
+  },
+  cardGradient: {
+    padding: SPACING.lg,
   },
   cardHeader: {
     flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: SPACING.sm,
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    marginBottom: SPACING.md,
   },
-  cardTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: COLORS.textDark,
+  titleSection: {
     flex: 1,
-    marginLeft: SPACING.xs,
+    marginRight: SPACING.sm,
   },
-  statusPill: {
-    paddingHorizontal: SPACING.sm,
-    paddingVertical: SPACING.xs,
-    borderRadius: 12,
+  jobTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#1e293b',
+    marginBottom: 4,
+    lineHeight: 24,
+    letterSpacing: -0.3,
   },
-  statusAvailable: {
-    backgroundColor: '#DBEAFE',
-  },
-  statusAssigned: {
-    backgroundColor: '#FEF3C7',
-  },
-  statusInProgress: {
-    backgroundColor: '#D1FAE5',
-  },
-  statusCompleted: {
-    backgroundColor: '#D1FAE5',
-  },
-  statusText: {
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  statusTextAvailable: {
-    color: '#1E40AF',
-  },
-  statusTextAssigned: {
-    color: '#D97706',
-  },
-  statusTextInProgress: {
-    color: '#059669',
-  },
-  statusTextCompleted: {
-    color: '#059669',
-  },
-  row: {
+  locationRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: SPACING.xs,
   },
-  cardDate: {
+  locationText: {
     fontSize: 14,
-    color: COLORS.textSecondary,
-    marginLeft: SPACING.xs,
+    color: '#64748b',
+    fontWeight: '500',
+    marginLeft: 4,
+    flex: 1,
+    lineHeight: 18,
   },
-  cardLocation: {
-    fontSize: 14,
-    color: COLORS.textSecondary,
-    marginLeft: SPACING.xs,
+  statusChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+    borderRadius: 16,
+    gap: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 2,
+    backgroundColor: '#3b82f6',
+  },
+  statusAssigned: {
+    backgroundColor: '#f59e0b',
+  },
+  statusInProgress: {
+    backgroundColor: '#10b981',
+  },
+  statusCompleted: {
+    backgroundColor: '#10b981',
+  },
+  statusText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: 'white',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  cardBody: {
+    gap: SPACING.md,
+  },
+  infoGrid: {
+    flexDirection: 'row',
+    gap: SPACING.md,
+  },
+  infoItem: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  infoIcon: {
+    width: 24,
+    height: 24,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  infoContent: {
     flex: 1,
   },
-  cardPay: {
-    fontSize: 14,
-    color: COLORS.textSecondary,
-    marginLeft: SPACING.xs,
+  infoLabel: {
+    fontSize: 10,
+    color: '#64748b',
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: 2,
   },
-  cardGuards: {
-    fontSize: 14,
-    color: COLORS.textSecondary,
-    marginLeft: SPACING.xs,
+  infoValue: {
+    fontSize: 13,
+    color: '#1e293b',
+    fontWeight: '600',
+    lineHeight: 18,
   },
-  cardManager: {
-    fontSize: 14,
-    color: COLORS.textSecondary,
-    marginLeft: SPACING.xs,
+  cardFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingTop: SPACING.sm,
+    borderTopWidth: 1,
+    borderTopColor: '#f1f5f9',
+    marginTop: SPACING.xs,
   },
-  cardActions: {
-    marginTop: SPACING.md,
-    alignItems: 'flex-end',
+  paySection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  payAmount: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: '#10b981',
+    letterSpacing: -0.5,
+  },
+  payUnit: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#64748b',
+  },
+  guardsSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  guardsText: {
+    fontSize: 12,
+    color: '#64748b',
+    fontWeight: '500',
+    lineHeight: 16,
+  },
+  acceptButtonContainer: {
+    marginTop: SPACING.sm,
   },
   acceptButton: {
-    borderRadius: 8,
+    borderRadius: 16,
     overflow: 'hidden',
+    width: '100%',
+    shadowColor: '#2563eb',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
   },
   gradientButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: SPACING.sm,
-    paddingHorizontal: SPACING.md,
-    gap: SPACING.xs,
+    paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.lg,
+    gap: SPACING.sm,
   },
   buttonText: {
     color: COLORS.white,
-    fontSize: 14,
-    fontWeight: '600',
+    fontSize: 16,
+    fontWeight: '700',
+    letterSpacing: 0.5,
   },
   emptyContainer: {
     flex: 1,
