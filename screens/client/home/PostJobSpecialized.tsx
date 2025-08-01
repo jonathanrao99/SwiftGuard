@@ -20,6 +20,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import Toast from 'react-native-toast-message';
 import { supabase } from '../../../supabaseClient';
 import { useAuth } from '../../../contexts/AuthContext';
+import { Picker } from '@react-native-picker/picker';
 
 // Types
 import { JobTemplate } from '../../../components/post-job/JobTemplateSelector';
@@ -31,6 +32,7 @@ import { DaySelector } from '../../../components/DaySelector';
 interface PostJobSpecializedFormData {
   title: string;
   location: string;
+  venue: string;
   startDate: string;
   endDate?: string;
   startTime: string;
@@ -42,7 +44,6 @@ interface PostJobSpecializedFormData {
   managerEmail: string;
   specialInstructions: string;
   guestCount?: number;
-  venueType: string;
 }
 
 interface PostJobSpecializedProps {
@@ -69,6 +70,7 @@ const PostJobSpecialized: React.FC<PostJobSpecializedProps> = ({ navigation, rou
       title: '',
       description: '',
       location: '',
+      venue: '',
       startDate: '',
       startTime: '',
       endTime: '',
@@ -79,7 +81,6 @@ const PostJobSpecialized: React.FC<PostJobSpecializedProps> = ({ navigation, rou
       managerEmail: '',
       specialInstructions: '',
       guestCount: 0,
-      venueType: 'Other',
     }
   };
   const { control, handleSubmit, formState: { errors }, watch, setValue, trigger } = useForm<PostJobSpecializedFormData>();
@@ -99,9 +100,9 @@ const PostJobSpecialized: React.FC<PostJobSpecializedProps> = ({ navigation, rou
   // Initialize form with template defaults
   useEffect(() => {
     setValue('title', template.defaultSettings.title);
+    setValue('venue', template.defaultSettings.venue || '');
     setValue('hourlyPay', template.defaultSettings.hourlyPay.toString());
     setValue('numGuards', template.defaultSettings.numGuards);
-    setValue('venueType', template.defaultSettings.venueType);
     setValue('specialInstructions', template.defaultSettings.specialInstructions || '');
     
     // Set default values based on template
@@ -191,6 +192,7 @@ const PostJobSpecialized: React.FC<PostJobSpecializedProps> = ({ navigation, rou
         title: data.title,
         description: template.defaultSettings.description,
         location: data.location,
+        venue: data.venue,
         pay: parseFloat(data.hourlyPay),
         num_guards: data.numGuards,
         start_time: startDateTime.toISOString(),
@@ -199,7 +201,6 @@ const PostJobSpecialized: React.FC<PostJobSpecializedProps> = ({ navigation, rou
         manager_name: data.managerName,
         manager_phone: data.managerPhone,
         manager_email: data.managerEmail,
-        venue_type: data.venueType,
         guest_count: data.guestCount,
         special_instructions: data.specialInstructions,
         recurring_mode: recurringMode,
@@ -257,91 +258,22 @@ const PostJobSpecialized: React.FC<PostJobSpecializedProps> = ({ navigation, rou
     await submitJob(data);
   };
 
-  const getTemplateSpecificFields = () => {
-    switch (template.id) {
-      case 'concert-security':
-        return (
-          <View style={styles.fieldGroup}>
-            <Text style={styles.fieldLabel}>Expected Guest Count</Text>
-            <Controller
-              control={control}
-              name="guestCount"
-              render={({ field: { onChange, value } }) => (
-                <TextInput
-                  style={styles.input}
-                  value={value?.toString() || '1000'}
-                  onChangeText={(text) => onChange(parseInt(text) || 1000)}
-                  placeholder="1000"
-                  keyboardType="numeric"
-                />
-              )}
-            />
-          </View>
-        );
-      
-      case 'nightclub-security':
-        return (
-          <View style={styles.fieldGroup}>
-            <Text style={styles.fieldLabel}>Venue Capacity</Text>
-            <Controller
-              control={control}
-              name="guestCount"
-              render={({ field: { onChange, value } }) => (
-                <TextInput
-                  style={styles.input}
-                  value={value?.toString() || '500'}
-                  onChangeText={(text) => onChange(parseInt(text) || 500)}
-                  placeholder="500"
-                  keyboardType="numeric"
-                />
-              )}
-            />
-          </View>
-        );
-      
-      case 'corporate-security':
-        return (
-          <View style={styles.fieldGroup}>
-            <Text style={styles.fieldLabel}>Event Type</Text>
-            <Controller
-              control={control}
-              name="venueType"
-              render={({ field: { onChange, value } }) => (
-                <View style={styles.pickerContainer}>
-                  {['Conference', 'Meeting', 'Product Launch', 'Corporate Party', 'Other'].map((type) => (
-                    <TouchableOpacity
-                      key={type}
-                      style={[styles.pickerOption, value === type && styles.pickerOptionSelected]}
-                      onPress={() => onChange(type)}
-                    >
-                      <Text style={[styles.pickerOptionText, value === type && styles.pickerOptionTextSelected]}>
-                        {type}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              )}
-            />
-          </View>
-        );
-      
-      default:
-        return null;
-    }
-  };
-
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
-      <StatusBar translucent={false} backgroundColor={COLORS.white} barStyle="dark-content" />
-      
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={handleBack}>
-          <Feather name="arrow-left" size={24} color="#222" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>{template.title}</Text>
-        <View style={{ width: 24 }} />
-      </View>
+    <LinearGradient
+      colors={['rgba(255, 255, 255, 0.9)', 'rgba(255, 255, 255, 0.95)']}
+      style={styles.gradientContainer}
+    >
+      <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
+        <StatusBar translucent={true} backgroundColor="transparent" barStyle="dark-content" />
+        
+        {/* Header */}
+        <View style={styles.header}>
+          <TouchableOpacity onPress={handleBack}>
+            <Feather name="arrow-left" size={24} color="#222" />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>{template.title}</Text>
+          <View style={{ width: 24 }} />
+        </View>
 
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
         <ScrollView
@@ -352,11 +284,10 @@ const PostJobSpecialized: React.FC<PostJobSpecializedProps> = ({ navigation, rou
         >
           {/* Template Info */}
           <View style={styles.templateInfo}>
-            <View style={[styles.templateIcon, { backgroundColor: template.color }]}>
-              <MaterialIcons name={template.icon} size={24} color="white" />
+            <View style={[styles.templateIcon, { backgroundColor: '#EBF4FF' }]}>
+              <MaterialIcons name={template.icon} size={24} color="#2563eb" />
             </View>
             <View style={styles.templateDetails}>
-              <Text style={styles.templateTitle}>{template.title}</Text>
               <Text style={styles.templateSubtext}>{template.subtext}</Text>
             </View>
           </View>
@@ -395,6 +326,25 @@ const PostJobSpecialized: React.FC<PostJobSpecializedProps> = ({ navigation, rou
               )}
             />
             {errors.location && <Text style={styles.errorText}>{errors.location.message}</Text>}
+          </View>
+
+          {/* Venue */}
+          <View style={styles.fieldGroup}>
+            <Text style={styles.fieldLabel}>Venue *</Text>
+            <Controller
+              control={control}
+              name="venue"
+              rules={{ required: 'Venue is required' }}
+              render={({ field: { onChange, value } }) => (
+                <TextInput
+                  style={styles.input}
+                  placeholder="e.g., Midnight bar, Marriott Hotel 2nd floor"
+                  value={value}
+                  onChangeText={onChange}
+                />
+              )}
+            />
+            {errors.venue && <Text style={styles.errorText}>{errors.venue.message}</Text>}
           </View>
 
           {/* Job Type Toggle - Moved above date field */}
@@ -535,14 +485,33 @@ const PostJobSpecialized: React.FC<PostJobSpecializedProps> = ({ navigation, rou
               <Controller
                 control={control}
                 name="hourlyPay"
-                rules={{ required: 'Hourly pay is required' }}
+                rules={{ 
+                  required: 'Hourly pay is required',
+                  pattern: {
+                    value: /^\d+(\.\d{0,2})?$/,
+                    message: 'Please enter a valid amount (e.g., 25.50)'
+                  },
+                  min: {
+                    value: 1,
+                    message: 'Hourly pay must be at least $1'
+                  }
+                }}
                 render={({ field: { onChange, value } }) => (
                   <View style={styles.inputContainer}>
                     <Text style={styles.currencySymbol}>$</Text>
                     <TextInput
                       style={styles.input}
                       value={value}
-                      onChangeText={onChange}
+                      onChangeText={(text) => {
+                        // Only allow numbers and one decimal point
+                        const cleaned = text.replace(/[^0-9.]/g, '');
+                        // Ensure only one decimal point
+                        const parts = cleaned.split('.');
+                        if (parts.length > 2) return;
+                        // Limit decimal places to 2
+                        if (parts[1] && parts[1].length > 2) return;
+                        onChange(cleaned);
+                      }}
                       placeholder="25.00"
                       keyboardType="numeric"
                     />
@@ -550,6 +519,7 @@ const PostJobSpecialized: React.FC<PostJobSpecializedProps> = ({ navigation, rou
                   </View>
                 )}
               />
+              {errors.hourlyPay && <Text style={styles.errorText}>{errors.hourlyPay.message}</Text>}
             </View>
 
             <View style={[styles.fieldGroup, styles.halfWidth]}>
@@ -572,8 +542,6 @@ const PostJobSpecialized: React.FC<PostJobSpecializedProps> = ({ navigation, rou
           </View>
 
           {/* Template-specific fields */}
-          {getTemplateSpecificFields()}
-
           {/* Contact Information */}
           <View style={styles.fieldGroup}>
             <Text style={styles.fieldLabel}>Point of Contact *</Text>
@@ -648,49 +616,55 @@ const PostJobSpecialized: React.FC<PostJobSpecializedProps> = ({ navigation, rou
               )}
             />
           </View>
+
+          {/* Submit Button */}
+          <View style={styles.submitButtonContainer}>
+            <TouchableOpacity
+              style={[styles.submitButton, styles.fullWidth]}
+              onPress={handleSubmit(onSubmit)}
+              disabled={isSubmitting}
+            >
+              <LinearGradient 
+                colors={["#2563eb", "#6366f1"]} 
+                start={{ x: 0, y: 0 }} 
+                end={{ x: 1, y: 0 }} 
+                style={styles.gradientButton}
+              >
+                {isSubmitting ? (
+                  <ActivityIndicator color="white" size="small" />
+                ) : (
+                  <Text style={styles.buttonText}>
+                    Post Job - ${parseFloat(watchedHourlyPay || '0') * (watchedNumGuards || 1) * 4}
+                  </Text>
+                )}
+              </LinearGradient>
+            </TouchableOpacity>
+          </View>
         </ScrollView>
       </KeyboardAvoidingView>
-
-      {/* Bottom button */}
-      <View style={styles.footerBar}>
-        <TouchableOpacity
-          style={[styles.submitButton, styles.fullWidth]}
-          onPress={handleSubmit(onSubmit)}
-          disabled={isSubmitting}
-        >
-          <LinearGradient 
-            colors={["#2563eb", "#6366f1"]} 
-            start={{ x: 0, y: 0 }} 
-            end={{ x: 1, y: 0 }} 
-            style={styles.gradientButton}
-          >
-            {isSubmitting ? (
-              <ActivityIndicator color="white" size="small" />
-            ) : (
-              <Text style={styles.buttonText}>
-                Post Job - ${parseFloat(watchedHourlyPay || '0') * (watchedNumGuards || 1) * 4}
-              </Text>
-            )}
-          </LinearGradient>
-        </TouchableOpacity>
-      </View>
     </SafeAreaView>
+    </LinearGradient>
   );
 };
 
 const styles = StyleSheet.create({
+  gradientContainer: {
+    flex: 1,
+  },
   safeArea: {
     flex: 1,
-    backgroundColor: COLORS.white,
+    backgroundColor: 'transparent',
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.md,
+    paddingHorizontal: 24,
+    paddingTop: Platform.OS === 'android' ? 48 : 4,
+    paddingBottom: 10,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.border,
+    backgroundColor: 'transparent',
   },
   headerTitle: {
     fontSize: 18,
@@ -701,8 +675,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   container: {
-    padding: SPACING.lg,
-    paddingBottom: 100,
+    padding: SPACING.md,
+    paddingBottom: 60,
   },
   templateInfo: {
     flexDirection: 'row',
@@ -711,6 +685,7 @@ const styles = StyleSheet.create({
     padding: SPACING.md,
     borderRadius: 12,
     marginBottom: SPACING.lg,
+    borderWidth: 0.2,
   },
   templateIcon: {
     width: 48,
@@ -729,8 +704,8 @@ const styles = StyleSheet.create({
     color: COLORS.textDark,
   },
   templateSubtext: {
-    fontSize: 14,
-    color: COLORS.textSecondary,
+    fontSize: 16,
+    color: COLORS.textDark,
     marginTop: 2,
   },
   fieldGroup: {
@@ -888,6 +863,23 @@ const styles = StyleSheet.create({
     color: COLORS.white,
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  dropdownWrapper: {
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: 8,
+    backgroundColor: COLORS.white,
+  },
+  picker: {
+    width: '100%',
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
+    fontSize: 16,
+    color: COLORS.textDark,
+  },
+  submitButtonContainer: {
+    marginTop: SPACING.lg,
+    marginBottom: SPACING.xl,
   },
 });
 

@@ -212,6 +212,25 @@ export const EventDetailsSection: React.FC<EventDetailsSectionProps> = React.mem
           <Text style={styles.errorText}>{errors.location.message}</Text>
         )}
 
+        {/* Venue */}
+        <Text style={styles.label}>Venue</Text>
+        <Controller
+          control={control}
+          name="venue"
+          rules={{ required: 'Venue is required' }}
+          render={({ field: { onChange, value } }) => (
+            <TextInput
+              style={styles.input}
+              placeholder="e.g., Midnight bar, Marriott Hotel 2nd floor"
+              value={value}
+              onChangeText={onChange}
+            />
+          )}
+        />
+        {step1Submitted && errors.venue && (
+          <Text style={styles.errorText}>{errors.venue.message}</Text>
+        )}
+
         {/* Time Selection (hide date) */}
         <DateTimePair
           date={startDate}
@@ -346,6 +365,31 @@ export const EventDetailsSection: React.FC<EventDetailsSectionProps> = React.mem
                 </View>
               )}
             />
+            {step1Submitted && errors.venueType && (
+              <Text style={styles.errorText}>{errors.venueType.message}</Text>
+            )}
+            {venueType === 'Other' && (
+              <Controller
+                control={control}
+                name="customVenueType"
+                rules={{ required: 'Please specify the custom event type' }}
+                render={({ field: { onChange, value } }) => (
+                  <TextInput
+                    style={[
+                      styles.input,
+                      { marginTop: SPACING.md, height: 48 },
+                      errors.customVenueType && styles.inputError
+                    ]}
+                    placeholder="Specify custom event type"
+                    value={value}
+                    onChangeText={onChange}
+                  />
+                )}
+              />
+            )}
+            {step1Submitted && venueType === 'Other' && errors.customVenueType && (
+              <Text style={styles.errorText}>{errors.customVenueType.message}</Text>
+            )}
           </View>
           <View style={{ flex: 1, marginLeft: 0 }}>
             <Text style={styles.label}>Estimated Guest Count</Text>
@@ -405,26 +449,6 @@ export const EventDetailsSection: React.FC<EventDetailsSectionProps> = React.mem
             )}
           </View>
         </View>
-        {venueType === 'Other' && (
-          <Controller
-            control={control}
-            name="customVenueType"
-            rules={{ required: 'Please specify the custom venue type' }}
-            render={({ field: { onChange, value } }) => (
-              <TextInput
-                style={[
-                  styles.input,
-                  { marginTop: SPACING.md, height: 48 },
-                  errors.customVenueType && styles.inputError
-                ]}
-                placeholder="E.g., Community Hall"
-                value={value}
-                onChangeText={onChange}
-                onBlur={() => !value && Alert.alert('Error', 'Custom venue type is required')}
-              />
-            )}
-          />
-        )}
       </View>
     </View>
   );

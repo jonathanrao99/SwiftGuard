@@ -5,6 +5,8 @@ import {
   TouchableOpacity,
   StyleSheet,
   Platform,
+  Modal,
+  Pressable,
 } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -31,7 +33,9 @@ export const TimeSelector: React.FC<TimeSelectorProps> = ({
   );
 
   const handleTimeChange = (event: any, time?: Date) => {
-    setShowPicker(Platform.OS === 'ios');
+    if (Platform.OS === 'android') {
+      setShowPicker(false);
+    }
     if (time) {
       setSelectedTime(time);
       const hours = time.getHours().toString().padStart(2, '0');
@@ -69,13 +73,46 @@ export const TimeSelector: React.FC<TimeSelectorProps> = ({
       {error && <Text style={styles.errorText}>{error}</Text>}
       
       {showPicker && (
-        <DateTimePicker
-          value={selectedTime}
-          mode="time"
-          display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-          onChange={handleTimeChange}
-          is24Hour={false}
-        />
+        Platform.OS === 'ios' ? (
+          <Modal
+            transparent={true}
+            animationType="slide"
+            visible={showPicker}
+            onRequestClose={() => setShowPicker(false)}
+          >
+            <Pressable 
+              style={styles.modalOverlay} 
+              onPress={() => setShowPicker(false)}
+            >
+              <Pressable style={styles.pickerContainer} onPress={(e) => e.stopPropagation()}>
+                <View style={styles.modalHeader}>
+                  <Text style={styles.modalTitle}>Select Time</Text>
+                  <TouchableOpacity onPress={() => setShowPicker(false)}>
+                    <Text style={styles.closeButton}>Done</Text>
+                  </TouchableOpacity>
+                </View>
+                <View style={styles.pickerWrapper}>
+                  <DateTimePicker
+                    value={selectedTime}
+                    mode="time"
+                    display="spinner"
+                    onChange={handleTimeChange}
+                    is24Hour={false}
+                    style={styles.dateTimePicker}
+                  />
+                </View>
+              </Pressable>
+            </Pressable>
+          </Modal>
+        ) : (
+          <DateTimePicker
+            value={selectedTime}
+            mode="time"
+            display="default"
+            onChange={handleTimeChange}
+            is24Hour={false}
+          />
+        )
       )}
     </View>
   );
@@ -114,5 +151,53 @@ const styles = StyleSheet.create({
     color: COLORS.error,
     fontSize: 12,
     marginTop: SPACING.xs,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+  },
+  pickerContainer: {
+    backgroundColor: COLORS.white,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: SPACING.lg,
+    width: '100%',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: -2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    width: '100%',
+    marginBottom: SPACING.md,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: COLORS.textDark,
+  },
+  closeButton: {
+    color: COLORS.primary,
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  pickerWrapper: {
+    width: '100%',
+    alignItems: 'center',
+    paddingVertical: SPACING.md,
+  },
+  dateTimePicker: {
+    width: '100%',
+    height: 200,
   },
 }); 

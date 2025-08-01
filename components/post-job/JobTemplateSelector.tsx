@@ -12,6 +12,7 @@ import {
 import { MaterialIcons, Feather } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS, SPACING } from '../../theme';
+import { LinearGradient } from 'expo-linear-gradient';
 
 const { width } = Dimensions.get('window');
 
@@ -25,6 +26,7 @@ export interface JobTemplate {
   defaultSettings: {
     title: string;
     description: string;
+    venue: string;
     venueType: string;
     hourlyPay: number;
     numGuards: number;
@@ -49,6 +51,7 @@ export const jobTemplates: JobTemplate[] = [
     defaultSettings: {
       title: 'Bar Security',
       description: 'Professional security services for bar/nightlife venue',
+      venue: 'Bar',
       venueType: 'Bar',
       hourlyPay: 25,
       numGuards: 2,
@@ -80,6 +83,7 @@ export const jobTemplates: JobTemplate[] = [
     defaultSettings: {
       title: 'Nightclub Security',
       description: 'Professional security for high-energy nightclub environment',
+      venue: 'Nightclub',
       venueType: 'Nightclub',
       hourlyPay: 30,
       numGuards: 3,
@@ -111,6 +115,7 @@ export const jobTemplates: JobTemplate[] = [
     defaultSettings: {
       title: 'Event Security',
       description: 'Professional security for private events and celebrations',
+      venue: 'Private Event',
       venueType: 'Private Event',
       hourlyPay: 22,
       numGuards: 2,
@@ -142,6 +147,7 @@ export const jobTemplates: JobTemplate[] = [
     defaultSettings: {
       title: 'Concert Security',
       description: 'Professional security for concerts and live music events',
+      venue: 'Concert',
       venueType: 'Concert',
       hourlyPay: 28,
       numGuards: 4,
@@ -173,6 +179,7 @@ export const jobTemplates: JobTemplate[] = [
     defaultSettings: {
       title: 'Corporate Security',
       description: 'Professional security for corporate events and business functions',
+      venue: 'Corporate',
       venueType: 'Corporate',
       hourlyPay: 24,
       numGuards: 2,
@@ -204,6 +211,7 @@ export const jobTemplates: JobTemplate[] = [
     defaultSettings: {
       title: '',
       description: '',
+      venue: 'Other',
       venueType: 'Other',
       hourlyPay: 20,
       numGuards: 1,
@@ -251,91 +259,99 @@ export const JobTemplateSelector: React.FC<JobTemplateSelectorProps> = ({ naviga
   };
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
-      <StatusBar translucent={false} backgroundColor={COLORS.white} barStyle="dark-content" />
-      
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Feather name="arrow-left" size={24} color="#222" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Choose Job Type</Text>
-        <View style={{ width: 24 }} />
-      </View>
+    <LinearGradient
+      colors={['rgba(255, 255, 255, 0.9)', 'rgba(255, 255, 255, 0.95)']}
+      style={styles.gradientContainer}
+    >
+      <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
+        <StatusBar translucent={true} backgroundColor="transparent" barStyle="dark-content" />
+        
+        {/* Header */}
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => navigation.goBack()}>
+            <Feather name="arrow-left" size={24} color="#222" />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Choose Job Type</Text>
+          <View style={{ width: 24 }} />
+        </View>
 
-      <View style={styles.container}>
-        <ScrollView 
-          style={styles.scrollView}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.contentContainer}
-        >
-          <View style={styles.templatesList}>
-            {jobTemplates.map((template) => (
-              <TouchableOpacity
-                key={template.id}
-                style={[
-                  styles.jobCard,
-                  selectedTemplate?.id === template.id && styles.selectedCard
-                ]}
-                onPress={() => handleTemplateSelect(template)}
-                activeOpacity={0.7}
-              >
-                <View style={styles.iconWrapper}>
-                  <MaterialIcons name={template.icon} size={20} color={COLORS.primary} />
-                </View>
-                
-                <View style={styles.jobInfo}>
-                  <Text style={styles.jobTitle}>{template.title}</Text>
-                  <Text style={styles.subtext}>{template.subtext}</Text>
-                </View>
-                
-                <View style={styles.cardActions}>
-                  {selectedTemplate?.id === template.id && (
-                    <View style={styles.selectedIndicator}>
-                      
-                    </View>
-                  )}
-                  <MaterialIcons name="chevron-right" size={18} color="#9CA3AF" />
-                </View>
+        <View style={styles.container}>
+          <ScrollView 
+            style={styles.scrollView}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.contentContainer}
+          >
+            <View style={styles.templatesList}>
+              {jobTemplates.map((template) => (
+                <TouchableOpacity
+                  key={template.id}
+                  style={[
+                    styles.jobCard,
+                    selectedTemplate?.id === template.id && styles.selectedCard
+                  ]}
+                  onPress={() => handleTemplateSelect(template)}
+                  activeOpacity={0.7}
+                >
+                  <View style={styles.iconWrapper}>
+                    <MaterialIcons name={template.icon} size={20} color="#2563eb" />
+                  </View>
+                  
+                  <View style={styles.jobInfo}>
+                    <Text style={styles.jobTitle}>{template.title}</Text>
+                    <Text style={styles.subtext}>{template.subtext}</Text>
+                  </View>
+                  
+                  <View style={styles.cardActions}>
+                    {selectedTemplate?.id === template.id && (
+                      <View style={styles.selectedIndicator}>
+                        
+                      </View>
+                    )}
+                    <MaterialIcons name="chevron-right" size={18} color="#9CA3AF" />
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </ScrollView>
+
+          {/* Floating CTA Button */}
+          {selectedTemplate && (
+            <View style={styles.floatingCta}>
+              <TouchableOpacity style={styles.continueButton} onPress={handleContinue}>
+                <Text style={styles.continueButtonText}>
+                  Continue with '{selectedTemplate.title}'
+                </Text>
               </TouchableOpacity>
-            ))}
-          </View>
-        </ScrollView>
-
-        {/* Floating CTA Button */}
-        {selectedTemplate && (
-          <View style={styles.floatingCta}>
-            <TouchableOpacity style={styles.continueButton} onPress={handleContinue}>
-              <Text style={styles.continueButtonText}>
-                Continue with '{selectedTemplate.title}'
-              </Text>
-            </TouchableOpacity>
-          </View>
-        )}
-      </View>
-    </SafeAreaView>
+            </View>
+          )}
+        </View>
+      </SafeAreaView>
+    </LinearGradient>
   );
 };
 
 const styles = StyleSheet.create({
+  gradientContainer: {
+    flex: 1,
+  },
   safeArea: { 
     flex: 1, 
-    backgroundColor: '#ffffff' 
+    backgroundColor: 'transparent' 
   },
   container: { 
     flex: 1, 
-    backgroundColor: '#ffffff' 
+    backgroundColor: 'transparent' 
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: SPACING.lg,
-    paddingTop: Platform.OS === 'android' ? SPACING.sm * 1.2 : SPACING.xl * 1.2,
-    paddingBottom: SPACING.sm,
+    paddingHorizontal: 24,
+    paddingTop: Platform.OS === 'android' ? 48 : 4,
+    paddingBottom: 10,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.border,
-    backgroundColor: COLORS.white,
+    backgroundColor: 'transparent',
   },
   headerTitle: { 
     fontSize: 20, 
@@ -367,7 +383,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F0F4FF',
   },
   iconWrapper: {
-    backgroundColor: '#EEF2FF',
+    backgroundColor: '#EBF4FF',
     padding: 10,
     borderRadius: 8,
     marginRight: 12,

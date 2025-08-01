@@ -44,6 +44,7 @@ interface PostJobFormData {
   title: string;
   description: string;
   location: string;
+  venue: string;
   hourlyPay: string;
   numGuards: number;
   genderPref: string;
@@ -103,6 +104,7 @@ const PostJob: React.FC<PostJobProps> = ({ navigation }) => {
       title: '',
       description: '',
       location: '',
+      venue: '',
       hourlyPay: '',
       numGuards: 1,
       genderPref: 'No Preference',
@@ -595,36 +597,40 @@ const PostJob: React.FC<PostJobProps> = ({ navigation }) => {
   );
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
-      {/* Status bar shadow when sheet is open */}
-      {isSheetOpen && (
-        <View style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          height: statusBarHeight + 4,
-          backgroundColor: '#000',
-          opacity: 0.1,
-          zIndex: 20,
-        }} />
-      )}
-      <StatusBar translucent={false} backgroundColor={COLORS.white} barStyle="dark-content" />
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => {
-          if (currentStep === 1 && isDirty) {
-            setShowUnsavedModal(true);
-          } else if (currentStep > 1) {
-            onPrevStep();
-          } else {
-            navigation.navigate('Client');
-          }
-        }}>
-          <Feather name="arrow-left" size={24} color="#222" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Post New Job</Text>
-        <View style={{ width: 24 }} />
-      </View>
+    <LinearGradient
+      colors={['rgba(255, 255, 255, 0.9)', 'rgba(255, 255, 255, 0.95)']}
+      style={styles.gradientContainer}
+    >
+      <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
+        {/* Status bar shadow when sheet is open */}
+        {isSheetOpen && (
+          <View style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            height: statusBarHeight + 4,
+            backgroundColor: '#000',
+            opacity: 0.1,
+            zIndex: 20,
+          }} />
+        )}
+        <StatusBar translucent={true} backgroundColor="transparent" barStyle="dark-content" />
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => {
+            if (currentStep === 1 && isDirty) {
+              setShowUnsavedModal(true);
+            } else if (currentStep > 1) {
+              onPrevStep();
+            } else {
+              navigation.navigate('Client');
+            }
+          }}>
+            <Feather name="arrow-left" size={24} color="#222" />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Post New Job</Text>
+          <View style={{ width: 24 }} />
+        </View>
 
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
         {/* Sticky step indicator */}
@@ -686,13 +692,13 @@ const PostJob: React.FC<PostJobProps> = ({ navigation }) => {
         }}
       />
 
-      {/* Confirmation Modal */}
-      <Modal
-        visible={showConfirmationModal}
-        animationType="slide"
-        transparent={true}
-        onRequestClose={() => setShowConfirmationModal(false)}
-      >
+        {/* Confirmation Modal */}
+        <Modal
+          visible={showConfirmationModal}
+          animationType="slide"
+          transparent={true}
+          onRequestClose={() => setShowConfirmationModal(false)}
+        >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <ScrollView showsVerticalScrollIndicator={false}>
@@ -871,28 +877,32 @@ const PostJob: React.FC<PostJobProps> = ({ navigation }) => {
         </View>
       </Modal>
     </SafeAreaView>
+    </LinearGradient>
   );
 };
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: '#ffffff' },
+  gradientContainer: {
+    flex: 1,
+  },
+  safeArea: { flex: 1, backgroundColor: 'transparent' },
   container: {
     flexGrow: 1,
     paddingHorizontal: SPACING.md,
     paddingTop: SPACING.sm,
     paddingBottom: SPACING.xl * 3,
-    backgroundColor: COLORS.white,
+    backgroundColor: 'transparent',
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: SPACING.lg,
-    paddingTop: Platform.OS === 'android' ? SPACING.sm * 1.2 : SPACING.xl * 1.2,
-    paddingBottom: SPACING.sm,
+    paddingHorizontal: 24,
+    paddingTop: Platform.OS === 'android' ? 48 : 4,
+    paddingBottom: 10,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.border,
-    backgroundColor: COLORS.white,
+    backgroundColor: 'transparent',
   },
   headerTitle: { fontSize: 20, fontWeight: '600', color: COLORS.textDark },
   label: { fontSize: 14, fontWeight: '600', color: COLORS.textDark, marginBottom: SPACING.xs, marginTop: SPACING.md },
