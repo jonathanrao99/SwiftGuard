@@ -1,7 +1,7 @@
-import React, { lazy, Suspense } from 'react';
+import React, { lazy, Suspense, useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
-import { Platform, View, ActivityIndicator } from 'react-native';
+import { Platform, View, ActivityIndicator, StatusBar, useColorScheme } from 'react-native';
 import { StripeProvider } from '@stripe/stripe-react-native';
 import { enableScreens } from 'react-native-screens';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -19,6 +19,7 @@ import CustomBottomNav from './components/CustomBottomNav';
 import { AuthProvider } from './contexts/AuthContext';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import Constants from 'expo-constants';
+import * as NavigationBar from 'expo-navigation-bar';
 
 // Lazy load screens for better performance
 const LoadingScreen = lazy(() => import('./screens/onboarding/LoadingScreen'));
@@ -115,16 +116,35 @@ export default function App() {
   // Get Stripe key from environment variables
   const extra = (Constants as any).expoConfig?.extra || (Constants as any).manifest?.extra;
   const STRIPE_PUBLIC_KEY = extra?.STRIPE_PUBLIC_KEY || process.env.STRIPE_PUBLIC_KEY;
+  const colorScheme = useColorScheme();
+
+  // Configure Android navigation bar to match our gradient
+  // This ensures the system navigation bar blends seamlessly with our app's gradient background
+  useEffect(() => {
+    if (Platform.OS === 'android') {
+      const isDark = colorScheme === 'dark';
+      // Quick test: Uncomment the line below to test if navigation bar is working
+      // NavigationBar.setBackgroundColorAsync('#ff0000'); // RED for testing
+      NavigationBar.setBackgroundColorAsync(isDark ? '#27272a' : '#e0f2ff');
+      NavigationBar.setButtonStyleAsync(isDark ? 'light' : 'dark');
+    }
+  }, [colorScheme]);
 
   return (
-    <ErrorBoundary>
-      <GluestackUIProvider config={gluestackUIConfig}>
-        <SafeAreaProvider>
-          <GestureHandlerRootView style={{ flex: 1 }}>
-            <BottomSheetModalProvider>
-              <AuthProvider>
-                <StripeProvider publishableKey={STRIPE_PUBLIC_KEY || 'pk_test_51R5tBA05xKnpNtzd6cGTTNnKLlOYPKdFaiJcXAtMHCWNpTSOv7FYwgMYhoNfIBSM27GXDFVoDCNkLGgcMkHclbhj00y61WpU98'}>
-                  <NavigationContainer>
+    <>
+      <StatusBar 
+        translucent 
+        backgroundColor="transparent" 
+        barStyle="dark-content"
+      />
+      <ErrorBoundary>
+        <GluestackUIProvider config={gluestackUIConfig}>
+          <SafeAreaProvider>
+            <GestureHandlerRootView style={{ flex: 1 }}>
+              <BottomSheetModalProvider>
+                <AuthProvider>
+                  <StripeProvider publishableKey={STRIPE_PUBLIC_KEY || 'pk_test_51R5tBA05xKnpNtzd6cGTTNnKLlOYPKdFaiJcXAtMHCWNpTSOv7FYwgMYhoNfIBSM27GXDFVoDCNkLGgcMkHclbhj00y61WpU98'}>
+                    <NavigationContainer>
                   <Stack.Navigator initialRouteName="Loading" screenOptions={{ headerShown: false }}>
                     <Stack.Screen 
                       name="Loading" 
@@ -318,5 +338,6 @@ export default function App() {
         </SafeAreaProvider>
       </GluestackUIProvider>
     </ErrorBoundary>
+    </>
   );
 }

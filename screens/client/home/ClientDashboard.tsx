@@ -9,10 +9,11 @@ import {
   StatusBar, 
   Dimensions, 
   TouchableOpacity, 
-  SafeAreaView, 
   useColorScheme,
   ActivityIndicator 
 } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import * as NavigationBar from 'expo-navigation-bar';
 import Animated, { 
   useSharedValue, 
   useAnimatedStyle, 
@@ -364,6 +365,7 @@ export default function ClientDashboard({ navigation }: { navigation: Navigation
   const contentHeightRef = useRef(0);
   const { setIsScrolledDown } = useTabBarVisibility();
   const colorScheme = useColorScheme();
+  const insets = useSafeAreaInsets();
 
   // Animation values with better spring configurations
   const headerOpacity = useSharedValue(0);
@@ -433,6 +435,17 @@ export default function ClientDashboard({ navigation }: { navigation: Navigation
 
     loadDarkMode();
   }, []);
+
+  // Update Android navigation bar color based on dark mode
+  useEffect(() => {
+    if (Platform.OS === 'android') {
+      const navBarColor = darkMode ? '#27272a' : '#e0f2ff';
+      const buttonStyle = darkMode ? 'light' : 'dark';
+      
+      NavigationBar.setBackgroundColorAsync(navBarColor);
+      NavigationBar.setButtonStyleAsync(buttonStyle);
+    }
+  }, [darkMode]);
 
   useEffect(() => {
     // Enhanced staggered animations with better spring configurations
@@ -507,9 +520,12 @@ export default function ClientDashboard({ navigation }: { navigation: Navigation
       />
       <LinearGradient
         colors={darkMode ? ['#18181b', '#27272a'] : ['#ffffff', '#e0f2ff']}
-        style={{ flex: 1 }}
+        style={{ 
+          flex: 1,
+          paddingBottom: Platform.OS === 'android' ? insets.bottom : 0
+        }}
       >
-        <SafeAreaView style={{ flex: 1, backgroundColor: 'transparent' }}>
+        <SafeAreaView style={{ flex: 1, backgroundColor: 'transparent' }} edges={['top']}>
           <View style={[styles.container, { backgroundColor: 'transparent' }]}>
             {/* Header */}
             <Animated.View style={[styles.headerWrapper, headerAnimatedStyle]}>
@@ -614,7 +630,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
     borderBottomLeftRadius: 24,
     borderBottomRightRadius: 24,
-    paddingTop: Platform.OS === 'android' ? 48 : 4,
+    paddingTop: Platform.OS === 'android' ? 4  : 4,
     paddingBottom: 4,
     paddingHorizontal: '5%',
   },

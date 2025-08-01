@@ -479,7 +479,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 24, // Match Profile screen's spacing.xl (24)
-    paddingTop: Platform.OS === 'android' ? 48 : 4,
+    paddingTop: Platform.OS === 'android' ? 6: 4,
     paddingBottom: 4,
     borderBottomColor: COLORS.border,
     backgroundColor: 'transparent',
