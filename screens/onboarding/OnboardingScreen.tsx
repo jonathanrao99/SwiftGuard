@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, Suspense } from 'react';
 import {
   View,
   Text,
@@ -6,6 +6,7 @@ import {
   StatusBar,
   Dimensions,
   StyleSheet,
+  ActivityIndicator,
 } from 'react-native';
 import Animated, {
   interpolateColor,
@@ -14,8 +15,10 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import Onboarding from 'react-native-onboarding-swiper';
-import LottieView from 'lottie-react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+
+// Lazy load Lottie for better performance
+const LottieView = React.lazy(() => import('lottie-react-native'));
 
 const { width, height } = Dimensions.get('window');
 
@@ -93,12 +96,18 @@ export default function OnboardingScreen({ navigation }: OnboardingScreenProps) 
   const pages: OnboardingPage[] = [
     {
       image: (
-        <LottieView
-          source={require('../../assets/EventSecurity.json')}
-          autoPlay
-          loop
-          style={styles.lottie}
-        />
+        <Suspense fallback={
+          <View style={styles.lottie}>
+            <ActivityIndicator size="large" color="#2563eb" />
+          </View>
+        }>
+          <LottieView
+            source={require('../../assets/EventSecurity.json')}
+            autoPlay
+            loop
+            style={styles.lottie}
+          />
+        </Suspense>
       ),
       title: <Title>Security Is Stressful</Title>,
       subtitle: (
@@ -109,12 +118,18 @@ export default function OnboardingScreen({ navigation }: OnboardingScreenProps) 
     },
     {
       image: (
-        <LottieView
-          source={require('../../assets/SecurePayment.json')}
-          autoPlay
-          loop
-          style={styles.lottie}
-        />
+        <Suspense fallback={
+          <View style={styles.lottie}>
+            <ActivityIndicator size="large" color="#2563eb" />
+          </View>
+        }>
+          <LottieView
+            source={require('../../assets/SecurePayment.json')}
+            autoPlay
+            loop
+            style={styles.lottie}
+          />
+        </Suspense>
       ),
       title: <Title>SwiftGuard Solves It</Title>,
       subtitle: (
@@ -125,12 +140,18 @@ export default function OnboardingScreen({ navigation }: OnboardingScreenProps) 
     },
     {
       image: (
-        <LottieView
-          source={require('../../assets/SecureBuilding.json')}
-          autoPlay
-          loop
-          style={styles.lottie}
-        />
+        <Suspense fallback={
+          <View style={styles.lottie}>
+            <ActivityIndicator size="large" color="#2563eb" />
+          </View>
+        }>
+          <LottieView
+            source={require('../../assets/SecureBuilding.json')}
+            autoPlay
+            loop
+            style={styles.lottie}
+          />
+        </Suspense>
       ),
       title: <Title color="#fff">Built for Your Safety</Title>,
       subtitle: (

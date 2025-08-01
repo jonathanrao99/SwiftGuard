@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "generated": "2025-07-18T01:03:38.346Z",
+  "generated": "2025-08-01T04:14:31.533Z",
   "assets": {
     "adaptive-icon.png": {
       "size": 1038796,
@@ -32,6 +32,11 @@
       "lastModified": "2025-05-23T23:56:50.035Z",
       "type": "mp4"
     },
+    "manifest.json": {
+      "size": 1442,
+      "lastModified": "2025-08-01T03:48:45.804Z",
+      "type": "json"
+    },
     "SecureBuilding.json": {
       "size": 746379,
       "lastModified": "2025-05-21T19:55:58.415Z",
@@ -46,6 +51,11 @@
       "size": 1038796,
       "lastModified": "2025-05-18T22:27:58.711Z",
       "type": "png"
+    },
+    "success.json": {
+      "size": 18569,
+      "lastModified": "2025-07-30T02:13:01.515Z",
+      "type": "json"
     }
   }
 }

@@ -213,8 +213,8 @@ export default function GuardJobDetailsScreen({ route, navigation }: GuardJobDet
                   color={currentStep > index ? COLORS.primary : '#d1d5db'} 
                   style={styles.stepArrow}
                 />
-              </View>
-            )}
+          </View>
+        )}
           </View>
         ))}
       </View>
@@ -424,7 +424,7 @@ export default function GuardJobDetailsScreen({ route, navigation }: GuardJobDet
               <Text style={styles.contactValue}>{job.managerEmail}</Text>
             </View>
           </View>
-        </View>
+              </View>
 
         {/* Action Buttons */}
         <View style={styles.actionButtons}>
@@ -438,7 +438,7 @@ export default function GuardJobDetailsScreen({ route, navigation }: GuardJobDet
             >
               <Text style={styles.acceptButtonText}>Accept Job</Text>
             </TouchableOpacity>
-          )}
+        )}
 
           {job.status === 'assigned' && (
             <TouchableOpacity
@@ -450,7 +450,7 @@ export default function GuardJobDetailsScreen({ route, navigation }: GuardJobDet
             >
               <Text style={styles.trackButtonText}>Start Job</Text>
             </TouchableOpacity>
-          )}
+        )}
         </View>
       </ScrollView>
     </SafeAreaView>

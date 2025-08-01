@@ -5,14 +5,14 @@ import { COLORS, SPACING } from '../../theme';
 import { Controller, Control } from 'react-hook-form';
 import { LocationAutocomplete } from '../LocationAutocomplete';
 import { DateTimePair } from '../DateTimePair';
-import { Calendar as RNCalendar } from 'react-native-calendars';
+import DatePicker from 'react-native-date-picker';
 import { CounterInput } from '../CounterInput';
 import { Picker } from '@react-native-picker/picker';
 import { Feather } from '@expo/vector-icons';
 
 const venueTypes = ['Nightclub', 'Bar', 'Private Event', 'Concert', 'Corporate', 'Other'];
 
-const MemoCalendar = React.memo(RNCalendar);
+// Removed Calendar component - using DatePicker instead
 
 interface EventDetailsSectionProps {
   control: Control<any>;
@@ -118,6 +118,7 @@ export const EventDetailsSection: React.FC<EventDetailsSectionProps> = React.mem
   const [recEndDate, setRecEndDate] = useState<string>('');
   const [showRecStartPicker, setShowRecStartPicker] = useState(false);
   const [showRecEndPicker, setShowRecEndPicker] = useState(false);
+  const [showDatePicker, setShowDatePicker] = useState(false);
   // Compute auto-marked dates between start/end for selected weekdays, parse date parts to avoid timezone
   const autoMarkedDates = useMemo(() => {
     if (!recStartDate || !recEndDate) return {};
@@ -260,18 +261,26 @@ export const EventDetailsSection: React.FC<EventDetailsSectionProps> = React.mem
           ))}
         </View>
 
-        {/* One-time calendar for selecting one or multiple dates */}
+        {/* One-time date selection */}
         {recurringMode === 'One-time' && (
           <>
-            <View style={styles.calendarContainer}>
-              <MemoCalendar
-                onDayPress={handleDayPress}
-                markedDates={selectedDates.reduce((acc: any, date: string) => ({
-                  ...acc,
-                  [date]: { selected: true, selectedColor: COLORS.primary }
-                }), {})}
+            <Text style={styles.label}>Select Date</Text>
+            <TouchableOpacity style={styles.input} onPress={() => setShowDatePicker(true)}>
+              <Text style={[styles.inputText, !selectedDates[0] && styles.placeholderText]}>
+                {selectedDates[0] ? new Date(selectedDates[0]).toLocaleDateString() : 'Select date'}
+              </Text>
+            </TouchableOpacity>
+            {showDatePicker && (
+              <DatePicker
+                date={selectedDates[0] ? new Date(selectedDates[0]) : new Date()}
+                mode="date"
+                onDateChange={(date) => {
+                  const dateString = date.toISOString().split('T')[0];
+                  setSelectedDates([dateString]);
+                  setShowDatePicker(false);
+                }}
               />
-            </View>
+            )}
             <View style={styles.selectedDatesRow}>
               {selectedDates.map(date => {
                 const [year, month, day] = date.split('-').map(Number);
@@ -332,9 +341,22 @@ export const EventDetailsSection: React.FC<EventDetailsSectionProps> = React.mem
                 )}
               </View>
             </View>
-            {/* Read-only calendar for recurring */}
+            {/* Date range summary for recurring */}
             <View style={styles.calendarContainer}>
-              <MemoCalendar markedDates={autoMarkedDates} />
+              <Text style={styles.label}>Selected Date Range</Text>
+              <Text style={styles.inputText}>
+                {recStartDate && recEndDate 
+                  ? `${new Date(recStartDate).toLocaleDateString()} - ${new Date(recEndDate).toLocaleDateString()}`
+                  : 'Select start and end dates above'
+                }
+              </Text>
+              <Text style={[styles.label, { marginTop: SPACING.sm }]}>Selected Weekdays</Text>
+              <Text style={styles.inputText}>
+                {Object.keys(selectedWeekdays).filter(key => selectedWeekdays[key]).length > 0
+                  ? Object.keys(selectedWeekdays).filter(key => selectedWeekdays[key]).join(', ')
+                  : 'No weekdays selected'
+                }
+              </Text>
             </View>
           </>
         )}

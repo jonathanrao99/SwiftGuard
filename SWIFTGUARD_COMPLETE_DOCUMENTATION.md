@@ -8,9 +8,10 @@
 5. [Authentication & Security](#authentication--security)
 6. [UI/UX Modernization](#uiux-modernization)
 7. [Performance Optimizations](#performance-optimizations)
-8. [Development Setup](#development-setup)
-9. [Current Status & Issues](#current-status--issues)
-10. [Future Roadmap](#future-roadmap)
+8. [Bundle Optimization Guide](#bundle-optimization-guide)
+9. [Development Setup](#development-setup)
+10. [Current Status & Issues](#current-status--issues)
+11. [Future Roadmap](#future-roadmap)
 
 ---
 
@@ -391,6 +392,221 @@ This section outlines the performance optimizations implemented in SwiftGuard an
 - **Screen Transitions**: < 500ms
 - **API Responses**: < 2 seconds
 - **Bundle Size**: < 50MB
+
+---
+
+## Bundle Optimization Guide
+
+### 🎯 Goal
+Reduce bundle size to enable successful `eas update` for both platforms simultaneously without timeout issues.
+
+### 📊 Current Bundle Analysis
+- **iOS Bundle**: ~5.7MB
+- **Android Bundle**: ~5.7MB
+- **Large Dependencies**: 12 identified heavy libraries
+
+### 🚀 Optimization Strategies
+
+#### 1. **Metro Configuration Optimizations** ✅
+- Enhanced `metro.config.js` with tree shaking
+- Excluded test files, READMEs, and unnecessary files
+- Optimized minifier configuration
+- Enabled asset optimization
+
+#### 2. **Asset Optimization** ✅
+- Lottie animation optimization script
+- Image compression and optimization
+- Asset manifest generation
+- **Result**: 32.3% reduction in manifest.json
+
+#### 3. **Dependency Management**
+Large dependencies identified:
+- `lottie-react-native` (animations)
+- `react-native-reanimated` (animations)
+- `@stripe/stripe-react-native` (payments)
+- `react-native-calendars` (calendar)
+- `react-native-dropdown-picker` (forms)
+- `react-native-super-grid` (layouts)
+- `react-native-skeleton-placeholder` (loading)
+- `react-native-tab-view` (navigation)
+- `react-native-toast-message` (notifications)
+- `sonner-native` (notifications)
+- `tailwindcss` (styling)
+- `tailwindcss-animate` (animations)
+
+#### 4. **Code Splitting Strategies**
+
+##### A. Lazy Loading Components
+```typescript
+// Use dynamic imports for heavy components
+const HeavyComponent = React.lazy(() => import('./HeavyComponent'));
+
+// Wrap in Suspense
+<Suspense fallback={<LoadingSpinner />}>
+  <HeavyComponent />
+</Suspense>
+```
+
+##### B. Screen-Level Code Splitting
+```typescript
+// Instead of direct imports
+import PostJob from '../screens/client/home/PostJob';
+
+// Use lazy loading
+const PostJob = React.lazy(() => import('../screens/client/home/PostJob'));
+```
+
+#### 5. **Bundle Size Reduction Techniques**
+
+##### A. Remove Unused Dependencies
+```bash
+# Check for unused dependencies
+npm ls
+npx depcheck
+
+# Remove unused packages
+npm uninstall unused-package
+```
+
+##### B. Optimize Imports
+```typescript
+// Instead of
+import { everything } from 'large-library';
+
+// Use specific imports
+import { specificComponent } from 'large-library/specific-component';
+```
+
+##### C. Tree Shaking
+- Ensure all dependencies support tree shaking
+- Use ES6 modules where possible
+- Avoid CommonJS imports in production
+
+#### 6. **Asset Optimization**
+
+##### A. Image Optimization
+```bash
+# Run asset optimization
+npm run optimize-assets
+
+# Use optimized assets
+import optimizedImage from '../assets/optimized/image.png';
+```
+
+##### B. Lottie Animation Optimization
+- Remove unnecessary properties from JSON files
+- Compress animation data
+- Use lower quality for non-critical animations
+
+#### 7. **Update Process Optimization**
+
+##### A. Use Platform-Specific Updates (Current Workaround)
+```bash
+# For immediate fixes
+npm run update:ios
+npm run update:android
+
+# Or manually
+eas update --platform ios --branch master
+eas update --platform android --branch master
+```
+
+##### B. Target Bundle Size Reduction (Goal)
+```bash
+# Target: Reduce bundle to <4MB for both platforms
+npm run update:both
+```
+
+### 🛠️ Implementation Steps
+
+#### Step 1: Analyze Current Bundle
+```bash
+npm run analyze-bundle
+```
+
+#### Step 2: Optimize Assets
+```bash
+npm run optimize-assets
+```
+
+#### Step 3: Implement Lazy Loading
+- Identify heavy screens and components
+- Convert to lazy loading
+- Add loading fallbacks
+
+#### Step 4: Remove Unused Dependencies
+```bash
+npx depcheck
+npm uninstall [unused-packages]
+```
+
+#### Step 5: Test Bundle Size
+```bash
+eas update --branch master --message "Test bundle optimization"
+```
+
+### 📈 Success Metrics
+
+#### Target Bundle Sizes
+- **iOS**: <4MB
+- **Android**: <4MB
+- **Total Assets**: <2MB
+
+#### Update Success Rate
+- **Goal**: 100% successful `eas update` for both platforms
+- **Current**: Requires platform-specific updates
+
+### 🔧 Maintenance
+
+#### Regular Checks
+1. **Monthly**: Run bundle analysis
+2. **Weekly**: Check for unused dependencies
+3. **Before Updates**: Optimize assets
+
+#### Monitoring
+- Track bundle size over time
+- Monitor update success rates
+- Log optimization results
+
+### 🚨 Troubleshooting
+
+#### Update Timeout Issues
+1. **Immediate Fix**: Use platform-specific updates
+2. **Long-term Fix**: Reduce bundle size
+3. **Fallback**: Split updates by platform
+
+#### Large Bundle Issues
+1. **Analyze**: Run bundle analyzer
+2. **Optimize**: Implement lazy loading
+3. **Clean**: Remove unused dependencies
+4. **Test**: Verify bundle size reduction
+
+### 📝 Quick Commands
+
+```bash
+# Analyze bundle
+npm run analyze-bundle
+
+# Optimize assets
+npm run optimize-assets
+
+# Update both platforms (target)
+npm run update:both
+
+# Update specific platform (current workaround)
+npm run update:ios
+npm run update:android
+
+# Clean and rebuild
+npm run clean
+```
+
+### 🎯 Next Steps
+
+1. **Immediate**: Use platform-specific updates for now
+2. **Short-term**: Implement lazy loading for heavy components
+3. **Medium-term**: Reduce bundle size to <4MB
+4. **Long-term**: Enable simultaneous platform updates
 
 ---
 

@@ -6,7 +6,7 @@ import { StripeProvider } from '@stripe/stripe-react-native';
 import { enableScreens } from 'react-native-screens';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
-import { Toaster } from 'sonner-native';
+// Removed sonner-native import - using react-native-toast-message instead
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import Toast from 'react-native-toast-message';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -314,7 +314,6 @@ export default function App() {
               </AuthProvider>
             </BottomSheetModalProvider>
             <Toast />
-            <Toaster />
           </GestureHandlerRootView>
         </SafeAreaProvider>
       </GluestackUIProvider>

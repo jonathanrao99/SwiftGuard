@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 import {
   View,
   Text,
@@ -6,12 +6,15 @@ import {
   TouchableOpacity,
   ScrollView,
   StatusBar,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons, Feather } from '@expo/vector-icons';
-import LottieView from 'lottie-react-native';
 import { COLORS, SPACING } from '../../../theme';
+
+// Lazy load Lottie for better performance
+const LottieView = React.lazy(() => import('lottie-react-native'));
 
 interface JobPostedSuccessScreenProps {
   navigation: any;
@@ -57,12 +60,18 @@ const JobPostedSuccessScreen: React.FC<JobPostedSuccessScreenProps> = ({ navigat
       >
         {/* Success Animation */}
         <View style={styles.successAnimationContainer}>
-          <LottieView
-            source={require('../../../assets/success.json')}
-            autoPlay
-            loop={false}
-            style={styles.lottieAnimation}
-          />
+          <Suspense fallback={
+            <View style={styles.lottieAnimation}>
+              <ActivityIndicator size="large" color={COLORS.primary} />
+            </View>
+          }>
+            <LottieView
+              source={require('../../../assets/success.json')}
+              autoPlay
+              loop={false}
+              style={styles.lottieAnimation}
+            />
+          </Suspense>
         </View>
 
         {/* Success Message */}

@@ -23,8 +23,8 @@ import { DateTimePair } from '../../../components/DateTimePair';
 import { CounterInput } from '../../../components/CounterInput';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Calendar } from 'react-native-calendars';
-import DropDownPicker from 'react-native-dropdown-picker';
+// Removed Calendar import - using DatePicker instead
+// Removed DropDownPicker import - using native Picker instead
 import { Picker } from '@react-native-picker/picker';
 import { EventDetailsSection } from '../../../components/post-job/EventDetailsSection';
 import { PayAndRequirementsSection } from '../../../components/post-job/PayAndRequirementsSection';
@@ -35,7 +35,16 @@ import { getEventDetailsSummary } from '../../../components/post-job/EventDetail
 import { getPayAndRequirementsSummary } from '../../../components/post-job/PayAndRequirementsSection';
 import { getContactReviewSummary } from '../../../components/post-job/ContactReviewSection';
 import BottomSheetStepper, { BottomSheetStepperRef, StepComponentProps } from 'bottom-sheet-stepper';
-import { useStripe } from '@stripe/stripe-react-native';
+// Dynamic import for Stripe to reduce bundle size
+let useStripe: any;
+
+// Load Stripe dynamically
+const loadStripe = async () => {
+  if (!useStripe) {
+    const stripeModule = await import('@stripe/stripe-react-native');
+    useStripe = stripeModule.useStripe;
+  }
+};
 import { supabase } from '../../../supabaseClient';
 import { JobService, JobData } from '../../../services/JobService';
 
@@ -99,6 +108,18 @@ const weekdays = [
 ];
 
 const PostJob: React.FC<PostJobProps> = ({ navigation }) => {
+  const [stripeLoaded, setStripeLoaded] = useState(false);
+  const [stripe, setStripe] = useState<any>(null);
+
+  useEffect(() => {
+    // Load Stripe dynamically
+    loadStripe().then(() => {
+      setStripeLoaded(true);
+      const stripeHook = useStripe();
+      setStripe(stripeHook);
+    });
+  }, []);
+
   const { control, handleSubmit, formState: { errors, isDirty }, watch, setValue, trigger } = useForm<PostJobFormData>({
     defaultValues: {
       title: '',
@@ -394,12 +415,8 @@ const PostJob: React.FC<PostJobProps> = ({ navigation }) => {
     date: new Date(dateString), // Add the actual Date object
   }));
 
-  // DropdownPicker state for Event Type
-  const [eventTypeOpen, setEventTypeOpen] = useState(false);
+  // Event Type state (using native Picker)
   const [eventTypeValue, setEventTypeValue] = useState<string>(venueType || '');
-  const [eventTypeItems, setEventTypeItems] = useState(
-    venueTypes.map(type => ({ label: type, value: type }))
-  );
   useEffect(() => {
     setEventTypeValue(venueType || '');
   }, [venueType]);
@@ -451,10 +468,11 @@ const PostJob: React.FC<PostJobProps> = ({ navigation }) => {
   // Payment related state
   const [loading, setLoading] = useState(false);
   const [paymentIntentId, setPaymentIntentId] = useState<string | null>(null);
-  const { initPaymentSheet, presentPaymentSheet } = useStripe();
 
   // Initialize payment sheet
   const initializePaymentSheet = async () => {
+    if (!stripe) return;
+    
     setLoading(true);
     try {
       const { data: { user }, error: userError } = await supabase.auth.getUser();
@@ -479,7 +497,7 @@ const PostJob: React.FC<PostJobProps> = ({ navigation }) => {
       
       setPaymentIntentId(fnData.paymentIntentId);
 
-      const { error } = await initPaymentSheet({
+      const { error } = await stripe.initPaymentSheet({
         merchantDisplayName: 'SwiftGuard',
         paymentIntentClientSecret: fnData.clientSecret,
         allowsDelayedPaymentMethods: false,
@@ -502,8 +520,10 @@ const PostJob: React.FC<PostJobProps> = ({ navigation }) => {
 
   // Handle payment
   const handlePayment = async () => {
+    if (!stripe) return;
+    
     try {
-      const { error } = await presentPaymentSheet();
+      const { error } = await stripe.presentPaymentSheet();
       if (error) {
         Alert.alert('Error', error.message);
       } else {

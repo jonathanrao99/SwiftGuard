@@ -4,7 +4,7 @@ import { COLORS, SPACING } from '../../theme';
 import { Controller, Control, FieldErrors } from 'react-hook-form';
 import { CounterInput } from '../CounterInput';
 import { Feather, MaterialIcons } from '@expo/vector-icons';
-import DropDownPicker from 'react-native-dropdown-picker';
+import { Picker } from '@react-native-picker/picker';
 import { PricingBreakdown } from '../../services/PricingService';
 import { JobTemplate } from './JobTemplateSelector';
 
@@ -59,9 +59,6 @@ export const PayAndRequirementsSection: React.FC<PayAndRequirementsSectionProps>
 }) => {
   // Local state for gender dropdown
   const [genderOpen, setGenderOpen] = useState(false);
-  const [genderItems, setGenderItems] = useState(
-    genderPrefs.map(p => ({ label: p, value: p }))
-  );
 
   return (
     <View style={styles.sectionCard}>
@@ -138,21 +135,17 @@ export const PayAndRequirementsSection: React.FC<PayAndRequirementsSectionProps>
           name="genderPref"
           defaultValue={genderPrefs[0]}
           render={({ field: { onChange, value } }) => (
-            <DropDownPicker
-              open={genderOpen}
-              value={value}
-              items={genderItems}
-              setOpen={setGenderOpen}
-              setValue={onChange}
-              setItems={setGenderItems}
-              placeholder="Select gender"
-              containerStyle={{ width: '100%', marginBottom: SPACING.md }}
-              style={styles.dropdownWrapper}
-              dropDownContainerStyle={styles.dropDownContainer}
-              listMode="SCROLLVIEW"
-              dropDownDirection="BOTTOM"
-              max={4}
-            />
+            <View style={styles.dropdownWrapper}>
+              <Picker
+                selectedValue={value}
+                onValueChange={onChange}
+                style={styles.picker}
+              >
+                {genderPrefs.map((pref) => (
+                  <Picker.Item key={pref} label={pref} value={pref} />
+                ))}
+              </Picker>
+            </View>
           )}
         />
 
@@ -371,5 +364,9 @@ const styles = StyleSheet.create({
     color: COLORS.textSecondary,
     fontStyle: 'italic',
     marginTop: SPACING.xs,
+  },
+  picker: {
+    width: '100%',
+    height: 50,
   },
 });

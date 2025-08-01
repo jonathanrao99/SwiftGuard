@@ -8,19 +8,45 @@ import {
   Alert,
   View
 } from 'react-native';
-import { initPaymentSheet, presentPaymentSheet, useStripe } from '@stripe/stripe-react-native';
+// Dynamic import for Stripe to reduce bundle size
+let useStripe: any;
+let initPaymentSheet: any;
+let presentPaymentSheet: any;
+
+// Load Stripe dynamically
+const loadStripe = async () => {
+  if (!useStripe) {
+    const stripeModule = await import('@stripe/stripe-react-native');
+    useStripe = stripeModule.useStripe;
+    initPaymentSheet = stripeModule.initPaymentSheet;
+    presentPaymentSheet = stripeModule.presentPaymentSheet;
+  }
+};
 import { supabase } from '../supabaseClient';
 
 export default function PreferredPayment({ navigation, route }) {
   const { userId } = route.params || {};
   const [loading, setLoading] = useState(false);
-  const { initPaymentSheet: initializePS, presentPaymentSheet: openPS } = useStripe();
+  const [stripeLoaded, setStripeLoaded] = useState(false);
+  const [stripe, setStripe] = useState<any>(null);
 
   useEffect(() => {
-    initializePaymentSheet();
+    loadStripe().then(() => {
+      setStripeLoaded(true);
+      const stripeHook = useStripe();
+      setStripe(stripeHook);
+    });
   }, []);
 
+  useEffect(() => {
+    if (stripeLoaded && stripe) {
+      initializePaymentSheet();
+    }
+  }, [stripeLoaded, stripe]);
+
   async function initializePaymentSheet() {
+    if (!stripe) return;
+    
     setLoading(true);
     // Call your Supabase Edge Function to create a SetupIntent
     const { data: fnData, error: fnError } = await supabase.functions.invoke(
@@ -36,7 +62,7 @@ export default function PreferredPayment({ navigation, route }) {
       return;
     }
     const clientSecret = fnData.clientSecret;
-    const { error: initError } = await initializePS({
+    const { error: initError } = await stripe.initPaymentSheet({
       merchantDisplayName: 'SwiftGuard',
       setupIntentClientSecret: clientSecret,
       allowsDelayedPaymentMethods: false,
@@ -58,7 +84,9 @@ export default function PreferredPayment({ navigation, route }) {
   }
 
   async function openPaymentSheet() {
-    const { error } = await openPS();
+    if (!stripe) return;
+    
+    const { error } = await stripe.presentPaymentSheet();
     if (error) {
       Alert.alert('Payment Error', error.message);
     } else {
