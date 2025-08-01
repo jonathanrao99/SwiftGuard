@@ -502,14 +502,14 @@ export default function ClientDashboard({ navigation }: { navigation: Navigation
     <>
       <StatusBar 
         translucent 
-        backgroundColor={darkMode ? '#18181b' : '#f9fafb'} 
+        backgroundColor="transparent" 
         barStyle={darkMode ? 'light-content' : 'dark-content'} 
       />
-      <SafeAreaView style={{ flex: 1, backgroundColor: darkMode ? '#18181b' : '#f9fafb' }}>
-        <LinearGradient
-          colors={darkMode ? ['#18181b', '#27272a'] : ['#ffffff', '#e0f2ff']}
-          style={{ flex: 1 }}
-        >
+      <LinearGradient
+        colors={darkMode ? ['#18181b', '#27272a'] : ['#ffffff', '#e0f2ff']}
+        style={{ flex: 1 }}
+      >
+        <SafeAreaView style={{ flex: 1, backgroundColor: 'transparent' }}>
           <View style={[styles.container, { backgroundColor: 'transparent' }]}>
             {/* Header */}
             <Animated.View style={[styles.headerWrapper, headerAnimatedStyle]}>
@@ -599,8 +599,8 @@ export default function ClientDashboard({ navigation }: { navigation: Navigation
               </Animated.View>
             </ScrollView>
           </View>
-        </LinearGradient>
-      </SafeAreaView>
+        </SafeAreaView>
+      </LinearGradient>
     </>
   );
 }
@@ -614,7 +614,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
     borderBottomLeftRadius: 24,
     borderBottomRightRadius: 24,
-    paddingTop: Platform.OS === 'android' ? 48 : 64,
+    paddingTop: Platform.OS === 'android' ? 48 : 4,
     paddingBottom: 4,
     paddingHorizontal: '5%',
   },

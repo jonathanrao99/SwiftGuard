@@ -19,6 +19,17 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS, SPACING } from '../../../theme';
 import { supabase } from '../../../supabaseClient';
 import { useAuth } from '../../../contexts/AuthContext';
+import TabScreenWrapper from '../../../components/TabScreenWrapper';
+import { useTabFocus } from '../../../hooks/useTabFocus';
+import Animated, { 
+  useSharedValue, 
+  useAnimatedStyle, 
+  withSpring, 
+  withTiming, 
+  withDelay,
+  withSequence,
+  runOnJS
+} from 'react-native-reanimated';
 
 interface JobsScreenProps {
   navigation: any;
@@ -337,10 +348,15 @@ const CompletedTab = ({ navigation, jobs, loading, onRefresh }: {
 
 export default function JobsScreen({ navigation }: JobsScreenProps) {
   const { user } = useAuth();
+  const isFocused = useTabFocus();
   const [index, setIndex] = useState(0);
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+
+  // Animation values
+  const headerOpacity = useSharedValue(0);
+  const headerTranslateY = useSharedValue(-50);
 
   const [routes] = useState([
     { key: 'scheduled', title: 'Scheduled' },
@@ -379,6 +395,12 @@ export default function JobsScreen({ navigation }: JobsScreenProps) {
     fetchJobs();
   }, [user?.id]);
 
+  useEffect(() => {
+    // Start animations when component mounts
+    headerOpacity.value = withTiming(1, { duration: 800 });
+    headerTranslateY.value = withSpring(0, { damping: 15, stiffness: 100 });
+  }, []);
+
   const handleRefresh = () => {
     setRefreshing(true);
     fetchJobs();
@@ -406,56 +428,70 @@ export default function JobsScreen({ navigation }: JobsScreenProps) {
     />
   );
 
-  return (
-    <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
-      <StatusBar translucent={false} backgroundColor={COLORS.white} barStyle="dark-content" />
-      
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>My Jobs</Text>
-        <TouchableOpacity
-          style={styles.headerButton}
-          onPress={() => navigation.navigate('JobTemplateSelector')}
-        >
-          <MaterialIcons name="add" size={24} color="#222" />
-        </TouchableOpacity>
-      </View>
+  // Animated styles
+  const headerAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: headerOpacity.value,
+    transform: [{ translateY: headerTranslateY.value }],
+  }));
 
-      <TabView
-        navigationState={{ index, routes }}
-        renderScene={renderScene}
-        onIndexChange={setIndex}
-        initialLayout={{ width }}
-        renderTabBar={renderTabBar}
-      />
-    </SafeAreaView>
+  return (
+    <>
+      <StatusBar translucent backgroundColor="transparent" barStyle="dark-content" />
+      <LinearGradient
+        colors={['#ffffff', '#e0f2ff']}
+        style={{ flex: 1 }}
+      >
+        <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
+          {/* Header */}
+          <Animated.View style={[styles.header, headerAnimatedStyle]}>
+            <View style={{ width: 24 }} />
+            <Text style={styles.headerTitle}>My Jobs</Text>
+            <TouchableOpacity
+              style={styles.headerButton}
+              onPress={() => navigation.navigate('JobTemplateSelector')}
+            >
+              <MaterialIcons name="add" size={24} color="#222" />
+            </TouchableOpacity>
+          </Animated.View>
+
+          <TabScreenWrapper isFocused={isFocused}>
+            <TabView
+              navigationState={{ index, routes }}
+              renderScene={renderScene}
+              onIndexChange={setIndex}
+              initialLayout={{ width }}
+              renderTabBar={renderTabBar}
+            />
+          </TabScreenWrapper>
+        </SafeAreaView>
+      </LinearGradient>
+    </>
   );
 }
 
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: COLORS.white,
+    backgroundColor: 'transparent',
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: SPACING.lg,
-    paddingTop: Platform.OS === 'android' ? SPACING.sm * 1.2 : SPACING.xl * 1.2,
+    paddingHorizontal: 24, // Match Profile screen's spacing.xl (24)
+    paddingTop: Platform.OS === 'android' ? 48 : 4,
+    paddingBottom: 4,
     borderBottomColor: COLORS.border,
-    backgroundColor: COLORS.white,
+    backgroundColor: 'transparent',
   },
   headerTitle: {
     fontSize: 20,
     fontWeight: '600',
-    color: COLORS.textDark,
-    alignSelf: 'center',
-    marginLeft: SPACING.xxl * 3,
+    color: COLORS.textPrimary,
   },
   headerButton: {
     borderRadius: 12,
-    padding: SPACING.xs * 1.5,
+    padding: 0,
   },
   tabBar: {
     backgroundColor: COLORS.white,
@@ -496,6 +532,8 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.12,
     shadowRadius: 12,
+    borderWidth: 1,
+    borderColor: COLORS.border,
     elevation: 5,
     overflow: 'hidden',
   },
@@ -582,7 +620,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: SPACING.md,
   },
+  dateTimeRow: {
+    flexDirection: 'row',
+    gap: SPACING.sm,
+  },
   infoItem: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  dateTimeItem: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
@@ -633,8 +681,8 @@ const styles = StyleSheet.create({
     letterSpacing: -0.5,
   },
   payUnit: {
-    fontSize: 14,
-    fontWeight: '600',
+    fontSize: 16,
+    fontWeight: '700',
     color: '#64748b',
   },
   guardsSection: {

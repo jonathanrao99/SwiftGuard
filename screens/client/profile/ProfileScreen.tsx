@@ -17,6 +17,8 @@ import Animated, {
   withSequence,
   runOnJS
 } from 'react-native-reanimated';
+import TabScreenWrapper from '../../../components/TabScreenWrapper';
+import { useTabFocus } from '../../../hooks/useTabFocus';
 
 // Platform-aware design constants
 const colors = {
@@ -49,6 +51,7 @@ const spacing = {
 
 export default function ProfileScreen({ navigation }) {
   const { user, signOut } = useAuth();
+  const isFocused = useTabFocus();
   const [darkMode, setDarkMode] = useState(false);
 
   // Animation values
@@ -116,13 +119,13 @@ export default function ProfileScreen({ navigation }) {
   }));
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
-      <StatusBar translucent backgroundColor="white" barStyle="dark-content" />
-      
+    <>
+      <StatusBar translucent backgroundColor="transparent" barStyle="dark-content" />
       <LinearGradient
         colors={['#ffffff', '#e0f2ff']}
         style={{ flex: 1 }}
       >
+        <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
         {/* Header matching JobsScreen styling */}
         <Animated.View style={[styles.header, headerAnimatedStyle]}>
           <View style={{ width: 24 }} />
@@ -130,11 +133,12 @@ export default function ProfileScreen({ navigation }) {
           <View style={{ width: 24 }} />
         </Animated.View>
 
-        <ScrollView 
-          style={styles.scrollView} 
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-        >
+        <TabScreenWrapper isFocused={isFocused}>
+          <ScrollView 
+            style={styles.scrollView} 
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+          >
                     {/* User Info Section */}
           <Animated.View style={userInfoAnimatedStyle}>
             <Pressable style={styles.userInfoCard} android_ripple={{ color: colors.border }}>
@@ -232,8 +236,10 @@ export default function ProfileScreen({ navigation }) {
           </Pressable>
           </Animated.View>
         </ScrollView>
+        </TabScreenWrapper>
+        </SafeAreaView>
       </LinearGradient>
-    </SafeAreaView>
+    </>
   );
 }
 
@@ -252,10 +258,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: spacing.xl,
-    paddingTop: Platform.OS === 'android' ? spacing.sm * 1.2 : spacing.xxl * 1.2,
+    paddingTop: Platform.OS === 'android' ? 48 : 4,
     paddingBottom: spacing.xs,
     borderBottomColor: colors.border,
-    backgroundColor: colors.surface,
+    backgroundColor: 'transparent',
   },
   headerTitle: { 
     fontSize: 20, 

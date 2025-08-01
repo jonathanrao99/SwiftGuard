@@ -11,9 +11,12 @@ import {
   Modal,
   Pressable,
   Animated,
+  Linking,
+  Alert,
 } from 'react-native';
 import { MaterialIcons, Feather, Entypo, Ionicons, FontAwesome5 } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
 import { supabase } from '../../../supabaseClient';
 import { COLORS, SPACING } from '../../../theme';
 
@@ -275,6 +278,32 @@ export default function JobDetailsScreen({ route, navigation }: JobDetailsScreen
     });
   };
 
+  // Open location in maps
+  const openLocationInMaps = () => {
+    const location = job.location;
+    const encodedLocation = encodeURIComponent(location);
+    
+    const mapsUrl = Platform.OS === 'ios' 
+      ? `http://maps.apple.com/?q=${encodedLocation}`
+      : `https://maps.google.com/?q=${encodedLocation}`;
+    
+    Linking.canOpenURL(mapsUrl).then(supported => {
+      if (supported) {
+        Linking.openURL(mapsUrl);
+      } else {
+        // Fallback to Google Maps web
+        const googleMapsUrl = `https://maps.google.com/?q=${encodedLocation}`;
+        Linking.openURL(googleMapsUrl);
+      }
+    }).catch(err => {
+      Alert.alert(
+        'Error',
+        'Unable to open maps. Please try again.',
+        [{ text: 'OK' }]
+      );
+    });
+  };
+
   // Filter only accepted guards
   const acceptedGuards = job.assignedGuards?.filter((guard: any) => 
     guard.status === 'accepted' || guard.status === 'active'
@@ -284,19 +313,19 @@ export default function JobDetailsScreen({ route, navigation }: JobDetailsScreen
   const jobSteps = ['Posted', 'Assigned', 'In Progress', 'Completed'];
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
-      <StatusBar translucent={false} backgroundColor={COLORS.white} barStyle="dark-content" />
-      
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Feather name="arrow-left" size={24} color="#222" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Job Details</Text>
-        <TouchableOpacity onPress={showMenu}>
-          <Entypo name="dots-three-vertical" size={18} color="#222" />
-        </TouchableOpacity>
-      </View>
+    <>
+      <StatusBar translucent backgroundColor="transparent" barStyle="dark-content" />
+      <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
+          {/* Header */}
+          <View style={styles.header}>
+            <TouchableOpacity onPress={() => navigation.goBack()}>
+              <Feather name="arrow-left" size={24} color="#222" />
+            </TouchableOpacity>
+            <Text style={styles.headerTitle}>Job Details</Text>
+            <TouchableOpacity onPress={showMenu}>
+              <Entypo name="dots-three-vertical" size={18} color="#222" />
+            </TouchableOpacity>
+          </View>
 
       {/* Job Progress Timeline */}
       <View style={styles.timelineContainer}>
@@ -319,8 +348,8 @@ export default function JobDetailsScreen({ route, navigation }: JobDetailsScreen
                 <View style={[styles.stepLine, currentStep > index && styles.stepLineActive]} />
                 <MaterialIcons 
                   name="arrow-forward" 
-                  size={20} 
-                  color={currentStep > index ? COLORS.primary : '#d1d5db'} 
+                  size={22} 
+                  color={currentStep > index ? COLORS.primary : '#9ca3af'} 
                   style={styles.stepArrow}
                 />
               </View>
@@ -376,10 +405,6 @@ export default function JobDetailsScreen({ route, navigation }: JobDetailsScreen
           <View style={styles.jobHeaderTop}>
             <View style={styles.jobHeaderInfo}>
               <Text style={styles.jobTitle}>{job.title}</Text>
-              <View style={styles.locationRow}>
-                <Ionicons name="location" size={16} color="#64748b" />
-                <Text style={styles.locationText}>{job.location}</Text>
-              </View>
             </View>
             <View style={[
               styles.statusChip,
@@ -398,6 +423,15 @@ export default function JobDetailsScreen({ route, navigation }: JobDetailsScreen
               </Text>
             </View>
           </View>
+          <TouchableOpacity 
+            style={styles.locationRow} 
+            onPress={openLocationInMaps}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="location" size={16} color="#64748b" />
+            <Text style={styles.locationText} numberOfLines={2}>{job.location}</Text>
+            <MaterialIcons name="open-in-new" size={16} color="#64748b" style={styles.locationArrow} />
+          </TouchableOpacity>
         </View>
 
         {/* Event Information Section */}
@@ -622,7 +656,8 @@ export default function JobDetailsScreen({ route, navigation }: JobDetailsScreen
           )}
         </View>
       </ScrollView>
-    </SafeAreaView>
+        </SafeAreaView>
+    </>
   );
 }
 
@@ -635,11 +670,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: SPACING.lg,
-    paddingTop: Platform.OS === 'android' ? SPACING.sm * 1.2 : SPACING.xl * 1.2,
-    paddingBottom: SPACING.xs,
+    paddingHorizontal: 24,
+    paddingTop: Platform.OS === 'android' ? 48 : 4,
+    paddingBottom: 4,
     borderBottomColor: COLORS.border,
-    backgroundColor: COLORS.white,
+    backgroundColor: 'transparent',
   },
   headerTitle: { 
     fontSize: 20, 
@@ -691,10 +726,10 @@ const styles = StyleSheet.create({
   },
   stepArrowContainer: {
     position: 'absolute',
-    top: 12,
-    left: '55%',
-    right: '-55%',
-    height: 28,
+    top: 14,
+    left: '70%',
+    right: '-76%',
+    height: 4,
     flexDirection: 'row',
     alignItems: 'center',
     zIndex: 3,
@@ -715,6 +750,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   content: {
+    paddingTop: SPACING.md,
     padding: SPACING.lg,
     paddingBottom: SPACING.xl,
   },
@@ -729,7 +765,6 @@ const styles = StyleSheet.create({
   },
   jobHeaderInfo: {
     flex: 1,
-    marginRight: SPACING.sm,
   },
   jobTitle: {
     fontSize: 24,
@@ -741,13 +776,18 @@ const styles = StyleSheet.create({
   locationRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    width: '100%',
+    paddingVertical: 4,
   },
   locationText: {
     fontSize: 16,
-    color: '#64748b',
-    fontWeight: '500',
+    color: COLORS.primaryDark,
+    fontWeight: '600',
     marginLeft: 8,
     flex: 1,
+  },
+  locationArrow: {
+    marginLeft: 8,
   },
   statusChip: {
     flexDirection: 'row',

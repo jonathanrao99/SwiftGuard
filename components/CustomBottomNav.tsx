@@ -2,6 +2,7 @@ import React, { FC } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { MaterialIcons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 
 // Types for bottom navigation custom component
 interface CustomBottomNavProps {
@@ -13,7 +14,23 @@ interface CustomBottomNavProps {
 const CustomBottomNav: FC<CustomBottomNavProps> = ({ state, descriptors, navigation }) => {
   return (
     <View style={{ position: 'absolute', bottom: 20, left: 0, right: 0, alignItems: 'center', zIndex: 100 }}>
-      <View style={{ flexDirection: 'row', backgroundColor: '#fff', borderRadius: 32, marginHorizontal: 56, paddingVertical: 8, paddingHorizontal: 18, shadowColor: '#000', shadowOpacity: 0.08, shadowRadius: 12, shadowOffset: { width: 0, height: 2 }, elevation: 10, justifyContent: 'space-between', flex: 1 }}>
+      <LinearGradient
+        colors={['rgba(255, 255, 255, 0.9)', 'rgba(255, 255, 255, 0.95)']}
+        style={{ 
+          flexDirection: 'row', 
+          borderRadius: 32, 
+          marginHorizontal: 56, 
+          paddingVertical: 8, 
+          paddingHorizontal: 18, 
+          shadowColor: '#000', 
+          shadowOpacity: 0.08, 
+          shadowRadius: 12, 
+          shadowOffset: { width: 0, height: 2 }, 
+          elevation: 10, 
+          justifyContent: 'space-between', 
+          flex: 1,
+        }}
+      >
         {state.routes.map((route: any, idx: number) => {
           const focused = state.index === idx;
           const { options } = descriptors[route.key];
@@ -49,7 +66,7 @@ const CustomBottomNav: FC<CustomBottomNavProps> = ({ state, descriptors, navigat
             </TouchableOpacity>
           );
         })}
-      </View>
+      </LinearGradient>
     </View>
   );
 }

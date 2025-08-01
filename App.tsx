@@ -77,7 +77,14 @@ const ScreenLoader: React.FC = () => (
 function ClientTabs() {
   return (
     <TabBarVisibilityProvider>
-      <Tab.Navigator initialRouteName="Home" screenOptions={{ headerShown: false }} tabBar={props => <CustomBottomNav {...props} />}>
+      <Tab.Navigator 
+        initialRouteName="Home" 
+        screenOptions={{ 
+          headerShown: false,
+          tabBarStyle: { display: 'none' }, // Hide default tab bar since we use CustomBottomNav
+        }} 
+        tabBar={props => <CustomBottomNav {...props} />}
+      >
         <Tab.Screen 
           name="Home" 
           component={ClientDashboard} 
