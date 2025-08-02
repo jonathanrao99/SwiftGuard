@@ -1,9 +1,8 @@
 import React, { FC } from 'react';
-import { View, Text, TouchableOpacity, Platform } from 'react-native';
+import { View, Text, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { MaterialIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 // Types for bottom navigation custom component
 interface CustomBottomNavProps {
@@ -13,17 +12,8 @@ interface CustomBottomNavProps {
 }
 
 const CustomBottomNav: FC<CustomBottomNavProps> = ({ state, descriptors, navigation }) => {
-  const insets = useSafeAreaInsets();
-  
   return (
-    <View style={{ 
-      position: 'absolute', 
-      bottom: Platform.OS === 'android' ? Math.max(20, insets.bottom) : 20, 
-      left: 0, 
-      right: 0, 
-      alignItems: 'center', 
-      zIndex: 100 
-    }}>
+    <View style={{ position: 'absolute', bottom: 20, left: 0, right: 0, alignItems: 'center', zIndex: 100 }}>
       <LinearGradient
         colors={['rgba(255, 255, 255, 0.9)', 'rgba(255, 255, 255, 0.95)']}
         style={{ 

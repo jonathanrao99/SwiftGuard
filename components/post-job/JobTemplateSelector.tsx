@@ -347,7 +347,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 24,
-    paddingTop: Platform.OS === 'android' ? 48 : 4,
+    paddingTop: Platform.OS === 'android' ? 4 : 4,
     paddingBottom: 10,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.border,

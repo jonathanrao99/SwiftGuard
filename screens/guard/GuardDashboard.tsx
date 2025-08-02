@@ -1,5 +1,5 @@
 // @ts-nocheck
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -12,6 +12,8 @@ import {
   SafeAreaView,
   Alert,
   Image,
+  useColorScheme,
+  ActivityIndicator 
 } from 'react-native';
 import Animated, { 
   useSharedValue, 
@@ -32,7 +34,9 @@ import { useFocusEffect } from '@react-navigation/native';
 import { startLocationTracking, stopLocationTracking, isLocationTrackingActive } from '../../services/LocationTrackingService';
 import { supabase } from '../../supabaseClient';
 import * as Location from 'expo-location';
-import { COLORS } from '../../theme';
+import { COLORS, SPACING } from '../../theme';
+import { useTabBarVisibility } from '../../components/TabBarVisibilityContext';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Props for QuickActionButton
 interface QuickActionButtonProps {
@@ -40,19 +44,40 @@ interface QuickActionButtonProps {
   label: string;
   color?: string;
   onPress: () => void;
+  darkMode?: boolean;
 }
+
+// Constants
+const ANIMATION_CONFIG = {
+  duration: 800,
+  damping: 15,
+  stiffness: 100,
+  mass: 1,
+  overshootClamping: false,
+  restDisplacementThreshold: 0.01,
+  restSpeedThreshold: 0.01,
+} as const;
+
+const SCROLL_THRESHOLD = 50;
 
 export default function GuardDashboard({ navigation }) {
   const [scrollEnabled, setScrollEnabled] = useState(true);
-  const screenHeight = Dimensions.get('window').height;
+  const [darkMode, setDarkMode] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  
+  const screenHeight = useMemo(() => Dimensions.get('window').height, []);
   const contentHeightRef = useRef(0);
+  const { setIsScrolledDown } = useTabBarVisibility();
+  const colorScheme = useColorScheme();
 
   // Status dropdown state
   const [status, setStatus] = useState('Ready');
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [isTracking, setIsTracking] = useState(false);
 
-  // Animation values
+  // Animation values with better spring configurations
+  const headerOpacity = useSharedValue(0);
+  const headerTranslateY = useSharedValue(50);
   const quickActionsOpacity = useSharedValue(0);
   const quickActionsTranslateY = useSharedValue(30);
   const upcomingJobsOpacity = useSharedValue(0);
@@ -61,7 +86,7 @@ export default function GuardDashboard({ navigation }) {
   const earningsTranslateY = useSharedValue(30);
 
   // Mock data for upcoming jobs and earnings
-  const upcomingJobs = [
+  const upcomingJobs = useMemo(() => [
     {
       id: '1',
       title: 'Nightclub Security',
@@ -80,20 +105,29 @@ export default function GuardDashboard({ navigation }) {
       status: 'Scheduled',
       hourlyPay: 35,
     },
-  ];
+  ], []);
 
   // Earnings data
-  const weeklyEarnings = {
+  const weeklyEarnings = useMemo(() => ({
     total: 480,
     hours: 16,
     averageRate: 30,
     nextPayment: '2024-06-07',
-  };
+  }), []);
+
+  // Handlers
+  const handleScroll = useCallback((event: any) => {
+    const yOffset = event.nativeEvent.contentOffset.y;
+    setIsScrolledDown(yOffset > SCROLL_THRESHOLD);
+  }, [setIsScrolledDown]);
+
+  const handleContentSizeChange = useCallback((w: number, h: number) => {
+    contentHeightRef.current = h;
+    setScrollEnabled(h > screenHeight);
+  }, [screenHeight]);
 
   useFocusEffect(
     React.useCallback(() => {
-      StatusBar.setBackgroundColor('#f9fafb');
-      StatusBar.setBarStyle('dark-content');
       const checkTrackingStatus = async () => {
         const trackingStatus = await isLocationTrackingActive();
         setIsTracking(trackingStatus);
@@ -102,17 +136,54 @@ export default function GuardDashboard({ navigation }) {
     }, [])
   );
 
-  // Start animations on mount
+  // Effects
   useEffect(() => {
-    // Staggered animations
+    const loadDarkMode = async () => {
+      try {
+        const value = await AsyncStorage.getItem('DARK_MODE');
+        setDarkMode(value === 'true');
+      } catch (error) {
+        console.error('Error loading dark mode:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadDarkMode();
+  }, []);
+
+  useEffect(() => {
+    // Enhanced staggered animations with better spring configurations
+    headerOpacity.value = withTiming(1, { duration: ANIMATION_CONFIG.duration });
+    headerTranslateY.value = withSpring(0, { 
+      damping: ANIMATION_CONFIG.damping, 
+      stiffness: ANIMATION_CONFIG.stiffness,
+      mass: ANIMATION_CONFIG.mass,
+      overshootClamping: ANIMATION_CONFIG.overshootClamping,
+      restDisplacementThreshold: ANIMATION_CONFIG.restDisplacementThreshold,
+      restSpeedThreshold: ANIMATION_CONFIG.restSpeedThreshold,
+    });
+
     quickActionsOpacity.value = withDelay(200, withTiming(1, { duration: 600 }));
-    quickActionsTranslateY.value = withDelay(200, withSpring(0, { damping: 15, stiffness: 100 }));
+    quickActionsTranslateY.value = withDelay(200, withSpring(0, { 
+      damping: ANIMATION_CONFIG.damping, 
+      stiffness: ANIMATION_CONFIG.stiffness,
+      mass: ANIMATION_CONFIG.mass,
+    }));
 
     upcomingJobsOpacity.value = withDelay(400, withTiming(1, { duration: 600 }));
-    upcomingJobsTranslateY.value = withDelay(400, withSpring(0, { damping: 15, stiffness: 100 }));
+    upcomingJobsTranslateY.value = withDelay(400, withSpring(0, { 
+      damping: ANIMATION_CONFIG.damping, 
+      stiffness: ANIMATION_CONFIG.stiffness,
+      mass: ANIMATION_CONFIG.mass,
+    }));
 
     earningsOpacity.value = withDelay(600, withTiming(1, { duration: 600 }));
-    earningsTranslateY.value = withDelay(600, withSpring(0, { damping: 15, stiffness: 100 }));
+    earningsTranslateY.value = withDelay(600, withSpring(0, { 
+      damping: ANIMATION_CONFIG.damping, 
+      stiffness: ANIMATION_CONFIG.stiffness,
+      mass: ANIMATION_CONFIG.mass,
+    }));
   }, []);
 
   const toggleLocationTracking = async () => {
@@ -128,6 +199,11 @@ export default function GuardDashboard({ navigation }) {
   };
 
   // Animated styles
+  const headerAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: headerOpacity.value,
+    transform: [{ translateY: headerTranslateY.value }],
+  }));
+
   const quickActionsAnimatedStyle = useAnimatedStyle(() => ({
     opacity: quickActionsOpacity.value,
     transform: [{ translateY: quickActionsTranslateY.value }],
@@ -186,17 +262,30 @@ export default function GuardDashboard({ navigation }) {
     }
   };
 
+  // Loading state
+  if (isLoading) {
+    return (
+      <SafeAreaView style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={COLORS.primary} />
+      </SafeAreaView>
+    );
+  }
+
   return (
     <>
-      <StatusBar translucent backgroundColor="#f9fafb" barStyle="dark-content" />
-      <SafeAreaView style={{ flex: 1, backgroundColor: '#f9fafb' }}>
-        <LinearGradient
-          colors={['#ffffff', '#e0f2ff']}
-          style={{ flex: 1 }}
-        >
+      <StatusBar 
+        translucent 
+        backgroundColor="transparent" 
+        barStyle={darkMode ? 'light-content' : 'dark-content'} 
+      />
+      <LinearGradient
+        colors={darkMode ? ['#18181b', '#27272a'] : ['#ffffff', '#e0f2ff']}
+        style={{ flex: 1 }}
+      >
+        <SafeAreaView style={{ flex: 1, backgroundColor: 'transparent' }}>
           <View style={[styles.container, { backgroundColor: 'transparent' }]}>
-            {/* Header (static) */}
-            <View style={styles.headerWrapper}>
+            {/* Header */}
+            <Animated.View style={[styles.headerWrapper, headerAnimatedStyle]}>
               <View style={styles.headerRow}>
                 <View>
                   <Text style={styles.headerSubtitle}>Welcome back, </Text>
@@ -218,11 +307,11 @@ export default function GuardDashboard({ navigation }) {
                     <MaterialIcons
                       name={dropdownOpen ? 'arrow-drop-up' : 'arrow-drop-down'}
                       size={20}
-                      color="#000"
+                      color={darkMode ? '#fff' : '#000'}
                     />
                   </TouchableOpacity>
                   {dropdownOpen && (
-                    <View style={styles.statusMenu}>
+                    <View style={[styles.statusMenu, { backgroundColor: darkMode ? '#374151' : '#ffffff' }]}>
                       <TouchableOpacity
                         style={styles.statusOption}
                         onPress={() => {
@@ -231,7 +320,7 @@ export default function GuardDashboard({ navigation }) {
                         }}
                       >
                         <View style={[styles.statusDot, { backgroundColor: 'green' }]} />
-                        <Text style={styles.statusText}>Ready</Text>
+                        <Text style={[styles.statusText, { color: darkMode ? '#fff' : '#000' }]}>Ready</Text>
                       </TouchableOpacity>
                       <TouchableOpacity
                         style={styles.statusOption}
@@ -241,57 +330,60 @@ export default function GuardDashboard({ navigation }) {
                         }}
                       >
                         <View style={[styles.statusDot, { backgroundColor: 'grey' }]} />
-                        <Text style={styles.statusText}>Off Duty</Text>
+                        <Text style={[styles.statusText, { color: darkMode ? '#fff' : '#000' }]}>Off Duty</Text>
                       </TouchableOpacity>
                     </View>
                   )}
                 </View>
               </View>
-            </View>
+            </Animated.View>
 
             <ScrollView
               contentContainerStyle={{ paddingBottom: 120 }}
               scrollEnabled={scrollEnabled}
-              onContentSizeChange={(w, h) => {
-                contentHeightRef.current = h;
-                setScrollEnabled(h > screenHeight);
-              }}
+              onContentSizeChange={handleContentSizeChange}
+              onScroll={handleScroll}
+              scrollEventThrottle={16}
+              showsVerticalScrollIndicator={false}
             >
               {/* Quick Actions */}
               <Animated.View style={[styles.quickActionsRow, quickActionsAnimatedStyle]}>
                 <QuickActionButton 
                   icon="login" 
                   label="Check In" 
-                  onPress={() => Alert.alert('Check In', 'Check in functionality')} 
+                  onPress={() => navigation.navigate('CheckIn')} 
+                  darkMode={darkMode}
                 />
                 <QuickActionButton 
                   icon="shield-plus" 
                   label="Report Incident" 
                   onPress={() => navigation.navigate('ReportIncident')} 
+                  darkMode={darkMode}
                 />
                 <QuickActionButton
                   icon="earnings" 
                   label="Earnings" 
-                  onPress={() => navigation.navigate('EarningsOverview')} 
+                  onPress={() => navigation.navigate('Earnings')} 
+                  darkMode={darkMode}
                 />
               </Animated.View>
 
               {/* Upcoming Jobs Section */}
               <Animated.View style={upcomingJobsAnimatedStyle}>
                 <View style={styles.sectionHeaderRow}>
-                  <Text style={styles.sectionHeader}>Upcoming Jobs</Text>
+                  <Text style={[styles.sectionHeader, { color: darkMode ? '#fff' : '#222' }]}>Upcoming Jobs</Text>
                   <Text style={styles.viewAllBtn}>View all</Text>
                 </View>
                 {upcomingJobs.length > 0 ? (
                   <View style={styles.jobsListCentered}>
                     {upcomingJobs.map((job) => (
-                      <JobCard key={job.id} job={job} navigation={navigation} />
+                      <JobCard key={job.id} job={job} navigation={navigation} darkMode={darkMode} />
                     ))}
                   </View>
                 ) : (
-                  <View style={styles.jobsPlaceholder}>
+                  <View style={[styles.jobsPlaceholder, { backgroundColor: darkMode ? '#374151' : '#eef2ff' }]}>
                     <MaterialIcons name="work-outline" size={48} color="#a5b4fc" style={{ marginBottom: 8 }} />
-                    <Text style={styles.jobsText}>No upcoming jobs scheduled</Text>
+                    <Text style={[styles.jobsText, { color: darkMode ? '#9ca3af' : '#64748b' }]}>No upcoming jobs scheduled</Text>
                   </View>
                 )}
               </Animated.View>
@@ -299,27 +391,27 @@ export default function GuardDashboard({ navigation }) {
               {/* Earnings Section */}
               <Animated.View style={earningsAnimatedStyle}>
                 <View style={styles.sectionHeaderRow}>
-                  <Text style={styles.sectionHeader}>This Week's Earnings</Text>
+                  <Text style={[styles.sectionHeader, { color: darkMode ? '#fff' : '#222' }]}>This Week's Earnings</Text>
                   <Text style={styles.viewAllBtn}>View details</Text>
                 </View>
-                <View style={styles.earningsCard}>
+                <View style={[styles.earningsCard, { backgroundColor: darkMode ? '#374151' : '#ffffff' }]}>
                   <View style={styles.earningsRow}>
                     <View style={styles.earningsItem}>
-                      <Text style={styles.earningsLabel}>Total Earned</Text>
+                      <Text style={[styles.earningsLabel, { color: darkMode ? '#9ca3af' : '#64748b' }]}>Total Earned</Text>
                       <Text style={styles.earningsValue}>${weeklyEarnings.total}</Text>
                     </View>
                     <View style={styles.earningsItem}>
-                      <Text style={styles.earningsLabel}>Hours Worked</Text>
+                      <Text style={[styles.earningsLabel, { color: darkMode ? '#9ca3af' : '#64748b' }]}>Hours Worked</Text>
                       <Text style={styles.earningsValue}>{weeklyEarnings.hours}h</Text>
                     </View>
                   </View>
                   <View style={styles.earningsRow}>
                     <View style={styles.earningsItem}>
-                      <Text style={styles.earningsLabel}>Avg. Rate</Text>
+                      <Text style={[styles.earningsLabel, { color: darkMode ? '#9ca3af' : '#64748b' }]}>Avg. Rate</Text>
                       <Text style={styles.earningsValue}>${weeklyEarnings.averageRate}/hr</Text>
                     </View>
                     <View style={styles.earningsItem}>
-                      <Text style={styles.earningsLabel}>Next Payment</Text>
+                      <Text style={[styles.earningsLabel, { color: darkMode ? '#9ca3af' : '#64748b' }]}>Next Payment</Text>
                       <Text style={styles.earningsValue}>{weeklyEarnings.nextPayment}</Text>
                     </View>
                   </View>
@@ -327,13 +419,13 @@ export default function GuardDashboard({ navigation }) {
               </Animated.View>
             </ScrollView>
           </View>
-        </LinearGradient>
-      </SafeAreaView>
+        </SafeAreaView>
+      </LinearGradient>
     </>
   );
 }
 
-function QuickActionButton({ icon, label, color = '#e0e7ff', onPress }: QuickActionButtonProps) {
+function QuickActionButton({ icon, label, color = '#e0e7ff', onPress, darkMode = false }: QuickActionButtonProps) {
   const scale = useSharedValue(1);
   const bgColor = color === '#e0e7ff' ? color : color + '22';
   const iconColor = color === '#e0e7ff' ? '#2563eb' : color;
@@ -370,12 +462,12 @@ function QuickActionButton({ icon, label, color = '#e0e7ff', onPress }: QuickAct
       <Animated.View style={[styles.quickActionButton, { backgroundColor: bgColor }, animatedStyle]}>
         {iconsMap[icon]}
       </Animated.View>
-      <Text style={styles.quickActionLabel}>{label}</Text>
+      <Text style={[styles.quickActionLabel, { color: darkMode ? '#fff' : '#222' }]}>{label}</Text>
     </TouchableOpacity>
   );
 }
 
-function JobCard({ job, navigation }: { job: any; navigation: any }) {
+function JobCard({ job, navigation, darkMode = false }: { job: any; navigation: any; darkMode?: boolean }) {
   const scale = useSharedValue(1);
   
   const animatedStyle = useAnimatedStyle(() => ({
@@ -431,6 +523,12 @@ function JobCard({ job, navigation }: { job: any; navigation: any }) {
 }
 
 const styles = StyleSheet.create({
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f9fafb',
+  },
   container: {
     flex: 1,
     backgroundColor: '#ffffff',
@@ -439,9 +537,10 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
     borderBottomLeftRadius: 24,
     borderBottomRightRadius: 24,
-    paddingTop: Platform.OS === 'android' ? 48 : 64,
+    paddingTop: Platform.OS === 'android' ? 40 : 4,
     paddingBottom: 4,
     paddingHorizontal: '5%',
+    zIndex: 9998,
   },
   headerRow: {
     flexDirection: 'row',
@@ -462,6 +561,8 @@ const styles = StyleSheet.create({
   headerIcons: {
     flexDirection: 'row',
     alignItems: 'center',
+    position: 'relative',
+    zIndex: 9999,
   },
   statusToggle: {
     flexDirection: 'row',
@@ -492,15 +593,16 @@ const styles = StyleSheet.create({
     backgroundColor: '#ffffff',
     borderRadius: 8,
     padding: 8,
-    marginTop: 4,
+    marginTop: -14,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 3,
+    elevation: 8,
     borderWidth: 1,
     borderColor: '#e5e7eb',
-    zIndex: 1000,
+    zIndex: 9999,
+    minWidth: 120,
   },
   statusOption: {
     flexDirection: 'row',
