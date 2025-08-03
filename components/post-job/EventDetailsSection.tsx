@@ -5,7 +5,7 @@ import { COLORS, SPACING } from '../../theme';
 import { Controller, Control } from 'react-hook-form';
 import { LocationAutocomplete } from '../LocationAutocomplete';
 import { DateTimePair } from '../DateTimePair';
-import DatePicker from 'react-native-date-picker';
+
 import { CounterInput } from '../CounterInput';
 import { Picker } from '@react-native-picker/picker';
 import { Feather } from '@expo/vector-icons';
@@ -271,12 +271,15 @@ export const EventDetailsSection: React.FC<EventDetailsSectionProps> = React.mem
               </Text>
             </TouchableOpacity>
             {showDatePicker && (
-              <DatePicker
-                date={selectedDates[0] ? new Date(selectedDates[0]) : new Date()}
+              <DateTimePicker
+                value={selectedDates[0] ? new Date(selectedDates[0]) : new Date()}
                 mode="date"
-                onDateChange={(date) => {
-                  const dateString = date.toISOString().split('T')[0];
-                  setSelectedDates([dateString]);
+                display="default"
+                onChange={(event, date) => {
+                  if (date) {
+                    const dateString = date.toISOString().split('T')[0];
+                    setSelectedDates([dateString]);
+                  }
                   setShowDatePicker(false);
                 }}
               />

@@ -16,7 +16,10 @@ import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';
 import { theme } from '../../design-system';
 import { COLORS } from '../../theme';
-import { NavigationProps, ShiftCheckpoint } from '../../types';
+import { NavigationProps } from '../../types';
+import CheckpointService, { CheckpointLocation } from '../../services/CheckpointService';
+import { useAuth } from '../../contexts/AuthContext';
+import ErrorBoundary from '../../components/ErrorBoundary';
 
 interface CheckpointProps {
   navigation: NavigationProps;
@@ -29,18 +32,27 @@ export default function Checkpoint({ navigation }: CheckpointProps) {
   const [photo, setPhoto] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [locationAccuracy, setLocationAccuracy] = useState<number | null>(null);
+  const [checkpoints, setCheckpoints] = useState<CheckpointLocation[]>([]);
+  const [nearestCheckpoint, setNearestCheckpoint] = useState<(CheckpointLocation & { distance: number }) | null>(null);
+  const { user } = useAuth();
 
-  // Mock checkpoint locations - in real app, get from job details
-  const predefinedCheckpoints = [
-    { id: '1', name: 'Main Entrance', latitude: 37.7749, longitude: -122.4194, required_photo: true },
-    { id: '2', name: 'Parking Garage', latitude: 37.7750, longitude: -122.4195, required_photo: false },
-    { id: '3', name: 'Emergency Exit', latitude: 37.7748, longitude: -122.4193, required_photo: true },
-    { id: '4', name: 'Loading Dock', latitude: 37.7751, longitude: -122.4192, required_photo: false },
-  ];
+  // Get job ID from navigation params or use default
+  const jobId = navigation.getState()?.routes?.find(route => route.name === 'Checkpoint')?.params?.jobId || 'default-job';
 
   useEffect(() => {
     getCurrentLocation();
-  }, []);
+    loadCheckpoints();
+  }, [jobId]);
+
+  const loadCheckpoints = async () => {
+    try {
+      const checkpointLocations = await CheckpointService.loadCheckpointLocations(jobId);
+      setCheckpoints(checkpointLocations);
+    } catch (error) {
+      console.error('Error loading checkpoints:', error);
+      Alert.alert('Error', 'Failed to load checkpoint locations');
+    }
+  };
 
   const getCurrentLocation = async () => {
     try {
@@ -63,41 +75,16 @@ export default function Checkpoint({ navigation }: CheckpointProps) {
     }
   };
 
-  const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
-    const R = 6371e3; // Earth's radius in meters
-    const φ1 = (lat1 * Math.PI) / 180;
-    const φ2 = (lat2 * Math.PI) / 180;
-    const Δφ = ((lat2 - lat1) * Math.PI) / 180;
-    const Δλ = ((lon2 - lon1) * Math.PI) / 180;
-
-    const a =
-      Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
-      Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-
-    return R * c; // Distance in meters
-  };
-
   const getNearestCheckpoint = () => {
-    if (!currentLocation) return null;
+    if (!currentLocation || !checkpoints.length) return null;
 
-    let nearest: any = null;
-    let minDistance = Infinity;
+    const nearest = CheckpointService.findNearestCheckpoint(
+      currentLocation.latitude,
+      currentLocation.longitude,
+      checkpoints
+    );
 
-    predefinedCheckpoints.forEach((checkpoint) => {
-      const distance = calculateDistance(
-        currentLocation.latitude,
-        currentLocation.longitude,
-        checkpoint.latitude,
-        checkpoint.longitude
-      );
-
-      if (distance < minDistance) {
-        minDistance = distance;
-        nearest = { ...checkpoint, distance };
-      }
-    });
-
+    setNearestCheckpoint(nearest);
     return nearest;
   };
 
@@ -130,6 +117,11 @@ export default function Checkpoint({ navigation }: CheckpointProps) {
       return;
     }
 
+    if (!user?.id) {
+      Alert.alert('Error', 'User not authenticated');
+      return;
+    }
+
     const nearestCheckpoint = getNearestCheckpoint();
     if (nearestCheckpoint && nearestCheckpoint.required_photo && !photo) {
       Alert.alert('Error', 'Photo is required for this checkpoint');
@@ -139,21 +131,34 @@ export default function Checkpoint({ navigation }: CheckpointProps) {
     setIsSubmitting(true);
 
     try {
-      const checkpoint: Partial<ShiftCheckpoint> = {
-        guard_id: 'current-guard-id', // Replace with actual guard ID
-        job_id: 'current-job-id', // Replace with actual job ID
-        checkpoint_location_id: nearestCheckpoint?.id || 'manual',
-        checked_at: new Date().toISOString(),
-        photo_url: photo || undefined,
-        notes: notes.trim() || undefined,
-        location: {
-          latitude: currentLocation.latitude,
-          longitude: currentLocation.longitude,
-        },
-      };
+      let photoUrl: string | undefined;
+      
+      // Upload photo if provided
+      if (photo) {
+        photoUrl = await CheckpointService.uploadCheckpointPhoto(photo, user.id, jobId);
+        if (!photoUrl) {
+          Alert.alert('Error', 'Failed to upload photo. Please try again.');
+          return;
+        }
+      }
 
-      // TODO: Submit to backend
-      console.log('Submitting checkpoint:', checkpoint);
+      // Submit checkpoint to backend
+      const success = await CheckpointService.submitCheckpoint({
+        guard_id: user.id,
+        job_id: jobId,
+        checkpoint_id: nearestCheckpoint?.id || 'manual',
+        checkpoint_name: checkpointName.trim(),
+        latitude: currentLocation.latitude,
+        longitude: currentLocation.longitude,
+        photo_url: photoUrl,
+        notes: notes.trim() || undefined,
+        checked_at: new Date().toISOString(),
+      });
+
+      if (!success) {
+        Alert.alert('Error', 'Failed to submit checkpoint. Please try again.');
+        return;
+      }
 
       Alert.alert(
         'Checkpoint Recorded',
@@ -184,8 +189,9 @@ export default function Checkpoint({ navigation }: CheckpointProps) {
   const nearestCheckpoint = getNearestCheckpoint();
 
   return (
-    <>
-      <StatusBar translucent backgroundColor="transparent" barStyle="dark-content" />
+    <ErrorBoundary>
+      <>
+        <StatusBar translucent backgroundColor="transparent" barStyle="dark-content" />
       <SafeAreaView style={styles.container}>
         <View style={styles.header}>
           <TouchableOpacity
@@ -356,7 +362,8 @@ export default function Checkpoint({ navigation }: CheckpointProps) {
           </TouchableOpacity>
         </View>
       </SafeAreaView>
-    </>
+      </>
+    </ErrorBoundary>
   );
 }
 

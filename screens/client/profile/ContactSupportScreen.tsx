@@ -277,8 +277,34 @@ const styles = StyleSheet.create({
   supportTitle: {
     fontSize: 16,
     fontWeight: '600',
+  },
+  contactCard: {
+    backgroundColor: COLORS.white,
+    borderRadius: 12,
+    padding: SPACING.md,
+    shadowColor: COLORS.cardShadow,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  contactItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: SPACING.sm,
+  },
+  contactInfo: {
+    marginLeft: SPACING.md,
+    flex: 1,
+  },
+  contactLabel: {
+    fontSize: 14,
+    color: COLORS.textSecondary,
+  },
+  contactValue: {
+    fontSize: 14,
+    fontWeight: '500',
     color: COLORS.textPrimary,
-    marginBottom: SPACING.xs,
   },
   supportDescription: {
     fontSize: 14,
@@ -351,25 +377,7 @@ const styles = StyleSheet.create({
     color: COLORS.white,
     marginLeft: SPACING.sm,
   },
-  contactItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: SPACING.lg,
-  },
-  contactInfo: {
-    marginLeft: SPACING.md,
-    flex: 1,
-  },
-  contactLabel: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: COLORS.textPrimary,
-    marginBottom: SPACING.xs,
-  },
-  contactValue: {
-    fontSize: 16,
-    color: COLORS.textSecondary,
-  },
+
   emergencyCard: {
     flexDirection: 'row',
     backgroundColor: COLORS.warningLight,

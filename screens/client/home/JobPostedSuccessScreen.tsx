@@ -12,6 +12,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons, Feather } from '@expo/vector-icons';
 import { COLORS, SPACING } from '../../../theme';
+import ErrorBoundary from '../../../components/ErrorBoundary';
 
 // Lazy load Lottie for better performance
 const LottieView = React.lazy(() => import('lottie-react-native'));
@@ -41,7 +42,8 @@ const JobPostedSuccessScreen: React.FC<JobPostedSuccessScreenProps> = ({ navigat
   };
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
+    <ErrorBoundary>
+      <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
       <StatusBar translucent={false} backgroundColor={COLORS.white} barStyle="dark-content" />
       
       {/* Header */}
@@ -157,6 +159,7 @@ const JobPostedSuccessScreen: React.FC<JobPostedSuccessScreenProps> = ({ navigat
         </View>
       </ScrollView>
     </SafeAreaView>
+    </ErrorBoundary>
   );
 };
 

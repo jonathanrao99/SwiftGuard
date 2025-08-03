@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, Image, ScrollView, StatusBar, TouchableOpacity,
 import { MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Foundation } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Audio } from 'expo-av';
+
 import { supabase } from '../../../supabaseClient';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 // Fallback to any for RouteProp if not found
@@ -84,12 +84,13 @@ export default function GuardCardScreen({ route, navigation }: GuardCardScreenPr
 
   const playSound = async () => {
     try {
-      const { sound } = await Audio.Sound.createAsync(
-        require('../../assets/notification.mp3')
-      );
-      await sound.playAsync();
+      // Audio functionality removed - not actively used
+      // const { sound } = await Audio.Sound.createAsync(
+      //   require('../../assets/notification.mp3')
+      // );
+      // await sound.playAsync();
     } catch (error) {
-      console.log('Error playing sound:', error);
+              // Error playing sound
     }
   };
 

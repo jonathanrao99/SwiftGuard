@@ -1,65 +1,114 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import { COLORS, SPACING, TYPOGRAPHY } from '../theme';
+import { COLORS, SPACING } from '../theme';
 
 interface Props {
   children: ReactNode;
   fallback?: ReactNode;
+  onError?: (error: Error, errorInfo: ErrorInfo) => void;
 }
 
 interface State {
   hasError: boolean;
-  error?: Error;
-  errorInfo?: ErrorInfo;
+  error: Error | null;
+  errorInfo: ErrorInfo | null;
 }
 
 export class ErrorBoundary extends Component<Props, State> {
   constructor(props: Props) {
     super(props);
-    this.state = { hasError: false };
+    this.state = {
+      hasError: false,
+      error: null,
+      errorInfo: null,
+    };
   }
 
   static getDerivedStateFromError(error: Error): State {
-    return { hasError: true, error };
+    return {
+      hasError: true,
+      error,
+      errorInfo: null,
+    };
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error('ErrorBoundary caught an error:', error, errorInfo);
-    this.setState({ error, errorInfo });
+    
+    this.setState({
+      error,
+      errorInfo,
+    });
+
+    // Call custom error handler if provided
+    if (this.props.onError) {
+      this.props.onError(error, errorInfo);
+    }
+
+    // Log error to external service in production
+    if (__DEV__) {
+      console.group('Error Boundary Error');
+      console.error('Error:', error);
+      console.error('Error Info:', errorInfo);
+      console.groupEnd();
+    }
   }
 
   handleRetry = () => {
-    this.setState({ hasError: false, error: undefined, errorInfo: undefined });
+    this.setState({
+      hasError: false,
+      error: null,
+      errorInfo: null,
+    });
   };
 
-  handleGoHome = () => {
-    // This would typically navigate to the home screen
-    // For now, we'll just reset the error state
-    this.setState({ hasError: false, error: undefined, errorInfo: undefined });
+  handleReportError = () => {
+    const { error, errorInfo } = this.state;
+    if (error) {
+      Alert.alert(
+        'Report Error',
+        'Would you like to report this error to our support team?',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Report',
+            onPress: () => {
+              // In a real app, you'd send this to your error reporting service
+              console.log('Reporting error:', { error, errorInfo });
+              Alert.alert('Thank you', 'Error has been reported to our team.');
+            },
+          },
+        ]
+      );
+    }
   };
 
   render() {
     if (this.state.hasError) {
+      // Custom fallback UI
       if (this.props.fallback) {
         return this.props.fallback;
       }
 
+      // Default error UI
       return (
         <View style={styles.container}>
-          <View style={styles.content}>
+          <View style={styles.errorContainer}>
             <MaterialIcons name="error-outline" size={64} color={COLORS.error} />
-            <Text style={styles.title}>Something went wrong</Text>
+            
+            <Text style={styles.title}>Oops! Something went wrong</Text>
+            
             <Text style={styles.message}>
               We're sorry, but something unexpected happened. Please try again.
             </Text>
-            
+
             {__DEV__ && this.state.error && (
-              <View style={styles.debugInfo}>
-                <Text style={styles.debugTitle}>Debug Information:</Text>
-                <Text style={styles.debugText}>{this.state.error.toString()}</Text>
+              <View style={styles.devInfo}>
+                <Text style={styles.devTitle}>Development Info:</Text>
+                <Text style={styles.devError}>{this.state.error.message}</Text>
                 {this.state.errorInfo && (
-                  <Text style={styles.debugText}>
+                  <Text style={styles.devStack}>
                     {this.state.errorInfo.componentStack}
                   </Text>
                 )}
@@ -70,9 +119,9 @@ export class ErrorBoundary extends Component<Props, State> {
               <TouchableOpacity style={styles.retryButton} onPress={this.handleRetry}>
                 <Text style={styles.retryButtonText}>Try Again</Text>
               </TouchableOpacity>
-              
-              <TouchableOpacity style={styles.homeButton} onPress={this.handleGoHome}>
-                <Text style={styles.homeButtonText}>Go Home</Text>
+
+              <TouchableOpacity style={styles.reportButton} onPress={this.handleReportError}>
+                <Text style={styles.reportButtonText}>Report Error</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -92,40 +141,45 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: SPACING.lg,
   },
-  content: {
+  errorContainer: {
     alignItems: 'center',
     maxWidth: 400,
   },
   title: {
-    fontSize: TYPOGRAPHY.xxl,
-    fontWeight: '700' as const,
-    color: COLORS.textPrimary,
-    marginTop: SPACING.lg,
-    marginBottom: SPACING.sm,
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: COLORS.text,
     textAlign: 'center',
+    marginTop: SPACING.lg,
+    marginBottom: SPACING.md,
   },
   message: {
-    fontSize: TYPOGRAPHY.base,
+    fontSize: 16,
     color: COLORS.textSecondary,
     textAlign: 'center',
-    lineHeight: TYPOGRAPHY.relaxed * TYPOGRAPHY.base,
+    lineHeight: 24,
     marginBottom: SPACING.xl,
   },
-  debugInfo: {
-    backgroundColor: COLORS.backgroundLight,
+  devInfo: {
+    backgroundColor: COLORS.surface,
     padding: SPACING.md,
     borderRadius: 8,
     marginBottom: SPACING.lg,
     width: '100%',
   },
-  debugTitle: {
-    fontSize: TYPOGRAPHY.sm,
-    fontWeight: '700' as const,
-    color: COLORS.textPrimary,
-    marginBottom: SPACING.xs,
+  devTitle: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: COLORS.text,
+    marginBottom: SPACING.sm,
   },
-  debugText: {
-    fontSize: TYPOGRAPHY.xs,
+  devError: {
+    fontSize: 12,
+    color: COLORS.error,
+    marginBottom: SPACING.sm,
+  },
+  devStack: {
+    fontSize: 10,
     color: COLORS.textSecondary,
     fontFamily: 'monospace',
   },
@@ -139,26 +193,28 @@ const styles = StyleSheet.create({
     paddingVertical: SPACING.md,
     borderRadius: 8,
     minWidth: 120,
-    alignItems: 'center',
   },
   retryButtonText: {
     color: COLORS.white,
-    fontSize: TYPOGRAPHY.base,
-    fontWeight: '600' as const,
+    fontSize: 16,
+    fontWeight: '600',
+    textAlign: 'center',
   },
-  homeButton: {
-    backgroundColor: COLORS.backgroundLight,
+  reportButton: {
+    backgroundColor: 'transparent',
     paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.md,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: COLORS.primary,
     minWidth: 120,
-    alignItems: 'center',
   },
-  homeButtonText: {
-    color: COLORS.textPrimary,
-    fontSize: TYPOGRAPHY.base,
-    fontWeight: '600' as const,
+  reportButtonText: {
+    color: COLORS.primary,
+    fontSize: 16,
+    fontWeight: '600',
+    textAlign: 'center',
   },
-}); 
+});
+
+export default ErrorBoundary; 

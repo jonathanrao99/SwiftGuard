@@ -32,12 +32,12 @@ export default function PersonalInfoScreen({ navigation }: PersonalInfoScreenPro
   const { user } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
-    firstName: user?.user_metadata?.first_name || '',
-    lastName: user?.user_metadata?.last_name || '',
+    firstName: (user as any)?.user_metadata?.first_name || '',
+    lastName: (user as any)?.user_metadata?.last_name || '',
     email: user?.email || '',
-    phone: user?.user_metadata?.phone || '',
-    company: user?.user_metadata?.company || '',
-    address: user?.user_metadata?.address || '',
+    phone: (user as any)?.user_metadata?.phone || '',
+    company: (user as any)?.user_metadata?.company || '',
+    address: (user as any)?.user_metadata?.address || '',
   });
 
   // Animation values
@@ -73,12 +73,12 @@ export default function PersonalInfoScreen({ navigation }: PersonalInfoScreenPro
 
   const handleCancel = () => {
     setFormData({
-      firstName: user?.user_metadata?.first_name || '',
-      lastName: user?.user_metadata?.last_name || '',
+      firstName: (user as any)?.user_metadata?.first_name || '',
+      lastName: (user as any)?.user_metadata?.last_name || '',
       email: user?.email || '',
-      phone: user?.user_metadata?.phone || '',
-      company: user?.user_metadata?.company || '',
-      address: user?.user_metadata?.address || '',
+      phone: (user as any)?.user_metadata?.phone || '',
+      company: (user as any)?.user_metadata?.company || '',
+      address: (user as any)?.user_metadata?.address || '',
     });
     setIsEditing(false);
   };

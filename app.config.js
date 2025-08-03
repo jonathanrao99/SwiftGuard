@@ -1,4 +1,4 @@
-import 'dotenv/config';
+// Environment variables are loaded from .env file automatically by Expo
 import appJson from './app.json';
 
 export default {

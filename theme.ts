@@ -72,7 +72,7 @@ export const TYPOGRAPHY = {
   
   // Line Heights
   tight: 1.2,
-  normal: 1.4,
+  normal: 1.4 as const,
   relaxed: 1.6,
 };
 

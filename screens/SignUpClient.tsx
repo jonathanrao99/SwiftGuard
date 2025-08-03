@@ -1,11 +1,19 @@
-// @ts-nocheck
 import React, { useState, useRef } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform, ScrollView, Image, StatusBar } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform, ScrollView, Image, StatusBar, Alert } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { Picker } from '@react-native-picker/picker';
 import { LocationAutocomplete } from '../components/LocationAutocomplete';
+import { useAuth } from '../contexts/AuthContext';
+import { NavigationProps } from '../types';
+import { clientSignUpSchema, validateForm } from '../lib/validation';
+import LoadingSpinner from '../components/LoadingSpinner';
+import ErrorBoundary from '../components/ErrorBoundary';
 
-export default function SignUpClient({ navigation }) {
+interface SignUpClientProps {
+  navigation: NavigationProps;
+}
+
+export default function SignUpClient({ navigation }: SignUpClientProps) {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
@@ -21,11 +29,60 @@ export default function SignUpClient({ navigation }) {
   const [location, setLocation] = useState('');
   const [referralCode, setReferralCode] = useState('');
   const [errors, setErrors] = useState({});
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const debounceTimeout = useRef(null);
+  const debounceTimeout = useRef<NodeJS.Timeout | null>(null);
+  const { signUp } = useAuth();
 
-  const handleSignUp = () => {
-    if (firstName === 'Test') {
+  const handleSignUp = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      
+      // Validate form using Zod schema
+      const formData = {
+      firstName,
+      lastName,
+      email,
+      phone,
+      password,
+      confirmPassword,
+      businessName,
+      establishmentType: establishmentType === 'other' ? otherEstablishment : establishmentType,
+      location,
+      referralCode,
+    };
+
+      const validation = validateForm(clientSignUpSchema, formData);
+      if (!validation.success) {
+        setErrors(validation.errors || {});
+        return;
+      }
+      // Create user with Supabase Auth
+      const { data, error } = await signUp({
+        email,
+        password,
+        options: {
+          data: {
+            first_name: firstName,
+            last_name: lastName,
+            phone,
+            business_name: businessName,
+            establishment_type: establishmentType === 'other' ? otherEstablishment : establishmentType,
+            location,
+            referral_code: referralCode,
+            role: 'client',
+          },
+        },
+      });
+
+      if (error) {
+        setError(error.message);
+        return;
+      }
+
+      // Navigate to OTP verification
       navigation.navigate('OtpVerification', {
         phone,
         nextScreen: 'PreferredPayment',
@@ -39,40 +96,24 @@ export default function SignUpClient({ navigation }) {
         referralCode,
         role: 'client',
       });
-      return;
+    } catch (error) {
+      console.error('Sign up error:', error);
+      setError('Failed to create account. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
-    // Validate required fields
-    const newErrors = {};
-    if (!firstName) newErrors.firstName = 'First name is required';
-    if (!lastName) newErrors.lastName = 'Last name is required';
-    if (!email) newErrors.email = 'Email is required';
-    if (!phone) newErrors.phone = 'Phone number is required';
-    if (!password) newErrors.password = 'Password is required';
-    if (confirmPassword !== password) newErrors.confirmPassword = 'Passwords do not match';
-    if (!businessName) newErrors.businessName = 'Business name is required';
-    if (!establishmentType) newErrors.establishmentType = 'Establishment type is required';
-    if (establishmentType === 'other' && !otherEstablishment) newErrors.otherEstablishment = 'Please specify establishment';
-    if (!location) newErrors.location = 'Location is required';
-    setErrors(newErrors);
-    if (Object.keys(newErrors).length > 0) return;
-    // Navigate to OTP verification before payment setup
-    navigation.navigate('OtpVerification', {
-      phone,
-      nextScreen: 'PreferredPayment',
-      firstName,
-      lastName,
-      email,
-      password,
-      businessName,
-      establishmentType: establishmentType === 'other' ? otherEstablishment : establishmentType,
-      location,
-      referralCode,
-      role: 'client',
-    });
   };
 
+  if (isLoading) {
+    return (
+      <View style={styles.container}>
+        <LoadingSpinner text="Creating account..." />
+      </View>
+    );
+  }
+
   return (
-    <>
+    <ErrorBoundary>
       <StatusBar translucent backgroundColor="transparent" barStyle="dark-content" />
     <View style={styles.safe}>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : null} style={styles.container}>
@@ -80,6 +121,13 @@ export default function SignUpClient({ navigation }) {
           
           <Text style={styles.header}>Client Sign Up</Text>
           <Text style={styles.subheader}>Join us in less than 1 minute.</Text>
+
+          {error && (
+            <View style={styles.errorContainer}>
+              <MaterialIcons name="error-outline" size={20} color="#dc2626" />
+              <Text style={styles.errorMessage}>{error}</Text>
+            </View>
+          )}
 
           {/* Shared Fields */}
           <View style={styles.rowContainer}>
@@ -182,7 +230,7 @@ export default function SignUpClient({ navigation }) {
         </ScrollView>
       </KeyboardAvoidingView>
     </View>
-    </>
+    </ErrorBoundary>
   );
 }
 
@@ -259,4 +307,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   errorText: { color: 'red', fontSize: 12, marginTop: -15, marginBottom: 5 },
+  errorContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fee2e2',
+    padding: 15,
+    borderRadius: 8,
+    marginBottom: 20,
+  },
+  errorMessage: {
+    color: '#dc2626',
+    fontSize: 14,
+    marginLeft: 10,
+    flex: 1,
+  },
 }); 

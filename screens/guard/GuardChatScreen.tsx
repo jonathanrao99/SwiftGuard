@@ -3,7 +3,8 @@ import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Keyboa
 import { MaterialIcons, Feather } from '@expo/vector-icons';
 import { supabase } from '../../supabaseClient';
 import NetInfo from '@react-native-community/netinfo';
-import { storePendingMessage } from '../../services/OfflineSyncService';
+import ErrorBoundary from '../../components/ErrorBoundary';
+
 
 export default function GuardChatScreen({ route, navigation }) {
   const { thread } = route.params;
@@ -91,7 +92,8 @@ export default function GuardChatScreen({ route, navigation }) {
   };
 
   return (
-    <View style={styles.container}>
+    <ErrorBoundary>
+      <View style={styles.container}>
       <StatusBar translucent={false} backgroundColor="#ffffff" barStyle="dark-content" />
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
@@ -123,6 +125,7 @@ export default function GuardChatScreen({ route, navigation }) {
         </View>
       </KeyboardAvoidingView>
     </View>
+    </ErrorBoundary>
   );
 }
 

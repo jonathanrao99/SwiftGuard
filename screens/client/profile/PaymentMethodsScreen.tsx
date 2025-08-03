@@ -16,6 +16,8 @@ import { COLORS, SPACING } from '../../../theme';
 import { NavigationProps } from '../../../types';
 import { supabase } from '../../../supabaseClient';
 import { useAuth } from '../../../contexts/AuthContext';
+import LoadingSpinner from '../../../components/LoadingSpinner';
+import ErrorBoundary from '../../../components/ErrorBoundary';
 import Animated, { 
   useSharedValue, 
   useAnimatedStyle, 
@@ -42,6 +44,7 @@ export default function PaymentMethodsScreen({ navigation }: PaymentMethodsScree
   const { user } = useAuth();
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   // Animation values
   const headerOpacity = useSharedValue(0);
@@ -69,37 +72,27 @@ export default function PaymentMethodsScreen({ navigation }: PaymentMethodsScree
   const loadPaymentMethods = async () => {
     try {
       setLoading(true);
+      setError(null);
       
+      if (!user?.id) {
+        setError('User not authenticated');
+        return;
+      }
+
       // Call Supabase Edge Function to get payment methods from Stripe
       const { data, error } = await supabase.functions.invoke('stripe-payment-methods', {
-        body: { customerId: user?.id || 'cus_SlusInVaUZRN6K' }
+        body: { customerId: user.id }
       });
 
       if (error) {
         console.error('Error loading payment methods:', error);
-        // Fallback to mock data
-        const fallbackPaymentMethods: PaymentMethod[] = [
-          {
-            id: '1',
-            type: 'card' as const,
-            name: 'Visa ending in 4242',
-            last4: '4242',
-            brand: 'visa',
-            isDefault: true,
-            expiryDate: '12/25',
-          },
-          {
-            id: '2',
-            type: 'card' as const,
-            name: 'Mastercard ending in 5555',
-            last4: '5555',
-            brand: 'mastercard',
-            isDefault: false,
-            expiryDate: '08/26',
-          },
-        ];
-        setPaymentMethods(fallbackPaymentMethods);
-      } else {
+        setError('Failed to load payment methods. Please try again.');
+        return;
+      }
+
+      if (data && Array.isArray(data)) {
+        setPaymentMethods(data);
+      } else if (data && data.paymentMethods) {
         // Transform Stripe payment methods to our format
         const transformedPaymentMethods: PaymentMethod[] = data.paymentMethods.map((pm: any) => ({
           id: pm.id,
@@ -107,37 +100,18 @@ export default function PaymentMethodsScreen({ navigation }: PaymentMethodsScree
           name: `${pm.card?.brand || 'Card'} ending in ${pm.card?.last4 || '****'}`,
           last4: pm.card?.last4,
           brand: pm.card?.brand,
-          isDefault: pm.id === 'pm_1RqN2s2eZvKYlo2CqtXFJnvI', // First card is default
+          isDefault: pm.id === data.paymentMethods[0]?.id, // First card is default
           expiryDate: pm.card ? `${pm.card.exp_month.toString().padStart(2, '0')}/${pm.card.exp_year.toString().slice(-2)}` : undefined,
         }));
         
         setPaymentMethods(transformedPaymentMethods);
+      } else {
+        setPaymentMethods([]);
       }
       
     } catch (error) {
       console.error('Error loading payment methods:', error);
-      // Fallback to mock data
-      const fallbackPaymentMethods: PaymentMethod[] = [
-        {
-          id: '1',
-          type: 'card' as const,
-          name: 'Visa ending in 4242',
-          last4: '4242',
-          brand: 'visa',
-          isDefault: true,
-          expiryDate: '12/25',
-        },
-        {
-          id: '2',
-          type: 'card' as const,
-          name: 'Mastercard ending in 5555',
-          last4: '5555',
-          brand: 'mastercard',
-          isDefault: false,
-          expiryDate: '08/26',
-        },
-      ];
-      setPaymentMethods(fallbackPaymentMethods);
+      setError('Failed to load payment methods. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -244,40 +218,72 @@ export default function PaymentMethodsScreen({ navigation }: PaymentMethodsScree
     </View>
   );
 
-  return (
-    <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
-      <StatusBar translucent={false} backgroundColor={COLORS.white} barStyle="dark-content" />
-      
-      {/* Header */}
-      <Animated.View style={[styles.header, headerAnimatedStyle]}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Feather name="arrow-left" size={24} color="#222" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Payment Methods</Text>
-        <TouchableOpacity onPress={() => navigation.navigate('AddPaymentMethod')}>
-          <MaterialIcons name="add" size={24} color="#222" />
-        </TouchableOpacity>
-      </Animated.View>
+  // Loading state
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
+        <StatusBar translucent={false} backgroundColor={COLORS.white} barStyle="dark-content" />
+        <View style={styles.loadingContainer}>
+          <LoadingSpinner text="Loading payment methods..." />
+        </View>
+      </SafeAreaView>
+    );
+  }
 
-      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-        <Animated.View style={[styles.content, contentAnimatedStyle]}>
-                {/* Payment Methods List */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Your Payment Methods</Text>
-        {loading ? (
-          <View style={styles.loadingContainer}>
-            <Text style={styles.loadingText}>Loading payment methods...</Text>
+  // Error state
+  if (error) {
+    return (
+      <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
+        <StatusBar translucent={false} backgroundColor={COLORS.white} barStyle="dark-content" />
+        <View style={styles.loadingContainer}>
+          <View style={{ alignItems: 'center', padding: 20 }}>
+            <MaterialIcons name="error-outline" size={64} color={COLORS.error} />
+            <Text style={{ fontSize: 18, color: COLORS.error, marginTop: 16, textAlign: 'center' }}>
+              {error}
+            </Text>
+            <TouchableOpacity 
+              style={{ marginTop: 20, padding: 12, backgroundColor: COLORS.primary, borderRadius: 8 }}
+              onPress={loadPaymentMethods}
+            >
+              <Text style={{ color: 'white', fontWeight: '600' }}>Retry</Text>
+            </TouchableOpacity>
           </View>
-        ) : paymentMethods.length > 0 ? (
-          paymentMethods.map(renderPaymentMethod)
-        ) : (
-          <View style={styles.emptyContainer}>
-            <MaterialIcons name="credit-card" size={48} color={COLORS.textSecondary} />
-            <Text style={styles.emptyTitle}>No Payment Methods</Text>
-            <Text style={styles.emptySubtitle}>Add a payment method to get started</Text>
-          </View>
-        )}
-      </View>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  return (
+    <ErrorBoundary>
+      <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
+        <StatusBar translucent={false} backgroundColor={COLORS.white} barStyle="dark-content" />
+        
+        {/* Header */}
+        <Animated.View style={[styles.header, headerAnimatedStyle]}>
+          <TouchableOpacity onPress={() => navigation.goBack()}>
+            <Feather name="arrow-left" size={24} color="#222" />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Payment Methods</Text>
+          <TouchableOpacity onPress={() => navigation.navigate('AddPaymentMethod')}>
+            <MaterialIcons name="add" size={24} color="#222" />
+          </TouchableOpacity>
+        </Animated.View>
+
+        <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+          <Animated.View style={[styles.content, contentAnimatedStyle]}>
+            {/* Payment Methods List */}
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Your Payment Methods</Text>
+              {paymentMethods.length > 0 ? (
+                paymentMethods.map(renderPaymentMethod)
+              ) : (
+                <View style={styles.emptyContainer}>
+                  <MaterialIcons name="credit-card" size={48} color={COLORS.textSecondary} />
+                  <Text style={styles.emptyTitle}>No Payment Methods</Text>
+                  <Text style={styles.emptySubtitle}>Add a payment method to get started</Text>
+                </View>
+              )}
+            </View>
 
           {/* Add New Payment Method */}
           <View style={styles.section}>
@@ -342,6 +348,7 @@ export default function PaymentMethodsScreen({ navigation }: PaymentMethodsScree
         </Animated.View>
       </ScrollView>
     </SafeAreaView>
+    </ErrorBoundary>
   );
 }
 

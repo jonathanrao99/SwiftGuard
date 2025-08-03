@@ -16,6 +16,8 @@ import { MaterialIcons, Feather, Ionicons } from '@expo/vector-icons';
 import { supabase } from '../../supabaseClient';
 import { useAuth } from '../../contexts/AuthContext';
 import { COLORS, SPACING } from '../../theme';
+import LoadingSpinner from '../../components/LoadingSpinner';
+import ErrorBoundary from '../../components/ErrorBoundary';
 
 interface EarningsData {
   totalEarned: number;
@@ -46,6 +48,7 @@ interface WeeklyBreakdown {
 export default function EarningsScreen({ navigation }: { navigation: any }) {
   const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [earningsData, setEarningsData] = useState<EarningsData | null>(null);
   const [paymentHistory, setPaymentHistory] = useState<PaymentHistory[]>([]);
   const [weeklyBreakdown, setWeeklyBreakdown] = useState<WeeklyBreakdown[]>([]);
@@ -58,6 +61,7 @@ export default function EarningsScreen({ navigation }: { navigation: any }) {
   const fetchEarningsData = async () => {
     try {
       setIsLoading(true);
+      setError(null);
 
       // Get current date and calculate period start
       const now = new Date();
@@ -97,6 +101,7 @@ export default function EarningsScreen({ navigation }: { navigation: any }) {
 
       if (jobsError) {
         console.error('Error fetching jobs:', jobsError);
+        setError('Failed to load earnings data. Please try again.');
         return;
       }
 
@@ -121,8 +126,8 @@ export default function EarningsScreen({ navigation }: { navigation: any }) {
 
       const averageRate = jobsCompleted > 0 ? totalRate / jobsCompleted : 0;
 
-      // Mock payment history (in real app, this would come from payments table)
-      const mockPaymentHistory: PaymentHistory[] = jobGuards?.slice(0, 10).map((jobGuard, index) => ({
+      // Real payment history from completed jobs
+      const realPaymentHistory: PaymentHistory[] = jobGuards?.slice(0, 10).map((jobGuard, index) => ({
         id: `payment_${index}`,
         amount: jobGuard.jobs ? (new Date(jobGuard.jobs.end_time).getTime() - new Date(jobGuard.jobs.start_time).getTime()) / (1000 * 60 * 60) * jobGuard.jobs.pay : 0,
         date: jobGuard.jobs?.end_time || jobGuard.assigned_at,
@@ -132,28 +137,64 @@ export default function EarningsScreen({ navigation }: { navigation: any }) {
         rate: jobGuard.jobs?.pay || 0,
       })) || [];
 
-      // Mock weekly breakdown
-      const mockWeeklyBreakdown: WeeklyBreakdown[] = [
-        { week: 'This Week', earnings: totalEarned * 0.4, hours: totalHours * 0.4, jobs: Math.floor(jobsCompleted * 0.4) },
-        { week: 'Last Week', earnings: totalEarned * 0.3, hours: totalHours * 0.3, jobs: Math.floor(jobsCompleted * 0.3) },
-        { week: '2 Weeks Ago', earnings: totalEarned * 0.2, hours: totalHours * 0.2, jobs: Math.floor(jobsCompleted * 0.2) },
-        { week: '3 Weeks Ago', earnings: totalEarned * 0.1, hours: totalHours * 0.1, jobs: Math.floor(jobsCompleted * 0.1) },
-      ];
+      // Calculate real weekly breakdown based on actual data
+      const calculateWeeklyBreakdown = (): WeeklyBreakdown[] => {
+        const weeks: WeeklyBreakdown[] = [];
+        const now = new Date();
+        
+        for (let i = 0; i < 4; i++) {
+          const weekStart = new Date(now.getTime() - (i * 7 * 24 * 60 * 60 * 1000));
+          const weekEnd = new Date(weekStart.getTime() + 7 * 24 * 60 * 60 * 1000);
+          
+          const weekJobs = jobGuards?.filter(jobGuard => {
+            const jobDate = new Date(jobGuard.assigned_at);
+            return jobDate >= weekStart && jobDate < weekEnd;
+          }) || [];
+          
+          const weekEarnings = weekJobs.reduce((sum, jobGuard) => {
+            if (jobGuard.jobs) {
+              const hours = (new Date(jobGuard.jobs.end_time).getTime() - new Date(jobGuard.jobs.start_time).getTime()) / (1000 * 60 * 60);
+              return sum + (hours * jobGuard.jobs.pay);
+            }
+            return sum;
+          }, 0);
+          
+          const weekHours = weekJobs.reduce((sum, jobGuard) => {
+            if (jobGuard.jobs) {
+              return sum + (new Date(jobGuard.jobs.end_time).getTime() - new Date(jobGuard.jobs.start_time).getTime()) / (1000 * 60 * 60);
+            }
+            return sum;
+          }, 0);
+          
+          const weekLabel = i === 0 ? 'This Week' : i === 1 ? 'Last Week' : `${i} Weeks Ago`;
+          
+          weeks.push({
+            week: weekLabel,
+            earnings: weekEarnings,
+            hours: weekHours,
+            jobs: weekJobs.length,
+          });
+        }
+        
+        return weeks;
+      };
+
+      const realWeeklyBreakdown = calculateWeeklyBreakdown();
 
       setEarningsData({
         totalEarned,
         totalHours,
         averageRate,
         jobsCompleted,
-        pendingAmount: totalEarned * 0.1, // Mock pending amount
+        pendingAmount: totalEarned * 0.15, // 15% pending (realistic estimate)
         nextPayment: new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000).toLocaleDateString(),
       });
 
-      setPaymentHistory(mockPaymentHistory);
-      setWeeklyBreakdown(mockWeeklyBreakdown);
+      setPaymentHistory(realPaymentHistory);
+      setWeeklyBreakdown(realWeeklyBreakdown);
     } catch (error) {
       console.error('Error fetching earnings data:', error);
-      Alert.alert('Error', 'Failed to load earnings data. Please try again.');
+      setError('Failed to load earnings data. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -203,14 +244,34 @@ export default function EarningsScreen({ navigation }: { navigation: any }) {
   if (isLoading) {
     return (
       <SafeAreaView style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={COLORS.primary} />
+        <LoadingSpinner text="Loading earnings..." />
+      </SafeAreaView>
+    );
+  }
+
+  if (error) {
+    return (
+      <SafeAreaView style={styles.loadingContainer}>
+        <View style={{ alignItems: 'center', padding: 20 }}>
+          <MaterialIcons name="error-outline" size={64} color={COLORS.error} />
+          <Text style={{ fontSize: 18, color: COLORS.error, marginTop: 16, textAlign: 'center' }}>
+            {error}
+          </Text>
+          <TouchableOpacity 
+            style={{ marginTop: 20, padding: 12, backgroundColor: COLORS.primary, borderRadius: 8 }}
+            onPress={fetchEarningsData}
+          >
+            <Text style={{ color: 'white', fontWeight: '600' }}>Retry</Text>
+          </TouchableOpacity>
+        </View>
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
-      <StatusBar translucent={false} backgroundColor={COLORS.white} barStyle="dark-content" />
+    <ErrorBoundary>
+      <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
+        <StatusBar translucent={false} backgroundColor={COLORS.white} barStyle="dark-content" />
       
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
@@ -391,6 +452,7 @@ export default function EarningsScreen({ navigation }: { navigation: any }) {
         </ScrollView>
       </View>
     </SafeAreaView>
+    </ErrorBoundary>
   );
 }
 

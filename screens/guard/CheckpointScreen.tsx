@@ -13,6 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
 import * as ImagePicker from 'expo-image-picker';
+import ErrorBoundary from '../../components/ErrorBoundary';
 
 interface CheckpointScreenProps {
   navigation: any;
@@ -133,8 +134,9 @@ export default function CheckpointScreen({ navigation, route }: CheckpointScreen
   };
 
   return (
-    <>
-      <StatusBar translucent backgroundColor="transparent" barStyle="dark-content" />
+    <ErrorBoundary>
+      <>
+        <StatusBar translucent backgroundColor="transparent" barStyle="dark-content" />
       <SafeAreaView style={styles.container}>
         {/* Header */}
         <View style={styles.header}>
@@ -243,7 +245,8 @@ export default function CheckpointScreen({ navigation, route }: CheckpointScreen
           </View>
         </View>
       </SafeAreaView>
-    </>
+      </>
+    </ErrorBoundary>
   );
 }
 

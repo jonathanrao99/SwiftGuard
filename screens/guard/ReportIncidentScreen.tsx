@@ -19,6 +19,7 @@ import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';
 import { supabase } from '../../supabaseClient';
 import { COLORS, SPACING } from '../../theme';
+import ErrorBoundary from '../../components/ErrorBoundary';
 
 interface IncidentType {
   id: string;
@@ -279,7 +280,8 @@ export default function ReportIncidentScreen({ navigation }: { navigation: any }
   };
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
+    <ErrorBoundary>
+      <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
       <StatusBar translucent={false} backgroundColor={COLORS.white} barStyle="dark-content" />
       
       <View style={styles.header}>
@@ -445,6 +447,7 @@ export default function ReportIncidentScreen({ navigation }: { navigation: any }
         </ScrollView>
       </View>
     </SafeAreaView>
+    </ErrorBoundary>
   );
 }
 

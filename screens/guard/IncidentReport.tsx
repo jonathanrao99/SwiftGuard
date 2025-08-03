@@ -19,6 +19,7 @@ import { supabase } from '../../supabaseClient';
 import { useAuth } from '../../contexts/AuthContext';
 import { Incident, NavigationProps } from '../../types';
 import { COLORS, SPACING, TYPOGRAPHY } from '../../theme';
+import ErrorBoundary from '../../components/ErrorBoundary';
 
 interface IncidentReportProps {
   navigation: NavigationProps;
@@ -222,7 +223,8 @@ export default function IncidentReport({ navigation }: IncidentReportProps) {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <ErrorBoundary>
+      <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}
@@ -413,6 +415,7 @@ export default function IncidentReport({ navigation }: IncidentReportProps) {
         </TouchableOpacity>
       </View>
     </SafeAreaView>
+    </ErrorBoundary>
   );
 }
 

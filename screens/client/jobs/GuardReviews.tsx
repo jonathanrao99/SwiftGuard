@@ -2,10 +2,12 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, StatusBar, Platform } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 
-export default function AllReviewsScreen({ route, navigation }) {
+import { AllReviewsScreenProps } from '../../../types';
+
+export default function AllReviewsScreen({ route, navigation }: AllReviewsScreenProps) {
   const { guard, reviews } = route.params;
   const [filterRating, setFilterRating] = useState('All');
-  const filtered = reviews.filter(r => filterRating === 'All' || r.rating >= parseFloat(filterRating));
+  const filtered = reviews.filter((r: any) => filterRating === 'All' || r.rating >= parseFloat(filterRating));
 
   return (
     <>
@@ -31,7 +33,7 @@ export default function AllReviewsScreen({ route, navigation }) {
           ))}
         </View>
         <ScrollView contentContainerStyle={styles.listContent} showsVerticalScrollIndicator={false}>
-          {filtered.map(r => (
+          {filtered.map((r: any) => (
             <View key={r.id} style={styles.reviewCard}>
               <Image source={{ uri: r.client.avatar_url }} style={styles.reviewAvatar} />
               <View style={{ flex: 1 }}>

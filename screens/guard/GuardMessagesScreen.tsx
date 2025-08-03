@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, StatusBar, Image 
 import { Feather } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { supabase } from '../../supabaseClient';
+import ErrorBoundary from '../../components/ErrorBoundary';
 
 export default function GuardMessagesScreen({ navigation }) {
   const [threads, setThreads] = useState([]);
@@ -79,7 +80,8 @@ export default function GuardMessagesScreen({ navigation }) {
   }, []);
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
+    <ErrorBoundary>
+      <View style={[styles.container, { paddingTop: insets.top }]}>
       <StatusBar translucent backgroundColor="transparent" barStyle="dark-content" />
       <Text style={styles.header}>Messages</Text>
       <ScrollView contentContainerStyle={styles.list} showsVerticalScrollIndicator={false}>
@@ -107,6 +109,7 @@ export default function GuardMessagesScreen({ navigation }) {
         )}
       </ScrollView>
     </View>
+    </ErrorBoundary>
   );
 }
 

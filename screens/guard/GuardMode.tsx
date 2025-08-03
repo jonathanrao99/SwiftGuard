@@ -15,6 +15,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons, Feather, Ionicons } from '@expo/vector-icons';
 import { supabase } from '../../supabaseClient';
 import { COLORS, SPACING } from '../../theme';
+import ErrorBoundary from '../../components/ErrorBoundary';
 
 interface Job {
   id: string;
@@ -65,7 +66,7 @@ export default function GuardMode({ navigation, route }: GuardModeProps) {
   };
 
   const handleScanID = () => {
-    // TODO: Implement ID scanning functionality
+    // ID scanning functionality will be implemented in future version
     Alert.alert('Scan ID', 'ID scanning functionality will be implemented here');
   };
 
@@ -113,8 +114,9 @@ export default function GuardMode({ navigation, route }: GuardModeProps) {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
-      <StatusBar translucent={false} backgroundColor={COLORS.primary} barStyle="light-content" />
+    <ErrorBoundary>
+      <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
+        <StatusBar translucent={false} backgroundColor={COLORS.primary} barStyle="light-content" />
       
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
@@ -257,6 +259,7 @@ export default function GuardMode({ navigation, route }: GuardModeProps) {
         </ScrollView>
       </View>
     </SafeAreaView>
+    </ErrorBoundary>
   );
 }
 

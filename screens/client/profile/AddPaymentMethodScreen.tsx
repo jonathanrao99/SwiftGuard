@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React, { useState } from 'react';
 import {
   View,
@@ -15,6 +14,8 @@ import { MaterialIcons, Feather } from '@expo/vector-icons';
 import { COLORS, SPACING } from '../../../theme';
 import { NavigationProps } from '../../../types';
 import { supabase } from '../../../supabaseClient';
+import LoadingSpinner from '../../../components/LoadingSpinner';
+import ErrorBoundary from '../../../components/ErrorBoundary';
 
 interface AddPaymentMethodScreenProps {
   navigation: NavigationProps;
@@ -29,21 +30,25 @@ export default function AddPaymentMethodScreen({ navigation }: AddPaymentMethodS
   const [routingNumber, setRoutingNumber] = useState('');
   const [accountNumber, setAccountNumber] = useState('');
   const [accountHolderName, setAccountHolderName] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleAddPaymentMethod = async () => {
     if (paymentType === 'card') {
       if (!cardNumber || !expiryDate || !cvv || !cardholderName) {
-        Alert.alert('Error', 'Please fill in all card details');
+        setError('Please fill in all card details');
         return;
       }
     } else {
       if (!routingNumber || !accountNumber || !accountHolderName) {
-        Alert.alert('Error', 'Please fill in all bank account details');
+        setError('Please fill in all bank account details');
         return;
       }
     }
 
     try {
+      setIsLoading(true);
+      setError(null);
       // Extract card brand from card number (simplified logic)
       const cardBrand = cardNumber.startsWith('4') ? 'visa' : 
                        cardNumber.startsWith('5') ? 'mastercard' : 
@@ -73,7 +78,7 @@ export default function AddPaymentMethodScreen({ navigation }: AddPaymentMethodS
 
       if (error) {
         console.error('Error adding payment method:', error);
-        Alert.alert('Error', 'Failed to add payment method. Please try again.');
+        setError('Failed to add payment method. Please try again.');
         return;
       }
 
@@ -81,7 +86,9 @@ export default function AddPaymentMethodScreen({ navigation }: AddPaymentMethodS
       navigation.goBack();
     } catch (error) {
       console.error('Error adding payment method:', error);
-      Alert.alert('Error', 'Failed to add payment method. Please try again.');
+      setError('Failed to add payment method. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -99,9 +106,18 @@ export default function AddPaymentMethodScreen({ navigation }: AddPaymentMethodS
     return cleaned;
   };
 
+  if (isLoading) {
+    return (
+      <SafeAreaView style={styles.safeArea}>
+        <LoadingSpinner text="Adding payment method..." />
+      </SafeAreaView>
+    );
+  }
+
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <StatusBar translucent={false} backgroundColor={COLORS.white} barStyle="dark-content" />
+    <ErrorBoundary>
+      <SafeAreaView style={styles.safeArea}>
+        <StatusBar translucent={false} backgroundColor={COLORS.white} barStyle="dark-content" />
       <View style={styles.container}>
         {/* Header */}
         <View style={styles.header}>
@@ -113,6 +129,14 @@ export default function AddPaymentMethodScreen({ navigation }: AddPaymentMethodS
         </View>
 
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+          {/* Error Display */}
+          {error && (
+            <View style={styles.errorContainer}>
+              <MaterialIcons name="error-outline" size={20} color={COLORS.error} />
+              <Text style={styles.errorText}>{error}</Text>
+            </View>
+          )}
+          
           {/* Payment Type Selection */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Payment Method Type</Text>
@@ -281,6 +305,7 @@ export default function AddPaymentMethodScreen({ navigation }: AddPaymentMethodS
         </View>
       </View>
     </SafeAreaView>
+    </ErrorBoundary>
   );
 }
 
@@ -409,5 +434,19 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: COLORS.white,
+  },
+  errorContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.errorLight,
+    padding: SPACING.md,
+    borderRadius: 8,
+    marginBottom: SPACING.md,
+  },
+  errorText: {
+    fontSize: 14,
+    color: COLORS.error,
+    marginLeft: SPACING.sm,
+    flex: 1,
   },
 }); 

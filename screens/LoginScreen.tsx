@@ -4,6 +4,7 @@ import { FontAwesome, MaterialIcons } from '@expo/vector-icons';
 import * as LocalAuthentication from 'expo-local-authentication';
 import { useAuth } from '../contexts/AuthContext';
 import { NavigationProps } from '../types';
+import ErrorBoundary from '../components/ErrorBoundary';
 
 interface LoginScreenProps {
   navigation: NavigationProps;
@@ -95,7 +96,7 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
   };
 
   return (
-    <>
+    <ErrorBoundary>
       <StatusBar translucent backgroundColor="transparent" barStyle="dark-content" />
       <Modal transparent visible={errorModalVisible} animationType="fade">
         <View style={styles.modalOverlay}>
@@ -199,7 +200,7 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
           </View>
         </KeyboardAvoidingView>
       </View>
-    </>
+    </ErrorBoundary>
   );
 }
 

@@ -19,18 +19,47 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { supabase } from '../../../supabaseClient';
 import { COLORS, SPACING } from '../../../theme';
+import LoadingSpinner from '../../../components/LoadingSpinner';
+import ErrorBoundary from '../../../components/ErrorBoundary';
+import { NavigationProps } from '../../../types';
+
+interface Job {
+  id: string;
+  title?: string;
+  hourlyPay?: string;
+  numGuards?: number;
+  requirements?: string[];
+  specialInstructions?: string;
+  managerName?: string;
+  managerPhone?: string;
+  managerEmail?: string;
+  guestCount?: number;
+  venueType?: string;
+  recurringMode?: string;
+  startDate?: string;
+  date?: string;
+  startTime?: string;
+  endTime?: string;
+  duration?: number;
+  location?: string;
+  venue?: string;
+  status?: string;
+  assignedGuards?: any[];
+}
 
 interface JobDetailsScreenProps {
   route: {
     params: {
-      job: any;
+      job: Job;
     };
   };
-  navigation: any;
+  navigation: NavigationProps;
 }
 
 export default function JobDetailsScreen({ route, navigation }: JobDetailsScreenProps) {
   const { job: originalJob } = route.params;
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Add sample data to fill in missing fields for demonstration
   const job = {
@@ -107,7 +136,7 @@ export default function JobDetailsScreen({ route, navigation }: JobDetailsScreen
             }
           }
         } catch (error) {
-          console.log('Error checking review status:', error);
+          // Error checking review status
         }
       }
     };
@@ -312,8 +341,16 @@ export default function JobDetailsScreen({ route, navigation }: JobDetailsScreen
   const currentStep = getCurrentJobStep();
   const jobSteps = ['Posted', 'Assigned', 'In Progress', 'Completed'];
 
+  if (isLoading) {
+    return (
+      <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
+        <LoadingSpinner text="Loading job details..." />
+      </SafeAreaView>
+    );
+  }
+
   return (
-    <>
+    <ErrorBoundary>
       <StatusBar translucent backgroundColor="transparent" barStyle="dark-content" />
       <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
           {/* Header */}
@@ -657,7 +694,7 @@ export default function JobDetailsScreen({ route, navigation }: JobDetailsScreen
         </View>
       </ScrollView>
         </SafeAreaView>
-    </>
+    </ErrorBoundary>
   );
 }
 

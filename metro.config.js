@@ -1,22 +1,9 @@
-const path = require('path');
 const { getDefaultConfig } = require('expo/metro-config');
 
 const config = getDefaultConfig(__dirname);
 
-// Allow resolution of CJS, alias Node built-ins, and blacklist real ws
+// Allow resolution of CJS
 config.resolver.sourceExts.push('cjs');
-config.resolver.extraNodeModules = {
-  ws: path.resolve(__dirname, 'shimWs.js'),
-  stream: path.resolve(__dirname, 'shimWs.js'),
-  crypto: path.resolve(__dirname, 'shimWs.js'),
-  url: path.resolve(__dirname, 'shimWs.js'),
-  http: path.resolve(__dirname, 'shimWs.js'),
-  https: path.resolve(__dirname, 'shimWs.js'),
-  net: path.resolve(__dirname, 'shimWs.js'),
-  tls: path.resolve(__dirname, 'shimWs.js'),
-  events: path.resolve(__dirname, 'shimWs.js'),
-  zlib: path.resolve(__dirname, 'shimWs.js'),
-};
 
 // Bundle optimization settings
 config.transformer.minifierConfig = {

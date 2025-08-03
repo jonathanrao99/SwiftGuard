@@ -11,7 +11,8 @@ import {
   TouchableOpacity, 
   SafeAreaView, 
   useColorScheme,
-  ActivityIndicator 
+  ActivityIndicator,
+  Alert 
 } from 'react-native';
 import Animated, { 
   useSharedValue, 
@@ -28,6 +29,10 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons, MaterialCommunityIcons, Feather } from '@expo/vector-icons';
 import { COLORS, SPACING } from '../../../theme';
 import { useTabBarVisibility } from '../../../components/TabBarVisibilityContext';
+import { useAuth } from '../../../contexts/AuthContext';
+import DashboardService, { DashboardJob, DashboardStats } from '../../../services/DashboardService';
+import LoadingSpinner from '../../../components/LoadingSpinner';
+import ErrorBoundary from '../../../components/ErrorBoundary';
 
 // Types and Interfaces
 interface NavigationProps {
@@ -85,27 +90,11 @@ const ANIMATION_CONFIG = {
 const SCROLL_THRESHOLD = 50;
 const MAX_AVATARS = 2;
 
-// Mock Data
-const MOCK_JOBS: Job[] = [
-  {
-    id: '1',
-    title: 'Event Security',
-    date: '2024-06-01',
-    time: '20:00 - 02:00',
-    location: 'Nightclub XYZ',
-    guards: [
-      { id: 'g1', name: 'John Doe', photo: 'https://randomuser.me/api/portraits/men/31.jpg', rating: 4.8, experience: '5 yrs' },
-      { id: 'g2', name: 'Jane Smith', photo: 'https://randomuser.me/api/portraits/women/44.jpg', rating: 4.7, experience: '3 yrs' },
-    ],
-    requiredGuards: 2,
-  },
-];
-
-const MOCK_GUARDS: Guard[] = [
-  { id: 'g3', name: 'Alex Turner', photo: 'https://randomuser.me/api/portraits/men/45.jpg', rating: 4.8, experience: '5 yrs' },
-  { id: 'g4', name: 'Maria Lopez', photo: 'https://randomuser.me/api/portraits/women/46.jpg', rating: 4.7, experience: '3 yrs' },
-  { id: 'g5', name: 'Sam Lee', photo: 'https://randomuser.me/api/portraits/men/47.jpg', rating: 4.9, experience: '7 yrs' },
-];
+// Real data state
+interface ClientDashboardData {
+  jobs: DashboardJob[];
+  stats: DashboardStats;
+}
 
 // Subcomponents
 const QuickActionButton: React.FC<QuickActionButtonProps> = React.memo(({ 
@@ -356,9 +345,21 @@ const JobCard: React.FC<JobCardProps> = React.memo(({ job, navigation }) => {
 
 // Main Component
 export default function ClientDashboard({ navigation }: { navigation: NavigationProps }) {
+  const { user } = useAuth();
   const [scrollEnabled, setScrollEnabled] = useState(true);
   const [darkMode, setDarkMode] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [dashboardData, setDashboardData] = useState<ClientDashboardData>({
+    jobs: [],
+    stats: {
+      totalJobs: 0,
+      activeJobs: 0,
+      completedJobs: 0,
+      totalEarnings: 0,
+      averageRating: 0,
+    }
+  });
+  const [error, setError] = useState<string | null>(null);
   
   const screenHeight = useMemo(() => Dimensions.get('window').height, []);
   const contentHeightRef = useRef(0);
@@ -375,9 +376,34 @@ export default function ClientDashboard({ navigation }: { navigation: Navigation
   const recommendedGuardsOpacity = useSharedValue(0);
   const recommendedGuardsTranslateY = useSharedValue(30);
 
-  // Memoized data
-  const jobs = useMemo(() => MOCK_JOBS, []);
-  const guards = useMemo(() => MOCK_GUARDS, []);
+  // Load dashboard data
+  const loadDashboardData = useCallback(async () => {
+    if (!user?.id) return;
+    
+    try {
+      setIsLoading(true);
+      setError(null);
+      const data = await DashboardService.getClientDashboardData(user.id);
+      setDashboardData(data);
+    } catch (err) {
+      console.error('Error loading dashboard data:', err);
+      setError('Failed to load dashboard data. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [user?.id]);
+
+  // Memoized data - convert DashboardJob to Job format
+  const jobs = useMemo(() => dashboardData.jobs.map(job => ({
+    id: job.id,
+    title: job.title,
+    date: job.date,
+    time: job.time,
+    location: job.location,
+    guards: [], // Will be populated from job_guards relationship
+    requiredGuards: job.requiredGuards || 0,
+  })), [dashboardData.jobs]);
+  const stats = useMemo(() => dashboardData.stats, [dashboardData.stats]);
 
   // Handlers
   const handleScroll = useCallback((event: any) => {
@@ -426,13 +452,15 @@ export default function ClientDashboard({ navigation }: { navigation: Navigation
         setDarkMode(value === 'true');
       } catch (error) {
         console.error('Error loading dark mode:', error);
-      } finally {
-        setIsLoading(false);
       }
     };
 
     loadDarkMode();
   }, []);
+
+  useEffect(() => {
+    loadDashboardData();
+  }, [loadDashboardData]);
 
   useEffect(() => {
     // Enhanced staggered animations with better spring configurations
@@ -493,13 +521,33 @@ export default function ClientDashboard({ navigation }: { navigation: Navigation
   if (isLoading) {
     return (
       <SafeAreaView style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={COLORS.primary} />
+        <LoadingSpinner text="Loading dashboard..." />
+      </SafeAreaView>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <SafeAreaView style={styles.loadingContainer}>
+        <View style={{ alignItems: 'center', padding: 20 }}>
+          <MaterialIcons name="error-outline" size={64} color={COLORS.error} />
+          <Text style={{ fontSize: 18, color: COLORS.error, marginTop: 16, textAlign: 'center' }}>
+            {error}
+          </Text>
+          <TouchableOpacity 
+            style={{ marginTop: 20, padding: 12, backgroundColor: COLORS.primary, borderRadius: 8 }}
+            onPress={loadDashboardData}
+          >
+            <Text style={{ color: 'white', fontWeight: '600' }}>Retry</Text>
+          </TouchableOpacity>
+        </View>
       </SafeAreaView>
     );
   }
 
   return (
-    <>
+    <ErrorBoundary>
       <StatusBar 
         translucent 
         backgroundColor="transparent" 
@@ -586,22 +634,16 @@ export default function ClientDashboard({ navigation }: { navigation: Navigation
                   </TouchableOpacity>
                 </View>
                 <View style={styles.carouselContainer}>
-                  <ScrollView 
-                    horizontal 
-                    showsHorizontalScrollIndicator={false} 
-                    contentContainerStyle={styles.carouselContentNoLeft}
-                  >
-                    {guards.map((guard, idx) => (
-                      <GuardCard key={guard.id} guard={guard} isFirst={idx === 0} />
-                    ))}
-                  </ScrollView>
+                  <Text style={styles.emptyStateText}>
+                    No verified guards available at the moment.
+                  </Text>
                 </View>
               </Animated.View>
             </ScrollView>
           </View>
         </SafeAreaView>
       </LinearGradient>
-    </>
+    </ErrorBoundary>
   );
 }
 
@@ -868,5 +910,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#f9fafb',
+  },
+  emptyStateText: {
+    textAlign: 'center',
+    color: '#64748b',
+    fontSize: 16,
+    fontStyle: 'italic',
+    marginTop: 20,
   },
 });

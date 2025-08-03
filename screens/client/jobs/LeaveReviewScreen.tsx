@@ -3,7 +3,9 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, StyleSheet, TouchableOpacity, Alert, StatusBar } from 'react-native';
 import { supabase } from '../../../supabaseClient';
 
-const LeaveReviewScreen = ({ route, navigation }) => {
+import { LeaveReviewScreenProps } from '../../../types';
+
+const LeaveReviewScreen = ({ route, navigation }: LeaveReviewScreenProps) => {
     const { jobId, guardId } = route.params;
     const [rating, setRating] = useState(0);
     const [reviewText, setReviewText] = useState('');

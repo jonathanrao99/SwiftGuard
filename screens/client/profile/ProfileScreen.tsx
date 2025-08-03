@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, StatusBar, Platform, Pressable } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -19,6 +18,9 @@ import Animated, {
 } from 'react-native-reanimated';
 import TabScreenWrapper from '../../../components/TabScreenWrapper';
 import { useTabFocus } from '../../../hooks/useTabFocus';
+import LoadingSpinner from '../../../components/LoadingSpinner';
+import ErrorBoundary from '../../../components/ErrorBoundary';
+import { NavigationProps } from '../../../types';
 
 // Platform-aware design constants
 const colors = {
@@ -49,7 +51,11 @@ const spacing = {
   xxl: 32,
 };
 
-export default function ProfileScreen({ navigation }) {
+interface ProfileScreenProps {
+  navigation: NavigationProps;
+}
+
+export default function ProfileScreen({ navigation }: ProfileScreenProps) {
   const { user, signOut } = useAuth();
   const isFocused = useTabFocus();
   const [darkMode, setDarkMode] = useState(false);

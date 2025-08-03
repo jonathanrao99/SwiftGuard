@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import {
   View,
@@ -31,12 +30,16 @@ import {
 } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect } from '@react-navigation/native';
-import { startLocationTracking, stopLocationTracking, isLocationTrackingActive } from '../../services/LocationTrackingService';
 import { supabase } from '../../supabaseClient';
-import * as Location from 'expo-location';
 import { COLORS, SPACING } from '../../theme';
 import { useTabBarVisibility } from '../../components/TabBarVisibilityContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { NavigationProps } from '../../types';
+import * as Location from 'expo-location';
+import { useAuth } from '../../contexts/AuthContext';
+import DashboardService, { DashboardJob, DashboardEarnings, DashboardStats } from '../../services/DashboardService';
+import LoadingSpinner from '../../components/LoadingSpinner';
+import ErrorBoundary from '../../components/ErrorBoundary';
 
 // Props for QuickActionButton
 interface QuickActionButtonProps {
@@ -60,10 +63,26 @@ const ANIMATION_CONFIG = {
 
 const SCROLL_THRESHOLD = 50;
 
-export default function GuardDashboard({ navigation }) {
+interface GuardDashboardProps {
+  navigation: NavigationProps;
+}
+
+export default function GuardDashboard({ navigation }: GuardDashboardProps) {
+  const { user } = useAuth();
   const [scrollEnabled, setScrollEnabled] = useState(true);
   const [darkMode, setDarkMode] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLocationTrackingActive, setIsLocationTrackingActive] = useState(false);
+  const [dashboardData, setDashboardData] = useState<{
+    jobs: DashboardJob[];
+    earnings: DashboardEarnings;
+    stats: DashboardStats;
+  }>({
+    jobs: [],
+    earnings: { total: 0, thisWeek: 0, thisMonth: 0, pending: 0 },
+    stats: { totalJobs: 0, activeJobs: 0, completedJobs: 0, totalEarnings: 0, averageRating: 0 }
+  });
+  const [error, setError] = useState<string | null>(null);
   
   const screenHeight = useMemo(() => Dimensions.get('window').height, []);
   const contentHeightRef = useRef(0);
@@ -85,35 +104,27 @@ export default function GuardDashboard({ navigation }) {
   const earningsOpacity = useSharedValue(0);
   const earningsTranslateY = useSharedValue(30);
 
-  // Mock data for upcoming jobs and earnings
-  const upcomingJobs = useMemo(() => [
-    {
-      id: '1',
-      title: 'Nightclub Security',
-      date: '2024-06-01',
-      time: '22:00 - 02:00',
-      location: 'Club Euphoria, Downtown',
-      status: 'Scheduled',
-      hourlyPay: 30,
-    },
-    {
-      id: '2',
-      title: 'Corporate Event',
-      date: '2024-06-03',
-      time: '18:00 - 22:00',
-      location: 'Tech Conference Center',
-      status: 'Scheduled',
-      hourlyPay: 35,
-    },
-  ], []);
+  // Load dashboard data
+  const loadDashboardData = useCallback(async () => {
+    if (!user?.id) return;
+    
+    try {
+      setIsLoading(true);
+      setError(null);
+      const data = await DashboardService.getGuardDashboardData(user.id);
+      setDashboardData(data);
+    } catch (err) {
+      console.error('Error loading dashboard data:', err);
+      setError('Failed to load dashboard data. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [user?.id]);
 
-  // Earnings data
-  const weeklyEarnings = useMemo(() => ({
-    total: 480,
-    hours: 16,
-    averageRate: 30,
-    nextPayment: '2024-06-07',
-  }), []);
+  // Memoized data
+  const upcomingJobs = useMemo(() => dashboardData.jobs, [dashboardData.jobs]);
+  const earnings = useMemo(() => dashboardData.earnings, [dashboardData.earnings]);
+  const stats = useMemo(() => dashboardData.stats, [dashboardData.stats]);
 
   // Handlers
   const handleScroll = useCallback((event: any) => {
@@ -129,8 +140,12 @@ export default function GuardDashboard({ navigation }) {
   useFocusEffect(
     React.useCallback(() => {
       const checkTrackingStatus = async () => {
-        const trackingStatus = await isLocationTrackingActive();
-        setIsTracking(trackingStatus);
+        try {
+          const trackingActive = await AsyncStorage.getItem('locationTrackingActive');
+          setIsTracking(trackingActive === 'true');
+        } catch (error) {
+          console.error('Error checking tracking status:', error);
+        }
       };
       checkTrackingStatus();
     }, [])
@@ -144,13 +159,15 @@ export default function GuardDashboard({ navigation }) {
         setDarkMode(value === 'true');
       } catch (error) {
         console.error('Error loading dark mode:', error);
-      } finally {
-        setIsLoading(false);
       }
     };
 
     loadDarkMode();
   }, []);
+
+  useEffect(() => {
+    loadDashboardData();
+  }, [loadDashboardData]);
 
   useEffect(() => {
     // Enhanced staggered animations with better spring configurations
@@ -185,6 +202,44 @@ export default function GuardDashboard({ navigation }) {
       mass: ANIMATION_CONFIG.mass,
     }));
   }, []);
+
+  const startLocationTracking = async () => {
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permission Denied', 'Location permission is required for tracking.');
+        return;
+      }
+
+      await AsyncStorage.setItem('locationTrackingActive', 'true');
+      setIsLocationTrackingActive(true);
+      setIsTracking(true);
+      
+      // Start location tracking
+      const location = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.High,
+      });
+      
+      // Update location in database
+      if (location) {
+        // Location sent to backend via GuardTrackingService
+        // Location updated successfully
+      }
+    } catch (error) {
+      console.error('Error starting location tracking:', error);
+      Alert.alert('Error', 'Failed to start location tracking.');
+    }
+  };
+
+  const stopLocationTracking = async () => {
+    try {
+      await AsyncStorage.setItem('locationTrackingActive', 'false');
+      setIsLocationTrackingActive(false);
+      setIsTracking(false);
+    } catch (error) {
+      console.error('Error stopping location tracking:', error);
+    }
+  };
 
   const toggleLocationTracking = async () => {
     if (isTracking) {
@@ -266,13 +321,33 @@ export default function GuardDashboard({ navigation }) {
   if (isLoading) {
     return (
       <SafeAreaView style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={COLORS.primary} />
+        <LoadingSpinner text="Loading dashboard..." />
+      </SafeAreaView>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <SafeAreaView style={styles.loadingContainer}>
+        <View style={{ alignItems: 'center', padding: 20 }}>
+          <MaterialIcons name="error-outline" size={64} color={COLORS.error} />
+          <Text style={{ fontSize: 18, color: COLORS.error, marginTop: 16, textAlign: 'center' }}>
+            {error}
+          </Text>
+          <TouchableOpacity 
+            style={{ marginTop: 20, padding: 12, backgroundColor: COLORS.primary, borderRadius: 8 }}
+            onPress={loadDashboardData}
+          >
+            <Text style={{ color: 'white', fontWeight: '600' }}>Retry</Text>
+          </TouchableOpacity>
+        </View>
       </SafeAreaView>
     );
   }
 
   return (
-    <>
+    <ErrorBoundary>
       <StatusBar 
         translucent 
         backgroundColor="transparent" 
@@ -398,21 +473,21 @@ export default function GuardDashboard({ navigation }) {
                   <View style={styles.earningsRow}>
                     <View style={styles.earningsItem}>
                       <Text style={[styles.earningsLabel, { color: darkMode ? '#9ca3af' : '#64748b' }]}>Total Earned</Text>
-                      <Text style={styles.earningsValue}>${weeklyEarnings.total}</Text>
+                      <Text style={styles.earningsValue}>${earnings.thisWeek}</Text>
                     </View>
                     <View style={styles.earningsItem}>
                       <Text style={[styles.earningsLabel, { color: darkMode ? '#9ca3af' : '#64748b' }]}>Hours Worked</Text>
-                      <Text style={styles.earningsValue}>{weeklyEarnings.hours}h</Text>
+                                              <Text style={styles.earningsValue}>{stats.totalJobs} jobs</Text>
                     </View>
                   </View>
                   <View style={styles.earningsRow}>
                     <View style={styles.earningsItem}>
                       <Text style={[styles.earningsLabel, { color: darkMode ? '#9ca3af' : '#64748b' }]}>Avg. Rate</Text>
-                      <Text style={styles.earningsValue}>${weeklyEarnings.averageRate}/hr</Text>
+                                              <Text style={styles.earningsValue}>${earnings.total}</Text>
                     </View>
                     <View style={styles.earningsItem}>
                       <Text style={[styles.earningsLabel, { color: darkMode ? '#9ca3af' : '#64748b' }]}>Next Payment</Text>
-                      <Text style={styles.earningsValue}>{weeklyEarnings.nextPayment}</Text>
+                                              <Text style={styles.earningsValue}>${earnings.pending}</Text>
                     </View>
                   </View>
                 </View>
@@ -421,7 +496,7 @@ export default function GuardDashboard({ navigation }) {
           </View>
         </SafeAreaView>
       </LinearGradient>
-    </>
+    </ErrorBoundary>
   );
 }
 

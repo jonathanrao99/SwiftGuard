@@ -4,13 +4,19 @@ import { View, Text, StyleSheet, Dimensions, StatusBar, Platform, TouchableOpaci
 import { MaterialIcons } from '@expo/vector-icons';
 import { supabase } from '../../../supabaseClient';
 import * as Location from 'expo-location';
+import ErrorBoundary from '../../../components/ErrorBoundary';
 
 const { width, height } = Dimensions.get('window');
 
-const TrackJobScreen = ({ route, navigation }) => {
+interface TrackJobScreenProps {
+  route: { params: { jobId: string } };
+  navigation: any;
+}
+
+const TrackJobScreen = ({ route, navigation }: TrackJobScreenProps) => {
     const { jobId } = route.params;
-    const [guardLocation, setGuardLocation] = useState(null);
-    const [jobDetails, setJobDetails] = useState(null);
+    const [guardLocation, setGuardLocation] = useState<{ latitude: number; longitude: number } | null>(null);
+    const [jobDetails, setJobDetails] = useState<any>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -67,7 +73,8 @@ const TrackJobScreen = ({ route, navigation }) => {
     const statusBarHeight = Platform.OS === 'android' ? StatusBar.currentHeight || 24 : 44;
 
     return (
-        <View style={[styles.container, { paddingTop: statusBarHeight }]}>
+        <ErrorBoundary>
+            <View style={[styles.container, { paddingTop: statusBarHeight }]}>
             <StatusBar translucent backgroundColor="transparent" barStyle="dark-content" />
             <View style={styles.header}>
                 <TouchableOpacity onPress={() => navigation.goBack()}>
@@ -102,6 +109,7 @@ const TrackJobScreen = ({ route, navigation }) => {
                 </View>
             )}
         </View>
+        </ErrorBoundary>
     );
 };
 

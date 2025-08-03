@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React, { useState, useEffect } from 'react';
 import {
   View,
@@ -14,18 +13,50 @@ import {
 import { MaterialIcons, Feather, Entypo, Ionicons, FontAwesome5 } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS, SPACING } from '../../theme';
+import LoadingSpinner from '../../components/LoadingSpinner';
+import ErrorBoundary from '../../components/ErrorBoundary';
+import { NavigationProps } from '../../types';
+
+interface Job {
+  id: string;
+  title: string;
+  hourlyPay?: string;
+  pay?: string;
+  numGuards?: number;
+  num_guards?: number;
+  requirements?: string[];
+  specialInstructions?: string;
+  managerName?: string;
+  managerPhone?: string;
+  managerEmail?: string;
+  guestCount?: number;
+  venueType?: string;
+  recurringMode?: string;
+  startDate?: string;
+  start_date?: string;
+  startTime?: string;
+  start_time?: string;
+  endTime?: string;
+  end_time?: string;
+  duration?: number;
+  location?: string;
+  venue?: string;
+  status?: string;
+}
 
 interface GuardJobDetailsScreenProps {
   route: {
     params: {
-      job: any;
+      job: Job;
     };
   };
-  navigation: any;
+  navigation: NavigationProps;
 }
 
 export default function GuardJobDetailsScreen({ route, navigation }: GuardJobDetailsScreenProps) {
   const { job: originalJob } = route.params;
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Add sample data to fill in missing fields for demonstration
   const job = {
@@ -173,9 +204,18 @@ export default function GuardJobDetailsScreen({ route, navigation }: GuardJobDet
   const currentStep = getCurrentJobStep();
   const jobSteps = ['Posted', 'Assigned', 'In Progress', 'Completed'];
 
+  if (isLoading) {
+    return (
+      <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
+        <LoadingSpinner text="Loading job details..." />
+      </SafeAreaView>
+    );
+  }
+
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
-      <StatusBar translucent={false} backgroundColor={COLORS.white} barStyle="dark-content" />
+    <ErrorBoundary>
+      <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
+        <StatusBar translucent={false} backgroundColor={COLORS.white} barStyle="dark-content" />
       
       {/* Header */}
       <View style={styles.header}>
@@ -454,6 +494,7 @@ export default function GuardJobDetailsScreen({ route, navigation }: GuardJobDet
         </View>
       </ScrollView>
     </SafeAreaView>
+    </ErrorBoundary>
   );
 }
 

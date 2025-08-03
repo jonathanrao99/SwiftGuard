@@ -41,7 +41,7 @@ const GuardProfileScreen = lazy(() => import('./screens/client/jobs/GuardCardScr
 const FindGuardsScreen = lazy(() => import('./screens/client/home/FindGuardsScreen'));
 const ReportsScreen = lazy(() => import('./screens/client/home/ReportsScreen'));
 const JobsScreen = lazy(() => import('./screens/client/jobs/JobsScreen'));
-const AllReviewsScreen = lazy(() => import('./screens/client/jobs/GuardReviews'));
+const AllReviewsScreen = lazy(() => import('./screens/client/jobs/GuardReviews').then(module => ({ default: module.default })));
 const JobDetailsScreen = lazy(() => import('./screens/client/jobs/JobDetailsScreen'));
 const LeaveReviewScreen = lazy(() => import('./screens/client/jobs/LeaveReviewScreen'));
 const GuardTabs = lazy(() => import('./screens/guard/GuardTabs'));

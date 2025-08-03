@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React, { useState, useEffect } from 'react';
 import {
   Text,
@@ -8,6 +7,9 @@ import {
   Alert,
   View
 } from 'react-native';
+import LoadingSpinner from '../components/LoadingSpinner';
+import ErrorBoundary from '../components/ErrorBoundary';
+import { NavigationProps } from '../types';
 // Dynamic import for Stripe to reduce bundle size
 let useStripe: any;
 let initPaymentSheet: any;
@@ -24,11 +26,21 @@ const loadStripe = async () => {
 };
 import { supabase } from '../supabaseClient';
 
-export default function PreferredPayment({ navigation, route }) {
+interface PreferredPaymentProps {
+  navigation: NavigationProps;
+  route: {
+    params: {
+      userId: string;
+    };
+  };
+}
+
+export default function PreferredPayment({ navigation, route }: PreferredPaymentProps) {
   const { userId } = route.params || {};
   const [loading, setLoading] = useState(false);
   const [stripeLoaded, setStripeLoaded] = useState(false);
   const [stripe, setStripe] = useState<any>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     loadStripe().then(() => {
@@ -48,6 +60,7 @@ export default function PreferredPayment({ navigation, route }) {
     if (!stripe) return;
     
     setLoading(true);
+    setError(null);
     // Call your Supabase Edge Function to create a SetupIntent
     const { data: fnData, error: fnError } = await supabase.functions.invoke(
       'create-setup-intent',
@@ -57,7 +70,7 @@ export default function PreferredPayment({ navigation, route }) {
     if (fnError) {
       // Show detailed server error
       const serverMsg = fnData?.error || fnError.message;
-      Alert.alert('Error', `${fnError.message}\n${serverMsg}`);
+      setError(`${fnError.message}\n${serverMsg}`);
       setLoading(false);
       return;
     }
@@ -78,7 +91,7 @@ export default function PreferredPayment({ navigation, route }) {
       }
     });
     if (initError) {
-      Alert.alert('Payment Error', initError.message);
+      setError(`Payment Error: ${initError.message}`);
     }
     setLoading(false);
   }
@@ -86,17 +99,30 @@ export default function PreferredPayment({ navigation, route }) {
   async function openPaymentSheet() {
     if (!stripe) return;
     
-    const { error } = await stripe.presentPaymentSheet();
-    if (error) {
-      Alert.alert('Payment Error', error.message);
-    } else {
-      Alert.alert('Success', 'Payment method saved successfully');
-      navigation.replace('Client');
+    try {
+      setError(null);
+      const { error } = await stripe.presentPaymentSheet();
+      if (error) {
+        setError(`Payment Error: ${error.message}`);
+      } else {
+        Alert.alert('Success', 'Payment method saved successfully');
+        navigation.replace('Client');
+      }
+    } catch (err) {
+      setError('Failed to process payment. Please try again.');
     }
   }
 
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        <LoadingSpinner text="Setting up payment..." />
+      </View>
+    );
+  }
+
   return (
-    <>
+    <ErrorBoundary>
       <StatusBar translucent backgroundColor="transparent" barStyle="dark-content" />
     <View style={styles.container}>
       <TouchableOpacity style={styles.skipButton} onPress={() => navigation.replace('Client')}>
@@ -105,6 +131,12 @@ export default function PreferredPayment({ navigation, route }) {
 
       <Text style={styles.header}>Set Up Your Preferred Payment Method</Text>
       <Text style={styles.subtext}>Add a credit/debit card or use Apple/Google Pay</Text>
+
+      {error && (
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>{error}</Text>
+        </View>
+      )}
 
       <View style={styles.paymentOptions}>
         <TouchableOpacity
@@ -116,7 +148,7 @@ export default function PreferredPayment({ navigation, route }) {
         </TouchableOpacity>
       </View>
     </View>
-    </>
+    </ErrorBoundary>
   );
 }
 
@@ -169,5 +201,17 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: 'bold',
     fontSize: 16,
+  },
+  errorContainer: {
+    backgroundColor: '#fee2e2',
+    padding: 15,
+    borderRadius: 8,
+    marginBottom: 20,
+    width: '100%',
+  },
+  errorText: {
+    color: '#dc2626',
+    fontSize: 14,
+    textAlign: 'center',
   },
 }); 

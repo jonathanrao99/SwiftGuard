@@ -1,11 +1,16 @@
-// @ts-nocheck
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, StatusBar } from 'react-native';
 import { FontAwesome5 } from '@expo/vector-icons';
+import ErrorBoundary from '../components/ErrorBoundary';
+import { NavigationProps } from '../types';
 
-export default function UserTypeSelection({ navigation }) {
+interface UserTypeSelectionProps {
+  navigation: NavigationProps;
+}
+
+export default function UserTypeSelection({ navigation }: UserTypeSelectionProps) {
   return (
-    <>
+    <ErrorBoundary>
       <StatusBar translucent backgroundColor="transparent" barStyle="dark-content" />
     <View style={styles.container}>
       <Text style={styles.header}>Welcome to SwiftGuard</Text>
@@ -24,7 +29,7 @@ export default function UserTypeSelection({ navigation }) {
         </TouchableOpacity>
       </View>
     </View>
-    </>
+    </ErrorBoundary>
   );
 }
 

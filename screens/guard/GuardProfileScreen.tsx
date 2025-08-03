@@ -1,6 +1,5 @@
-// @ts-nocheck
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, StatusBar, Platform, Pressable } from 'react-native';
+import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, StatusBar, Platform, Pressable, Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { MaterialIcons, FontAwesome5 } from '@expo/vector-icons';
 import { supabase } from '../../supabaseClient';
@@ -17,6 +16,9 @@ import Animated, {
   withSequence,
   runOnJS
 } from 'react-native-reanimated';
+import LoadingSpinner from '../../components/LoadingSpinner';
+import ErrorBoundary from '../../components/ErrorBoundary';
+import { NavigationProps } from '../../types';
 
 // Platform-aware design constants
 const colors = {
@@ -47,9 +49,15 @@ const spacing = {
   xxl: 32,
 };
 
-export default function GuardProfileScreen({ navigation }) {
+interface GuardProfileScreenProps {
+  navigation: NavigationProps;
+}
+
+export default function GuardProfileScreen({ navigation }: GuardProfileScreenProps) {
   const { user, signOut } = useAuth();
   const [darkMode, setDarkMode] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Animation values
   const headerOpacity = useSharedValue(0);
@@ -140,9 +148,18 @@ export default function GuardProfileScreen({ navigation }) {
     transform: [{ scale: logoutButtonScale.value }],
   }));
 
+  if (isLoading) {
+    return (
+      <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
+        <LoadingSpinner text="Loading profile..." />
+      </SafeAreaView>
+    );
+  }
+
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
-      <StatusBar translucent backgroundColor="white" barStyle="dark-content" />
+    <ErrorBoundary>
+      <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
+        <StatusBar translucent backgroundColor="white" barStyle="dark-content" />
       
       <LinearGradient
         colors={['#ffffff', '#e0f2ff']}
@@ -259,6 +276,7 @@ export default function GuardProfileScreen({ navigation }) {
         </ScrollView>
       </LinearGradient>
     </SafeAreaView>
+    </ErrorBoundary>
   );
 }
 

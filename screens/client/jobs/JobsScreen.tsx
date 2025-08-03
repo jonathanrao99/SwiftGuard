@@ -366,7 +366,7 @@ export default function JobsScreen({ navigation }: JobsScreenProps) {
   const fetchJobs = async () => {
     try {
       if (!user?.id) {
-        console.log('No user ID available');
+        // No user ID available
         return;
       }
 
@@ -381,7 +381,7 @@ export default function JobsScreen({ navigation }: JobsScreenProps) {
         return;
       }
 
-      console.log('Fetched jobs:', data);
+              // Jobs fetched successfully
       setJobs(data || []);
     } catch (error) {
       console.error('Error fetching jobs:', error);

@@ -47,6 +47,8 @@ const loadStripe = async () => {
 };
 import { supabase } from '../../../supabaseClient';
 import { JobService, JobData } from '../../../services/JobService';
+import LoadingSpinner from '../../../components/LoadingSpinner';
+import ErrorBoundary from '../../../components/ErrorBoundary';
 
 // Types
 interface PostJobFormData {
@@ -108,6 +110,8 @@ const weekdays = [
 ];
 
 const PostJob: React.FC<PostJobProps> = ({ navigation }) => {
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [stripeLoaded, setStripeLoaded] = useState(false);
   const [stripe, setStripe] = useState<any>(null);
 
@@ -616,11 +620,20 @@ const PostJob: React.FC<PostJobProps> = ({ navigation }) => {
     </View>
   );
 
+  if (isLoading) {
+    return (
+      <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
+        <LoadingSpinner text="Processing..." />
+      </SafeAreaView>
+    );
+  }
+
   return (
-    <LinearGradient
-      colors={['rgba(255, 255, 255, 0.9)', 'rgba(255, 255, 255, 0.95)']}
-      style={styles.gradientContainer}
-    >
+    <ErrorBoundary>
+      <LinearGradient
+        colors={['rgba(255, 255, 255, 0.9)', 'rgba(255, 255, 255, 0.95)']}
+        style={styles.gradientContainer}
+      >
       <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
         {/* Status bar shadow when sheet is open */}
         {isSheetOpen && (
@@ -898,6 +911,7 @@ const PostJob: React.FC<PostJobProps> = ({ navigation }) => {
       </Modal>
     </SafeAreaView>
     </LinearGradient>
+    </ErrorBoundary>
   );
 };
 

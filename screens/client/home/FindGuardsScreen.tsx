@@ -17,6 +17,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS, SPACING } from '../../../theme';
 import { NavigationProps } from '../../../types';
+import LoadingSpinner from '../../../components/LoadingSpinner';
+import ErrorBoundary from '../../../components/ErrorBoundary';
 
 interface Guard {
   id: string;
@@ -60,6 +62,8 @@ export default function FindGuardsScreen({ navigation }: FindGuardsScreenProps) 
   const [searchQuery, setSearchQuery] = useState('');
   const [filterModalVisible, setFilterModalVisible] = useState(false);
   const [selectedSort, setSelectedSort] = useState('Rating');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [filters, setFilters] = useState<Filters>({
     experience: 'All',
     rating: 'All',
@@ -293,9 +297,18 @@ export default function FindGuardsScreen({ navigation }: FindGuardsScreenProps) 
     );
   };
 
+  if (isLoading) {
+    return (
+      <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
+        <LoadingSpinner text="Finding guards..." />
+      </SafeAreaView>
+    );
+  }
+
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
-      <StatusBar translucent={false} backgroundColor={COLORS.white} barStyle="dark-content" />
+    <ErrorBoundary>
+      <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
+        <StatusBar translucent={false} backgroundColor={COLORS.white} barStyle="dark-content" />
       
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
@@ -360,6 +373,7 @@ export default function FindGuardsScreen({ navigation }: FindGuardsScreenProps) 
           />
         </View>
     </SafeAreaView>
+    </ErrorBoundary>
   );
 }
 

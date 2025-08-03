@@ -205,6 +205,47 @@ export type NavigationProps = {
   reset: (options: any) => void;
 }
 
+// Navigation parameter types for different screens
+export interface JobDetailsScreenProps {
+  route: { params: { jobId: string } };
+  navigation: NavigationProps;
+}
+
+export interface TrackJobScreenProps {
+  route: { params: { jobId: string } };
+  navigation: NavigationProps;
+}
+
+export interface GuardJobDetailsScreenProps {
+  route: { params: { jobId: string } };
+  navigation: NavigationProps;
+}
+
+export interface GuardModeProps {
+  route: { params: { jobId: string } };
+  navigation: NavigationProps;
+}
+
+export interface PostJobSpecializedProps {
+  route: { params: { jobId?: string } };
+  navigation: NavigationProps;
+}
+
+export interface JobPostedSuccessScreenProps {
+  route: { params: { jobId: string } };
+  navigation: NavigationProps;
+}
+
+export interface AllReviewsScreenProps {
+  route: { params: { guard: any; reviews: any[] } };
+  navigation: NavigationProps;
+}
+
+export interface LeaveReviewScreenProps {
+  route: { params: { jobId: string; guardId: string } };
+  navigation: NavigationProps;
+}
+
 export interface DashboardStats {
   totalJobs: number;
   activeJobs: number;

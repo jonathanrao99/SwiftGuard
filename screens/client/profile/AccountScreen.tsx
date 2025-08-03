@@ -322,6 +322,16 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: COLORS.textPrimary,
   },
+  accountCard: {
+    backgroundColor: COLORS.white,
+    borderRadius: 12,
+    padding: SPACING.md,
+    shadowColor: COLORS.cardShadow,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
+  },
   menuItem: {
     flexDirection: 'row',
     alignItems: 'center',

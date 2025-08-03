@@ -1,10 +1,12 @@
-// @ts-nocheck
 import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, StatusBar } from 'react-native';
 import { supabase } from '../supabaseClient';
+import LoadingSpinner from '../components/LoadingSpinner';
+import ErrorBoundary from '../components/ErrorBoundary';
+import { NavigationProps } from '../types';
 
 // Helper to derive E.164 format: strip non-digits and add +1 for US numbers
-function normalizePhone(number) {
+function normalizePhone(number: string): string {
   const digits = (number || '').replace(/\D/g, '');
   // 10-digit US number
   if (digits.length === 10) {
@@ -22,13 +24,40 @@ function normalizePhone(number) {
   return number;
 }
 
-export default function OtpVerification({ navigation, route }) {
+interface OtpVerificationProps {
+  navigation: NavigationProps;
+  route: {
+    params: {
+      phone: string;
+      nextScreen: string;
+      role: string;
+      email: string;
+      firstName: string;
+      lastName: string;
+      businessName?: string;
+      establishmentType?: string;
+      location?: string;
+      referralCode?: string;
+      gender?: string;
+      dob?: string;
+      experienceLevel?: string;
+      yearsExperience?: number;
+      bio?: string;
+      certifications?: string[];
+      emergencyContact?: string;
+      availability?: string;
+    };
+  };
+}
+
+export default function OtpVerification({ navigation, route }: OtpVerificationProps) {
   const { phone, nextScreen, ...formData } = route.params;
   const normalizedPhone = normalizePhone(phone);
   console.log('↪️ Normalized phone for OTP:', normalizedPhone);
   const [code, setCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     sendOtp();
@@ -45,6 +74,7 @@ export default function OtpVerification({ navigation, route }) {
   }
 
   async function verifyOtp() {
+    setIsLoading(true);
     setLoading(true);
     setErrorMsg('');
     console.log('↪️ Calling verifyOtp for:', normalizedPhone, 'code:', code);
@@ -98,14 +128,23 @@ export default function OtpVerification({ navigation, route }) {
       navigation.replace(nextScreen, { userId: user.id });
     } catch (e) {
       console.log('↪️ verifyOtp threw exception:', e);
-      setErrorMsg(e.message || 'Unexpected error');
+      setErrorMsg(e.message || 'Verification failed. Please try again.');
     } finally {
+      setIsLoading(false);
       setLoading(false);
     }
   }
 
+  if (isLoading) {
+    return (
+      <View style={styles.container}>
+        <LoadingSpinner text="Verifying code..." />
+      </View>
+    );
+  }
+
   return (
-    <>
+    <ErrorBoundary>
       <StatusBar translucent backgroundColor="transparent" barStyle="dark-content" />
       <View style={styles.container}>
         <Text style={styles.header}>Enter Verification Code</Text>
@@ -130,7 +169,7 @@ export default function OtpVerification({ navigation, route }) {
           <Text style={styles.resendText}>Resend Code</Text>
         </TouchableOpacity>
       </View>
-    </>
+    </ErrorBoundary>
   );
 }
 

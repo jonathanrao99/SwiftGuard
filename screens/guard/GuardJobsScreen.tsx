@@ -20,9 +20,12 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS, SPACING } from '../../theme';
 import { supabase } from '../../supabaseClient';
 import { useAuth } from '../../contexts/AuthContext';
+import LoadingSpinner from '../../components/LoadingSpinner';
+import ErrorBoundary from '../../components/ErrorBoundary';
+import { NavigationProps } from '../../types';
 
 interface GuardJobsScreenProps {
-  navigation: any;
+  navigation: NavigationProps;
 }
 
 interface Job {
@@ -334,6 +337,7 @@ const AcceptedTab = ({ navigation, jobs, loading, onRefresh }: {
 };
 
 export default function GuardJobsScreen({ navigation }: GuardJobsScreenProps) {
+  const [error, setError] = useState<string | null>(null);
   const { user } = useAuth();
   const [index, setIndex] = useState(0);
   const [jobs, setJobs] = useState<Job[]>([]);
@@ -349,7 +353,7 @@ export default function GuardJobsScreen({ navigation }: GuardJobsScreenProps) {
   const fetchJobs = async () => {
     try {
       if (!user?.id) {
-        console.log('No user ID available');
+        // No user ID available
         return;
       }
 
@@ -365,7 +369,7 @@ export default function GuardJobsScreen({ navigation }: GuardJobsScreenProps) {
         return;
       }
 
-      console.log('Fetched jobs for guard:', data);
+              // Jobs fetched successfully
       setJobs(data || []);
     } catch (error) {
       console.error('Error fetching jobs:', error);
@@ -443,8 +447,9 @@ export default function GuardJobsScreen({ navigation }: GuardJobsScreenProps) {
   );
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
-      <StatusBar translucent={false} backgroundColor={COLORS.white} barStyle="dark-content" />
+    <ErrorBoundary>
+      <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
+        <StatusBar translucent={false} backgroundColor={COLORS.white} barStyle="dark-content" />
       
       {/* Header */}
       <View style={styles.header}>
@@ -459,6 +464,7 @@ export default function GuardJobsScreen({ navigation }: GuardJobsScreenProps) {
         renderTabBar={renderTabBar}
       />
     </SafeAreaView>
+    </ErrorBoundary>
   );
 }
 

@@ -17,6 +17,7 @@ import * as Location from 'expo-location';
 import { supabase } from '../../supabaseClient';
 import { useAuth } from '../../contexts/AuthContext';
 import { COLORS, SPACING } from '../../theme';
+import ErrorBoundary from '../../components/ErrorBoundary';
 
 interface Job {
   id: string;
@@ -281,7 +282,8 @@ export default function CheckInScreen({ navigation }: { navigation: any }) {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
+    <ErrorBoundary>
+      <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
       <StatusBar translucent={false} backgroundColor={COLORS.white} barStyle="dark-content" />
       
       <View style={styles.header}>
@@ -539,6 +541,7 @@ export default function CheckInScreen({ navigation }: { navigation: any }) {
           </ScrollView>
         </View>
     </SafeAreaView>
+    </ErrorBoundary>
   );
 }
 

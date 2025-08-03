@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -8,12 +7,14 @@ import GuardJobsScreen from './GuardJobsScreen';
 import GuardProfileScreen from './GuardProfileScreen';
 import CustomBottomNav from '../../components/CustomBottomNav';
 import { TabBarVisibilityProvider } from '../../components/TabBarVisibilityContext';
+import ErrorBoundary from '../../components/ErrorBoundary';
 
 const Tab = createBottomTabNavigator();
 
 export default function GuardTabs() {
   return (
-    <TabBarVisibilityProvider>
+    <ErrorBoundary>
+      <TabBarVisibilityProvider>
       <Tab.Navigator initialRouteName="Home" screenOptions={{ headerShown: false }} tabBar={props => <CustomBottomNav {...props} />}>
         <Tab.Screen 
           name="Home" 
@@ -38,5 +39,6 @@ export default function GuardTabs() {
         />
       </Tab.Navigator>
     </TabBarVisibilityProvider>
+    </ErrorBoundary>
   );
 } 

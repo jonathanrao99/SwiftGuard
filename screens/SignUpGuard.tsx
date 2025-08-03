@@ -1,14 +1,21 @@
-// @ts-nocheck
 import React, { useState, useRef } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform, ScrollView, Image, StatusBar } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform, ScrollView, Image, StatusBar, Alert } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Picker } from '@react-native-picker/picker';
 import * as DocumentPicker from 'expo-document-picker';
-import { useState as useLocalState } from 'react';
 import { LocationAutocomplete } from '../components/LocationAutocomplete';
+import { useAuth } from '../contexts/AuthContext';
+import { NavigationProps } from '../types';
+import { guardSignUpSchema, validateForm } from '../lib/validation';
+import LoadingSpinner from '../components/LoadingSpinner';
+import ErrorBoundary from '../components/ErrorBoundary';
 
-export default function SignUpGuard({ navigation }) {
+interface SignUpGuardProps {
+  navigation: NavigationProps;
+}
+
+export default function SignUpGuard({ navigation }: SignUpGuardProps) {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
@@ -29,12 +36,72 @@ export default function SignUpGuard({ navigation }) {
   const [bio, setBio] = useState('');
   const [emergencyContact, setEmergencyContact] = useState('');
 
-  const [showPassword, setShowPassword] = useLocalState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useLocalState(false);
-  const [errors, setErrors] = useState({});
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const { signUp } = useAuth();
 
-  const handleSignUp = () => {
-    if (firstName === 'Test') {
+  const handleSignUp = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      
+      // Validate form using Zod schema
+      const formData = {
+      firstName,
+      lastName,
+      email,
+      phone,
+      password,
+      confirmPassword,
+      dob,
+      gender,
+      experienceLevel,
+      yearsExperience,
+      availability,
+      address,
+      bio,
+      emergencyContact,
+    };
+
+    const validation = validateForm(guardSignUpSchema, formData);
+    if (!validation.success) {
+      setErrors(validation.errors || {});
+      return;
+    }
+
+    try {
+      // Create user with Supabase Auth
+      const { data, error } = await signUp({
+        email,
+        password,
+        options: {
+          data: {
+            first_name: firstName,
+            last_name: lastName,
+            phone,
+            gender,
+            dob,
+            experience_level: experienceLevel,
+            years_experience: yearsExperience,
+            certifications,
+            availability,
+            address,
+            bio,
+            emergency_contact: emergencyContact,
+            role: 'guard',
+          },
+        },
+      });
+
+      if (error) {
+        setError(error.message);
+        return;
+      }
+
+      // Navigate to OTP verification
       navigation.navigate('OtpVerification', {
         phone,
         nextScreen: 'PreferredPayment',
@@ -53,45 +120,12 @@ export default function SignUpGuard({ navigation }) {
         emergencyContact,
         role: 'guard',
       });
-      return;
+    } catch (error) {
+      console.error('Sign up error:', error);
+      setError('Failed to create account. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
-    // Validate required fields
-    const newErrors = {};
-    if (!firstName) newErrors.firstName = 'First name is required';
-    if (!lastName) newErrors.lastName = 'Last name is required';
-    if (!email) newErrors.email = 'Email is required';
-    if (!phone) newErrors.phone = 'Phone is required';
-    if (!password) newErrors.password = 'Password is required';
-    if (confirmPassword !== password) newErrors.confirmPassword = 'Passwords do not match';
-    if (!dob) newErrors.dob = 'Date of birth is required';
-    if (!gender) newErrors.gender = 'Gender is required';
-    if (!experienceLevel) newErrors.experienceLevel = 'Experience level is required';
-    if (!yearsExperience) newErrors.yearsExperience = 'Years of experience is required';
-    if (!availability) newErrors.availability = 'Availability is required';
-    if (!address) newErrors.address = 'Address is required';
-    if (!bio) newErrors.bio = 'Bio is required';
-    if (!emergencyContact) newErrors.emergencyContact = 'Emergency contact is required';
-    setErrors(newErrors);
-    if (Object.keys(newErrors).length > 0) return;
-    // Navigate to OTP verification before payment setup
-    navigation.navigate('OtpVerification', {
-      phone,
-      nextScreen: 'PreferredPayment',
-      firstName,
-      lastName,
-      email,
-      password,
-      gender,
-      dob,
-      experienceLevel,
-      yearsExperience,
-      certifications,
-      availability,
-      address,
-      bio,
-      emergencyContact,
-      role: 'guard',
-    });
   };
 
   const handlePickCertifications = async () => {

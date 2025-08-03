@@ -11,7 +11,8 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
 import { theme } from '../../../design-system';
-import { NavigationProps, GuardTracking, Job, User } from '../../../types';
+import { NavigationProps } from '../../../types';
+import GuardTrackingService, { GuardStatus } from '../../../services/GuardTrackingService';
 
 interface LiveTrackingProps {
   navigation: NavigationProps;
@@ -22,15 +23,7 @@ interface LiveTrackingProps {
   };
 }
 
-interface GuardStatus {
-  guard: User;
-  tracking: GuardTracking;
-  job: Job;
-  checkpointCount: number;
-  lastCheckpoint?: string;
-  batteryLevel?: number;
-  isOnline: boolean;
-}
+
 
 export default function LiveTracking({ navigation, route }: LiveTrackingProps) {
   const [guards, setGuards] = useState<GuardStatus[]>([]);
@@ -39,112 +32,37 @@ export default function LiveTracking({ navigation, route }: LiveTrackingProps) {
 
   useEffect(() => {
     loadGuardData();
-    // Set up real-time updates every 30 seconds
-    const interval = setInterval(loadGuardData, 30000);
-    return () => clearInterval(interval);
-  }, []);
+    
+    // Set up real-time subscription if jobId is provided
+    if (route?.params?.jobId) {
+      GuardTrackingService.subscribeToGuardUpdates(route.params.jobId, (guardStatuses) => {
+        setGuards(guardStatuses);
+      });
+    } else {
+      // Fallback to polling every 30 seconds for general tracking
+      const interval = setInterval(loadGuardData, 30000);
+      return () => clearInterval(interval);
+    }
+
+    // Cleanup subscription on unmount
+    return () => {
+      if (route?.params?.jobId) {
+        GuardTrackingService.unsubscribeFromGuardUpdates(route.params.jobId);
+      }
+    };
+  }, [route?.params?.jobId]);
 
   const loadGuardData = async () => {
     try {
-      // Mock data - replace with real API calls
-      const mockGuards: GuardStatus[] = [
-        {
-          guard: {
-            id: 'guard-1',
-            role: 'guard',
-            email: 'john@swiftguard.com',
-            first_name: 'John',
-            last_name: 'Smith',
-            status: 'active',
-            created_at: new Date().toISOString(),
-            experience_level: 'Expert',
-          },
-          tracking: {
-            id: 'tracking-1',
-            guard_id: 'guard-1',
-            job_id: 'job-1',
-            latitude: 37.7749,
-            longitude: -122.4194,
-            battery_level: 85,
-            is_online: true,
-            last_seen: new Date(Date.now() - 2 * 60 * 1000).toISOString(), // 2 minutes ago
-            created_at: new Date().toISOString(),
-          },
-          job: {
-            id: 'job-1',
-            client_id: 'client-1',
-            title: 'Corporate Office Security',
-            location: '123 Business Ave, Downtown',
-            venue_type: 'Corporate Office',
-            recurring_mode: 'One-time',
-            event_dates: ['2024-01-15'],
-            start_time: '18:00',
-            end_time: '06:00',
-            duration: 12,
-            num_guards: 1,
-            hourly_pay: 25,
-            total_amount: 300,
-            manager_name: 'Sarah Johnson',
-            manager_phone: '+1234567890',
-            status: 'active',
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          },
-          checkpointCount: 3,
-          lastCheckpoint: 'Main Entrance - 15 minutes ago',
-          batteryLevel: 85,
-          isOnline: true,
-        },
-        {
-          guard: {
-            id: 'guard-2',
-            role: 'guard',
-            email: 'mike@swiftguard.com',
-            first_name: 'Mike',
-            last_name: 'Johnson',
-            status: 'active',
-            created_at: new Date().toISOString(),
-            experience_level: 'Intermediate',
-          },
-          tracking: {
-            id: 'tracking-2',
-            guard_id: 'guard-2',
-            job_id: 'job-2',
-            latitude: 37.7750,
-            longitude: -122.4195,
-            battery_level: 62,
-            is_online: true,
-            last_seen: new Date(Date.now() - 5 * 60 * 1000).toISOString(), // 5 minutes ago
-            created_at: new Date().toISOString(),
-          },
-          job: {
-            id: 'job-2',
-            client_id: 'client-1',
-            title: 'Warehouse Night Shift',
-            location: '456 Industrial Way',
-            venue_type: 'Warehouse',
-            recurring_mode: 'Multiple Days',
-            event_dates: ['2024-01-16'],
-            start_time: '22:00',
-            end_time: '06:00',
-            duration: 8,
-            num_guards: 2,
-            hourly_pay: 28,
-            total_amount: 224,
-            manager_name: 'Mike Thompson',
-            manager_phone: '+1987654321',
-            status: 'active',
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          },
-          checkpointCount: 1,
-          lastCheckpoint: 'Loading Dock - 25 minutes ago',
-          batteryLevel: 62,
-          isOnline: true,
-        },
-      ];
+      // Load real guard data from Supabase
+      const guardStatuses = await GuardTrackingService.loadGuardData();
+      setGuards(guardStatuses);
+    } catch (error) {
+      console.error('Error loading guard data:', error);
+      Alert.alert('Error', 'Failed to load guard tracking data');
+    }
+  };
 
-      setGuards(mockGuards);
     } catch (error) {
       console.error('Error loading guard data:', error);
       Alert.alert('Error', 'Failed to load tracking data');

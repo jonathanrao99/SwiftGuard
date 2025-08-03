@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, StatusBar } from 'react-native';
 import { MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import ErrorBoundary from '../../components/ErrorBoundary';
 
 export default function GuardReportsScreen() {
   const [filter, setFilter] = useState('All');
@@ -64,7 +65,8 @@ export default function GuardReportsScreen() {
   const filtered = incidents.filter(item => filter === 'All' || item.status === filter);
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
+    <ErrorBoundary>
+      <View style={[styles.container, { paddingTop: insets.top }]}>
       <StatusBar translucent backgroundColor="transparent" barStyle="dark-content" />
       <Text style={styles.header}>Reports</Text>
       <View style={styles.summaryRow}>
@@ -114,6 +116,7 @@ export default function GuardReportsScreen() {
         ))}
       </ScrollView>
     </View>
+    </ErrorBoundary>
   );
 }
 
