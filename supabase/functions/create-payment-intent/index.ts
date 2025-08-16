@@ -1,26 +1,57 @@
-// @ts-nocheck
-
 import { serve } from 'https://deno.land/std@0.171.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
-console.log('Edge Function ENV:', {
-  SUPABASE_URL: Deno.env.get('SUPABASE_URL')?.slice(0,30) + '...',  
-  HAS_SERVICE_ROLE: !!Deno.env.get('SUPABASE_SERVICE_ROLE_KEY'),
-  HAS_STRIPE_KEY: !!Deno.env.get('STRIPE_SECRET_KEY')
-});
+// Environment validation
+const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
+const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+const STRIPE_SECRET_KEY = Deno.env.get('STRIPE_SECRET_KEY');
 
-const supabaseAdmin = createClient(
-  Deno.env.get('SUPABASE_URL')!,
-  Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-);
-const stripeKey = Deno.env.get('STRIPE_SECRET_KEY');
-if (!stripeKey) throw new Error('Missing STRIPE_SECRET_KEY');
-const authHeader = 'Basic ' + btoa(stripeKey + ':');
+if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY || !STRIPE_SECRET_KEY) {
+  throw new Error('Missing required environment variables');
+}
+
+const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+const authHeader = 'Basic ' + btoa(STRIPE_SECRET_KEY + ':');
+
+// Input validation schema
+interface PaymentRequest {
+  userId: string;
+  amount: number;
+  jobDetails: {
+    id: string;
+    title: string;
+    location: string;
+  };
+}
 
 serve(async (req: Request) => {
   try {
-    const { userId, amount, jobDetails } = await req.json();
-    console.log('Creating payment intent for job:', { userId, amount, jobDetails });
+    // Validate request method
+    if (req.method !== 'POST') {
+      return new Response(JSON.stringify({ error: 'Method not allowed' }), {
+        status: 405,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    // Parse and validate request body
+    const body = await req.json() as PaymentRequest;
+    const { userId, amount, jobDetails } = body;
+
+    // Input validation
+    if (!userId || !amount || !jobDetails?.id) {
+      return new Response(JSON.stringify({ error: 'Missing required fields' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    if (amount <= 0 || amount > 50000) {
+      return new Response(JSON.stringify({ error: 'Invalid amount' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
 
     // Fetch existing Stripe customer ID
     const { data: user, error: userError } = await supabaseAdmin
@@ -78,9 +109,18 @@ serve(async (req: Request) => {
       headers: { 'Content-Type': 'application/json' }
     });
   } catch (err: any) {
-    console.error('Function caught error:', err.stack || err);
-    return new Response(JSON.stringify({ error: err.message, stack: err.stack }), {
-      status: 400,
+    console.error('Payment intent creation failed:', err.message);
+    
+    // Sanitize error response for production
+    const errorMessage = err.message?.includes('Stripe') || err.message?.includes('Supabase') 
+      ? 'Payment processing error. Please try again.' 
+      : err.message || 'Internal server error';
+    
+    return new Response(JSON.stringify({ 
+      error: errorMessage,
+      code: 'PAYMENT_ERROR'
+    }), {
+      status: 500,
       headers: { 'Content-Type': 'application/json' }
     });
   }
