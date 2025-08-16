@@ -14,19 +14,7 @@
 
 ## 🚀 **CRITICAL MCPs FOR IMMEDIATE LAUNCH**
 
-### 1. **Magic UI Design MCP** (Already Available!)
-```json
-{
-  "magic-ui": {
-    "command": "npx",
-    "args": ["-y", "@magic-ui/mcp"]
-  }
-}
-```
-**Benefits**: Pre-built components, animations, professional UI elements
-**Use Cases**: Landing pages, marketing site, enhanced user experience
-
-### 2. **Context7 Library Documentation MCP** (Already Available!)
+### 1. **Context7 Library Documentation MCP** (Already Available!)
 ```json
 {
   "context7": {
@@ -276,7 +264,7 @@
 
 ## ⚡ **QUICK WINS**
 
-### Magic UI Components (Available Now!)
+
 - Use for landing page and marketing materials
 - Enhance user onboarding experience
 - Create professional animations
