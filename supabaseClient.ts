@@ -1,5 +1,9 @@
+// Import WebSocket polyfill first
+import './utils/websocketPolyfill';
 import { createClient } from '@supabase/supabase-js';
 import Constants from 'expo-constants';
+
+
 
 // Get environment variables from Expo config
 const extra = (Constants as any).expoConfig?.extra || (Constants as any).manifest?.extra;

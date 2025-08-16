@@ -1,13 +1,33 @@
-// @ts-nocheck
 import { serve } from 'https://deno.land/std@0.171.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+
+// TypeScript interfaces for our test account structure
+interface TestAccount {
+  email: string;
+  password: string;
+  role: 'client' | 'guard';
+  first_name: string;
+  last_name: string;
+  phone: string;
+  business_name?: string;
+  establishment_type?: string;
+  location?: string;
+  gender?: string;
+  dob?: string;
+  experience_level?: string;
+  years_experience?: number;
+  bio?: string;
+  certifications?: string[];
+  emergency_contact?: string;
+  availability?: string;
+}
 
 const supabaseAdmin = createClient(
   Deno.env.get('SUPABASE_URL')!,
   Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 );
 
-const testAccounts = [
+const testAccounts: TestAccount[] = [
   // Client Accounts
   {
     email: 'client1@test.com',

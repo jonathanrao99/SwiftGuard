@@ -19,6 +19,7 @@ import CustomBottomNav from './components/CustomBottomNav';
 import { AuthProvider } from './contexts/AuthContext';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import Constants from 'expo-constants';
+import { initializeMonitoring } from './utils/monitoringSetup';
 
 // Lazy load screens for better performance
 const LoadingScreen = lazy(() => import('./screens/onboarding/LoadingScreen'));
@@ -114,6 +115,11 @@ function ClientTabs() {
 }
 
 export default function App() {
+  // Initialize monitoring system
+  React.useEffect(() => {
+    initializeMonitoring().catch(console.error);
+  }, []);
+
   // Get Stripe key from environment variables
   const extra = (Constants as any).expoConfig?.extra || (Constants as any).manifest?.extra;
   const STRIPE_PUBLIC_KEY = extra?.STRIPE_PUBLIC_KEY || process.env.STRIPE_PUBLIC_KEY;

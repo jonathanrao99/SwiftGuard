@@ -30,7 +30,7 @@ export default function SignUpGuard({ navigation }: SignUpGuardProps) {
   const [gender, setGender] = useState('');
   const [experienceLevel, setExperienceLevel] = useState('');
   const [yearsExperience, setYearsExperience] = useState('');
-  const [certifications, setCertifications] = useState([]);
+  const [certifications, setCertifications] = useState<DocumentPicker.DocumentPickerAsset[]>([]);
   const [availability, setAvailability] = useState('');
   const [address, setAddress] = useState('');
   const [bio, setBio] = useState('');
@@ -50,50 +50,42 @@ export default function SignUpGuard({ navigation }: SignUpGuardProps) {
       
       // Validate form using Zod schema
       const formData = {
-      firstName,
-      lastName,
-      email,
-      phone,
-      password,
-      confirmPassword,
-      dob,
-      gender,
-      experienceLevel,
-      yearsExperience,
-      availability,
-      address,
-      bio,
-      emergencyContact,
-    };
-
-    const validation = validateForm(guardSignUpSchema, formData);
-    if (!validation.success) {
-      setErrors(validation.errors || {});
-      return;
-    }
-
-    try {
-      // Create user with Supabase Auth
-      const { data, error } = await signUp({
+        firstName,
+        lastName,
         email,
+        phone,
         password,
-        options: {
-          data: {
-            first_name: firstName,
-            last_name: lastName,
-            phone,
-            gender,
-            dob,
-            experience_level: experienceLevel,
-            years_experience: yearsExperience,
-            certifications,
-            availability,
-            address,
-            bio,
-            emergency_contact: emergencyContact,
-            role: 'guard',
-          },
-        },
+        confirmPassword,
+        dob,
+        gender,
+        experienceLevel,
+        yearsExperience,
+        availability,
+        address,
+        bio,
+        emergencyContact,
+      };
+
+      const validation = validateForm(guardSignUpSchema, formData);
+      if (!validation.success) {
+        setErrors(validation.errors || {});
+        return;
+      }
+
+      // Create user with Supabase Auth
+      const { error } = await signUp(email, password, {
+        first_name: firstName,
+        last_name: lastName,
+        phone,
+        gender,
+        dob,
+        experience_level: experienceLevel as 'Entry' | 'Intermediate' | 'Expert',
+        years_experience: parseInt(yearsExperience) || 0,
+        certifications: certifications.map(cert => cert.name || cert.uri || 'Unknown'),
+        availability,
+        bio,
+        emergency_contact: emergencyContact,
+        role: 'guard',
       });
 
       if (error) {
@@ -111,11 +103,10 @@ export default function SignUpGuard({ navigation }: SignUpGuardProps) {
         password,
         gender,
         dob,
-        experienceLevel,
-        yearsExperience,
-        certifications,
+        experienceLevel: experienceLevel as 'Entry' | 'Intermediate' | 'Expert',
+        yearsExperience: parseInt(yearsExperience) || 0,
+        certifications: certifications.map(cert => cert.name || cert.uri || 'Unknown'),
         availability,
-        address,
         bio,
         emergencyContact,
         role: 'guard',
@@ -136,14 +127,14 @@ export default function SignUpGuard({ navigation }: SignUpGuardProps) {
         copyToCacheDirectory: false,
       });
       if (!result.canceled) {
-        setCertifications((prev) => [...prev, ...result.assets]);
+        setCertifications((prev) => [...prev, ...(result.assets || [])]);
       }
     } catch (e) {
       console.warn(e);
     }
   };
 
-  const onChangeDate = (event, selectedDate) => {
+  const onChangeDate = (event: any, selectedDate?: Date) => {
     setShowDatePicker(false);
     if (selectedDate) {
       setDate(selectedDate);
@@ -158,7 +149,7 @@ export default function SignUpGuard({ navigation }: SignUpGuardProps) {
     <>
       <StatusBar translucent backgroundColor="transparent" barStyle="dark-content" />
     <View style={styles.safe}>
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : null} style={styles.container}>
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.container}>
         <ScrollView contentContainerStyle={styles.innerContainer} keyboardShouldPersistTaps="handled">
           
           <Text style={styles.header}>Security Sign Up</Text>
@@ -254,7 +245,7 @@ export default function SignUpGuard({ navigation }: SignUpGuardProps) {
             <View style={styles.certList}>
               {certifications.map((file, idx) => (
                 <View key={file.uri || idx} style={styles.certFileRow}>
-                  <Text style={styles.certFile}>{file.name}</Text>
+                  <Text style={styles.certFile}>{file.name || 'Unknown file'}</Text>
                   <TouchableOpacity onPress={() => {
                     setCertifications(certifications.filter((_, i) => i !== idx));
                   }} style={styles.removeCertButton}>

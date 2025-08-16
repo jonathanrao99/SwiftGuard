@@ -4,6 +4,10 @@ import appJson from './app.json';
 export default {
   expo: {
     ...appJson.expo,
+    plugins: [
+      ...(appJson.expo.plugins || []),
+      "expo-font"
+    ],
     extra: {
       ...appJson.expo.extra,
       SUPABASE_URL: process.env.SUPABASE_URL,
