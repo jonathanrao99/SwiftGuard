@@ -59,22 +59,16 @@ export default function SignUpClient({ navigation }: SignUpClientProps) {
         setErrors(validation.errors || {});
         return;
       }
-      // Create user with Supabase Auth
-      const { data, error } = await signUp({
-        email,
-        password,
-        options: {
-          data: {
-            first_name: firstName,
-            last_name: lastName,
-            phone,
-            business_name: businessName,
-            establishment_type: establishmentType === 'other' ? otherEstablishment : establishmentType,
-            location,
-            referral_code: referralCode,
-            role: 'client',
-          },
-        },
+      // Create user with Supabase Auth using correct AuthContext signature
+      const { error } = await signUp(email, password, {
+        first_name: firstName,
+        last_name: lastName,
+        phone,
+        business_name: businessName,
+        establishment_type: establishmentType === 'other' ? otherEstablishment : establishmentType,
+        location,
+        referral_code: referralCode,
+        role: 'client',
       });
 
       if (error) {

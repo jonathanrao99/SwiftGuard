@@ -6,9 +6,8 @@ import { StripeProvider } from '@stripe/stripe-react-native';
 import { enableScreens } from 'react-native-screens';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
-// Removed sonner-native import - using react-native-toast-message instead
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import Toast from 'react-native-toast-message';
+import { ToastProvider } from './components/ui/toast';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { MaterialIcons } from '@expo/vector-icons';
 import { FontAwesome } from '@expo/vector-icons';
@@ -29,6 +28,7 @@ const ForgotPassword = lazy(() => import('./screens/ForgotPassword'));
 const WelcomeScreen = lazy(() => import('./screens/onboarding/WelcomeScreen'));
 const UserTypeSelection = lazy(() => import('./screens/UserTypeSelection'));
 const SignUpClient = lazy(() => import('./screens/SignUpClient'));
+const EnhancedSignUpClient = lazy(() => import('./screens/EnhancedSignUpClient'));
 const SignUpGuard = lazy(() => import('./screens/SignUpGuard'));
 const PreferredPayment = lazy(() => import('./screens/PreferredPayment'));
 const OtpVerification = lazy(() => import('./screens/OtpVerification'));
@@ -132,7 +132,8 @@ export default function App() {
             <BottomSheetModalProvider>
               <AuthProvider>
                 <StripeProvider publishableKey={STRIPE_PUBLIC_KEY || 'pk_test_51R5tBA05xKnpNtzd6cGTTNnKLlOYPKdFaiJcXAtMHCWNpTSOv7FYwgMYhoNfIBSM27GXDFVoDCNkLGgcMkHclbhj00y61WpU98'}>
-                  <NavigationContainer>
+                  <ToastProvider>
+                    <NavigationContainer>
                   <Stack.Navigator initialRouteName="Loading" screenOptions={{ headerShown: false }}>
                     <Stack.Screen 
                       name="Loading" 
@@ -156,6 +157,11 @@ export default function App() {
                     />
                     <Stack.Screen 
                       name="SignUpClient" 
+                      component={EnhancedSignUpClient} 
+                      options={{ headerShown: false }} 
+                    />
+                    <Stack.Screen 
+                      name="SignUpClientOriginal" 
                       component={SignUpClient} 
                       options={{ headerShown: false }} 
                     />
@@ -327,11 +333,11 @@ export default function App() {
           options={{ headerShown: false }}
         />
                   </Stack.Navigator>
-                </NavigationContainer>
+                    </NavigationContainer>
+                  </ToastProvider>
                 </StripeProvider>
               </AuthProvider>
             </BottomSheetModalProvider>
-            <Toast />
           </GestureHandlerRootView>
         </SafeAreaProvider>
       </GluestackUIProvider>

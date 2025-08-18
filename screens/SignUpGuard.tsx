@@ -72,7 +72,7 @@ export default function SignUpGuard({ navigation }: SignUpGuardProps) {
         return;
       }
 
-      // Create user with Supabase Auth
+      // Create user with Supabase Auth using correct AuthContext signature
       const { error } = await signUp(email, password, {
         first_name: firstName,
         last_name: lastName,
