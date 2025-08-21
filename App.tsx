@@ -28,7 +28,7 @@ const ForgotPassword = lazy(() => import('./screens/ForgotPassword'));
 const WelcomeScreen = lazy(() => import('./screens/onboarding/WelcomeScreen'));
 const UserTypeSelection = lazy(() => import('./screens/UserTypeSelection'));
 const SignUpClient = lazy(() => import('./screens/SignUpClient'));
-const EnhancedSignUpClient = lazy(() => import('./screens/EnhancedSignUpClient'));
+
 const SignUpGuard = lazy(() => import('./screens/SignUpGuard'));
 const PreferredPayment = lazy(() => import('./screens/PreferredPayment'));
 const OtpVerification = lazy(() => import('./screens/OtpVerification'));
@@ -157,14 +157,10 @@ export default function App() {
                     />
                     <Stack.Screen 
                       name="SignUpClient" 
-                      component={EnhancedSignUpClient} 
-                      options={{ headerShown: false }} 
-                    />
-                    <Stack.Screen 
-                      name="SignUpClientOriginal" 
                       component={SignUpClient} 
                       options={{ headerShown: false }} 
                     />
+
                     <Stack.Screen 
                       name="OtpVerification" 
                       component={OtpVerification} 
