@@ -253,7 +253,7 @@ export default function SignUpClient({ navigation }: SignUpClientProps) {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#fff', paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0 },
+  safe: { flex: 1, backgroundColor: '#fff', paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 0) : 0 },
   container: { flex: 1 },
   innerContainer: { paddingHorizontal: 20, paddingBottom: 30 },
   logoContainer: { alignItems: 'center', marginVertical: 10 },

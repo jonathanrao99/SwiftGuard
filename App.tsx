@@ -19,6 +19,7 @@ import { AuthProvider } from './contexts/AuthContext';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import Constants from 'expo-constants';
 import { initializeMonitoring } from './utils/monitoringSetup';
+import NotificationService from './services/NotificationService';
 
 // Lazy load screens for better performance
 const LoadingScreen = lazy(() => import('./screens/onboarding/LoadingScreen'));
@@ -63,6 +64,11 @@ const MySecurityJobsScreen = lazy(() => import('./screens/client/profile/MySecur
 const PaymentMethodsScreen = lazy(() => import('./screens/client/profile/PaymentMethodsScreen'));
 const AddPaymentMethodScreen = lazy(() => import('./screens/client/profile/AddPaymentMethodScreen'));
 const ContactSupportScreen = lazy(() => import('./screens/client/profile/ContactSupportScreen'));
+
+// Notification screens
+const NotificationCenterScreen = lazy(() => import('./screens/client/profile/NotificationCenterScreen'));
+const NotificationPreferencesScreen = lazy(() => import('./screens/client/profile/NotificationPreferencesScreen'));
+const NotificationTestScreen = lazy(() => import('./screens/client/profile/NotificationTestScreen'));
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -118,6 +124,16 @@ export default function App() {
   // Initialize monitoring system
   React.useEffect(() => {
     initializeMonitoring().catch(console.error);
+  }, []);
+
+  // Initialize notification service
+  React.useEffect(() => {
+    NotificationService.initialize().catch(console.error);
+    
+    // Cleanup on unmount
+    return () => {
+      NotificationService.cleanup();
+    };
   }, []);
 
   // Get Stripe key from environment variables
@@ -323,12 +339,29 @@ export default function App() {
           component={AddPaymentMethodScreen}
           options={{ headerShown: false }}
         />
-        <Stack.Screen
+                <Stack.Screen
           name="ContactSupport"
           component={ContactSupportScreen}
           options={{ headerShown: false }}
         />
-                  </Stack.Navigator>
+        
+        {/* Notification screens */}
+        <Stack.Screen
+          name="NotificationCenter"
+          component={NotificationCenterScreen}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="NotificationPreferences"
+          component={NotificationPreferencesScreen}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="NotificationTest"
+          component={NotificationTestScreen}
+          options={{ headerShown: false }}
+        />
+      </Stack.Navigator>
                     </NavigationContainer>
                   </ToastProvider>
                 </StripeProvider>

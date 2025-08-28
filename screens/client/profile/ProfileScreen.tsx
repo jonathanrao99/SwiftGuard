@@ -228,6 +228,41 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
               </TouchableOpacity>
             </Pressable>
           </View>
+
+          {/* Notifications Section */}
+          <View style={styles.sectionContainer}>
+            <Text style={styles.sectionTitle}>Notifications</Text>
+            
+            <Pressable style={styles.menuItemCard} android_ripple={{ color: colors.border }}>
+                <TouchableOpacity style={styles.menuItem} activeOpacity={0.7} onPress={() => navigation.navigate('NotificationCenter')}>
+                <View style={styles.menuItemLeft}>
+                  <MaterialIcons name="notifications" size={20} color={colors.primary} />
+                  <Text style={styles.menuItemText}>Notification Center</Text>
+                </View>
+                <MaterialIcons name="chevron-right" size={20} color={colors.textSecondary} />
+              </TouchableOpacity>
+            </Pressable>
+
+            <Pressable style={styles.menuItemCard} android_ripple={{ color: colors.border }}>
+                <TouchableOpacity style={styles.menuItem} activeOpacity={0.7} onPress={() => navigation.navigate('NotificationPreferences')}>
+                <View style={styles.menuItemLeft}>
+                  <MaterialIcons name="settings" size={20} color={colors.primary} />
+                  <Text style={styles.menuItemText}>Notification Preferences</Text>
+                </View>
+                <MaterialIcons name="chevron-right" size={20} color={colors.textSecondary} />
+              </TouchableOpacity>
+            </Pressable>
+
+            <Pressable style={styles.menuItemCard} android_ripple={{ color: colors.border }}>
+                <TouchableOpacity style={styles.menuItem} activeOpacity={0.7} onPress={() => navigation.navigate('NotificationTest')}>
+                <View style={styles.menuItemLeft}>
+                  <MaterialIcons name="bug-report" size={20} color={colors.warning} />
+                  <Text style={styles.menuItemText}>Test Notifications</Text>
+                </View>
+                <MaterialIcons name="chevron-right" size={20} color={colors.textSecondary} />
+              </TouchableOpacity>
+            </Pressable>
+          </View>
           </Animated.View>
 
           <View style={styles.divider} />
