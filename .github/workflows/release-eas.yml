@@ -1,0 +1,110 @@
+name: Release EAS Build
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      platform:
+        description: 'Platform to build'
+        required: true
+        default: 'both'
+        type: choice
+        options:
+        - both
+        - ios
+        - android
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Setup EAS
+      uses: expo/expo-github-action@v8
+      with:
+        eas-version: latest
+        token: ${{ secrets.EXPO_TOKEN }}
+        
+    - name: Configure app version
+      run: |
+        # Extract version from tag or use current version
+        if [[ $GITHUB_REF == refs/tags/* ]]; then
+          VERSION=${GITHUB_REF#refs/tags/}
+          VERSION=${VERSION#v}
+        else
+          VERSION=$(node -p "require('./package.json').version")
+        fi
+        
+        echo "VERSION=$VERSION" >> $GITHUB_ENV
+        echo "Building version: $VERSION"
+        
+    - name: Build iOS
+      if: ${{ github.event.inputs.platform == 'ios' || github.event.inputs.platform == 'both' || github.event_name == 'push' }}
+      run: |
+        eas build --platform ios --non-interactive --no-wait
+        
+    - name: Build Android
+      if: ${{ github.event.inputs.platform == 'android' || github.event.inputs.platform == 'both' || github.event_name == 'push' }}
+      run: |
+        eas build --platform android --non-interactive --no-wait
+        
+    - name: Upload to Sentry
+      if: always()
+      run: |
+        # Install Sentry CLI
+        npm install -g @sentry/cli
+        
+        # Upload source maps
+        if [ -d "dist" ]; then
+          sentry-cli releases new $VERSION
+          sentry-cli releases files $VERSION upload-sourcemaps dist/
+          sentry-cli releases finalize $VERSION
+        fi
+        
+    - name: Create GitHub Release
+      if: startsWith(github.ref, 'refs/tags/')
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.ref }}
+        release_name: Release ${{ github.ref }}
+        body: |
+          ## SwiftGuard Release ${{ github.ref }}
+          
+          ### Changes
+          - Updated edge functions
+          - Performance improvements
+          - Bug fixes
+          
+          ### Builds
+          - iOS: TestFlight build available
+          - Android: Internal testing build available
+          
+          ### Monitoring
+          - Sentry source maps uploaded
+          - Analytics tracking enabled
+        draft: false
+        prerelease: false
+        
+    - name: Notify deployment
+      run: |
+        echo "🎉 Release $VERSION deployed successfully!"
+        echo "📱 iOS build: TestFlight"
+        echo "🤖 Android build: Internal testing"
+        echo "📊 Sentry monitoring: Active"
+

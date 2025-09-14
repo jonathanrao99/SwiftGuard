@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -17,6 +17,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS, SPACING } from '../../../theme';
 import { NavigationProps } from '../../../types';
+import { supabase } from '../../../supabaseClient';
 import LoadingSpinner from '../../../components/LoadingSpinner';
 import ErrorBoundary from '../../../components/ErrorBoundary';
 
@@ -62,76 +63,114 @@ export default function FindGuardsScreen({ navigation }: FindGuardsScreenProps) 
   const [searchQuery, setSearchQuery] = useState('');
   const [filterModalVisible, setFilterModalVisible] = useState(false);
   const [selectedSort, setSelectedSort] = useState('Rating');
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [guards, setGuards] = useState<Guard[]>([]);
   const [filters, setFilters] = useState<Filters>({
     experience: 'All',
     rating: 'All',
     requirements: {},
   });
 
-  const guards: Guard[] = [
-    {
-      id: '1',
-      name: 'John Carter',
-      image: 'https://randomuser.me/api/portraits/men/20.jpg',
-      rating: 4.9,
-      level: 'Elite',
-      description: '5+ years experience. VIP protection specialist.',
-      online: true,
-      certifications: ['Licensed Security Guard', 'First Aid Certified', 'Firearms License Required'],
-    },
-    {
-      id: '2',
-      name: 'Maria Lopez',
-      image: 'https://randomuser.me/api/portraits/women/13.jpg',
-      rating: 4.8,
-      level: 'Certified',
-      description: 'Event security and crowd management expert.',
-      online: false,
-      certifications: ['Licensed Security Guard', 'First Aid Certified', 'Security Training Completed'],
-    },
-    {
-      id: '3',
-      name: 'Alex Kim',
-      image: 'https://randomuser.me/api/portraits/men/14.jpg',
-      rating: 4.7,
-      level: 'Entry',
-      description: 'Reliable, punctual, and professional.',
-      online: true,
-      certifications: ['Licensed Security Guard'],
-    },
-    {
-      id: '4',
-      name: 'Priya Singh',
-      image: 'https://randomuser.me/api/portraits/women/15.jpg',
-      rating: 4.6,
-      level: 'Certified',
-      description: 'Specializes in event security and VIP escort.',
-      online: false,
-      certifications: ['Licensed Security Guard', 'First Aid Certified', 'CPR Certified'],
-    },
-    {
-      id: '5',
-      name: 'James Lee',
-      image: 'https://randomuser.me/api/portraits/men/11.jpg',
-      rating: 4.5,
-      level: 'Elite',
-      description: 'Martial arts background, excellent crowd control.',
-      online: true,
-      certifications: ['Licensed Security Guard', 'First Aid Certified', 'Firearms License Required', 'Security Training Completed'],
-    },
-    {
-      id: '6',
-      name: 'Emily Chen',
-      image: 'https://randomuser.me/api/portraits/women/18.jpg',
-      rating: 4.4,
-      level: 'Entry',
-      description: 'Professional and attentive to every detail.',
-      online: false,
-      certifications: ['Licensed Security Guard', 'First Aid Certified'],
-    },
-  ];
+  // Load guards from Supabase
+  useEffect(() => {
+    loadGuards();
+  }, []);
+
+  const loadGuards = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      // Fetch guards from Supabase with their profiles and ratings
+      const { data: guardsData, error: guardsError } = await supabase
+        .from('users')
+        .select(`
+          id,
+          first_name,
+          last_name,
+          profile_image_url,
+          experience_level,
+          bio,
+          status,
+          created_at,
+          guard_ratings (
+            rating,
+            review_count
+          )
+        `)
+        .eq('role', 'guard')
+        .eq('status', 'active')
+        .order('created_at', { ascending: false });
+
+      if (guardsError) {
+        console.error('Error fetching guards:', guardsError);
+        setError('Failed to load guards. Please try again.');
+        return;
+      }
+
+      // Transform data to match Guard interface
+      const transformedGuards: Guard[] = (guardsData || []).map(guard => {
+        const averageRating = guard.guard_ratings?.length > 0 
+          ? guard.guard_ratings.reduce((sum: number, r: any) => sum + r.rating, 0) / guard.guard_ratings.length
+          : 4.0; // Default rating for new guards
+
+        const totalReviews = guard.guard_ratings?.reduce((sum: number, r: any) => sum + r.review_count, 0) || 0;
+
+        // Map experience level to our level system
+        const levelMap: Record<string, 'Elite' | 'Certified' | 'Entry'> = {
+          'expert': 'Elite',
+          'intermediate': 'Certified',
+          'beginner': 'Entry'
+        };
+
+        // Generate certifications based on experience level and years since registration
+        const yearsSinceRegistration = new Date().getFullYear() - new Date(guard.created_at).getFullYear();
+        const certifications = generateCertifications(guard.experience_level, yearsSinceRegistration);
+
+        return {
+          id: guard.id,
+          name: `${guard.first_name} ${guard.last_name}`,
+          image: guard.profile_image_url || `https://ui-avatars.com/api/?name=${guard.first_name}+${guard.last_name}&background=2563eb&color=fff`,
+          rating: Math.round(averageRating * 10) / 10, // Round to 1 decimal place
+          level: levelMap[guard.experience_level] || 'Entry',
+          description: guard.bio || 'Professional security guard with reliable service.',
+          online: guard.status === 'available',
+          certifications,
+        };
+      });
+
+      setGuards(transformedGuards);
+    } catch (error) {
+      console.error('Error in loadGuards:', error);
+      setError('An unexpected error occurred. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Helper function to generate certifications based on experience
+  const generateCertifications = (experienceLevel: string, yearsSinceRegistration: number): string[] => {
+    const baseCertifications = ['Licensed Security Guard'];
+    
+    if (yearsSinceRegistration >= 1) {
+      baseCertifications.push('First Aid Certified');
+    }
+    
+    if (experienceLevel === 'expert' || yearsSinceRegistration >= 3) {
+      baseCertifications.push('Security Training Completed');
+    }
+    
+    if (experienceLevel === 'expert' && yearsSinceRegistration >= 5) {
+      baseCertifications.push('Firearms License Required');
+    }
+    
+    if (yearsSinceRegistration >= 2) {
+      baseCertifications.push('CPR Certified');
+    }
+    
+    return baseCertifications;
+  };
 
   const requirementsList: Requirement[] = [
     { key: 'licensed', label: 'Licensed Security Guard' },
@@ -297,10 +336,30 @@ export default function FindGuardsScreen({ navigation }: FindGuardsScreenProps) 
     );
   };
 
+  // Handle refresh
+  const handleRefresh = () => {
+    loadGuards();
+  };
+
   if (isLoading) {
     return (
       <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
         <LoadingSpinner text="Finding guards..." />
+      </SafeAreaView>
+    );
+  }
+
+  if (error) {
+    return (
+      <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
+        <View style={styles.errorContainer}>
+          <MaterialIcons name="error-outline" size={64} color={COLORS.error} />
+          <Text style={styles.errorTitle}>Unable to Load Guards</Text>
+          <Text style={styles.errorMessage}>{error}</Text>
+          <TouchableOpacity style={styles.retryButton} onPress={handleRefresh}>
+            <Text style={styles.retryButtonText}>Try Again</Text>
+          </TouchableOpacity>
+        </View>
       </SafeAreaView>
     );
   }
@@ -363,6 +422,20 @@ export default function FindGuardsScreen({ navigation }: FindGuardsScreenProps) 
             )}
             contentContainerStyle={styles.listContent}
             showsVerticalScrollIndicator={false}
+            refreshing={isLoading}
+            onRefresh={handleRefresh}
+            ListEmptyComponent={
+              <View style={styles.emptyContainer}>
+                <MaterialIcons name="person-search" size={64} color="#9CA3AF" />
+                <Text style={styles.emptyTitle}>No Guards Found</Text>
+                <Text style={styles.emptyMessage}>
+                  {searchQuery ? 'Try adjusting your search or filters' : 'No guards are currently available'}
+                </Text>
+                <TouchableOpacity style={styles.refreshButton} onPress={handleRefresh}>
+                  <Text style={styles.refreshButtonText}>Refresh</Text>
+                </TouchableOpacity>
+              </View>
+            }
           />
 
           <FilterModal 
@@ -596,5 +669,68 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignItems: 'center',
     marginTop: 20,
+  },
+  
+  // Error and Empty States
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: SPACING.xl,
+  },
+  errorTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: COLORS.text,
+    marginTop: SPACING.lg,
+    marginBottom: SPACING.sm,
+  },
+  errorMessage: {
+    fontSize: 16,
+    color: COLORS.textSecondary,
+    textAlign: 'center',
+    marginBottom: SPACING.xl,
+  },
+  retryButton: {
+    backgroundColor: COLORS.primary,
+    paddingHorizontal: SPACING.xl,
+    paddingVertical: SPACING.md,
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    color: COLORS.white,
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: SPACING.xl,
+    paddingVertical: SPACING.xxl,
+  },
+  emptyTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: COLORS.text,
+    marginTop: SPACING.lg,
+    marginBottom: SPACING.sm,
+  },
+  emptyMessage: {
+    fontSize: 14,
+    color: COLORS.textSecondary,
+    textAlign: 'center',
+    marginBottom: SPACING.xl,
+  },
+  refreshButton: {
+    backgroundColor: COLORS.primary,
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.sm,
+    borderRadius: 6,
+  },
+  refreshButtonText: {
+    color: COLORS.white,
+    fontSize: 14,
+    fontWeight: '600',
   },
 });

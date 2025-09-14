@@ -1,0 +1,14 @@
+{
+  "name": "swiftguard-sbom",
+  "version": "1.0.0",
+  "description": "Software Bill of Materials for SwiftGuard",
+  "scripts": {
+    "generate": "cyclonedx-bom -o security/sbom/swiftguard-sbom.json",
+    "generate-xml": "cyclonedx-bom -o security/sbom/swiftguard-sbom.xml -t xml",
+    "validate": "cyclonedx-bom validate -i security/sbom/swiftguard-sbom.json"
+  },
+  "devDependencies": {
+    "@cyclonedx/cyclonedx-npm": "^3.0.0"
+  }
+}
+

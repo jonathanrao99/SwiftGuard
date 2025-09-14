@@ -1,0 +1,121 @@
+# Gitleaks configuration for SwiftGuard
+# Detects secrets and sensitive information in code
+
+title = "SwiftGuard Gitleaks Config"
+version = "8.18.0"
+
+# Global settings
+[gitleaks]
+    # Exit code when leaks are found
+    exit-code = 1
+    
+    # Redact secrets from output
+    redact = true
+    
+    # Verbose output
+    verbose = false
+    
+    # Number of workers for scanning
+    threads = 0
+
+# Rules for detecting secrets
+[[rules]]
+    description = "Supabase Service Role Key"
+    regex = '''eyJ[A-Za-z0-9_-]{20,}\.eyJ[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{20,}'''
+    tags = ["supabase", "jwt", "service-role"]
+    severity = "critical"
+
+[[rules]]
+    description = "Stripe Secret Key"
+    regex = '''sk_(test_|live_)[A-Za-z0-9]{24,}'''
+    tags = ["stripe", "api-key"]
+    severity = "critical"
+
+[[rules]]
+    description = "Stripe Webhook Secret"
+    regex = '''whsec_[A-Za-z0-9]{32,}'''
+    tags = ["stripe", "webhook"]
+    severity = "critical"
+
+[[rules]]
+    description = "Sentry DSN"
+    regex = '''https://[a-f0-9]{32}@[a-z0-9.-]+\.ingest\.sentry\.io/[0-9]+'''
+    tags = ["sentry", "dsn"]
+    severity = "high"
+
+[[rules]]
+    description = "AWS Access Key ID"
+    regex = '''AKIA[0-9A-Z]{16}'''
+    tags = ["aws", "access-key"]
+    severity = "critical"
+
+[[rules]]
+    description = "AWS Secret Access Key"
+    regex = '''[A-Za-z0-9/+=]{40}'''
+    tags = ["aws", "secret-key"]
+    severity = "critical"
+
+[[rules]]
+    description = "GitHub Personal Access Token"
+    regex = '''ghp_[A-Za-z0-9]{36}'''
+    tags = ["github", "token"]
+    severity = "high"
+
+[[rules]]
+    description = "Google API Key"
+    regex = '''AIza[0-9A-Za-z\\-_]{35}'''
+    tags = ["google", "api-key"]
+    severity = "high"
+
+[[rules]]
+    description = "Firebase API Key"
+    regex = '''AAAA[A-Za-z0-9_-]{7}:[A-Za-z0-9_-]{140}'''
+    tags = ["firebase", "api-key"]
+    severity = "high"
+
+[[rules]]
+    description = "Database Connection String"
+    regex = '''(postgresql|postgres|mysql|mongodb)://[^\\s]+'''
+    tags = ["database", "connection"]
+    severity = "high"
+
+[[rules]]
+    description = "Private Key"
+    regex = '''-----BEGIN (RSA |DSA |EC |OPENSSH )?PRIVATE KEY-----'''
+    tags = ["private-key", "crypto"]
+    severity = "critical"
+
+[[rules]]
+    description = "JWT Token"
+    regex = '''eyJ[A-Za-z0-9_-]{20,}\.eyJ[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{20,}'''
+    tags = ["jwt", "token"]
+    severity = "medium"
+
+# Allowlist patterns (false positives)
+[[rules.allowlist]]
+    description = "Test JWT tokens in test files"
+    regexes = [
+        '''test.*\.(js|ts|tsx|jsx)$''',
+        '''spec.*\.(js|ts|tsx|jsx)$''',
+        '''\.test\.(js|ts|tsx|jsx)$'''
+    ]
+
+[[rules.allowlist]]
+    description = "Example/placeholder values"
+    regexes = [
+        '''example\.com''',
+        '''placeholder''',
+        '''your-.*-here''',
+        '''<your-.*>'''
+    ]
+
+# File patterns to scan
+[[rules]]
+    description = "Scan all files"
+    regex = '''.*'''
+    tags = ["general"]
+    severity = "info"
+
+
+
+

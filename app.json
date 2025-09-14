@@ -6,7 +6,7 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
-    "newArchEnabled": true,
+    "newArchEnabled": false,
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
@@ -15,8 +15,11 @@
     "ios": {
       "supportsTablet": true,
       "infoPlist": {
-        "NSLocationWhenInUseUsageDescription": "This app uses location to track guard positions and show job locations.",
-        "NSLocationAlwaysAndWhenInUseUsageDescription": "This app uses location to track guard positions and show job locations."
+        "NSLocationWhenInUseUsageDescription": "SwiftGuard uses your location to provide security services, dispatch guards to your location, and enable emergency response features.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "SwiftGuard uses your location to provide security services, dispatch guards to your location, and enable emergency response features. Background location is used for shift tracking and emergency services.",
+        "NSLocationAlwaysUsageDescription": "SwiftGuard uses background location for shift tracking and emergency services. This ensures we can provide security services even when the app is not actively in use.",
+        "UIBackgroundModes": ["location", "background-fetch", "background-processing"],
+        "NSUserTrackingUsageDescription": "SwiftGuard does not track users across other apps or websites for advertising purposes."
       }
     },
     "android": {
@@ -27,7 +30,19 @@
       "edgeToEdgeEnabled": true,
       "permissions": [
         "ACCESS_COARSE_LOCATION",
-        "ACCESS_FINE_LOCATION"
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_BACKGROUND_LOCATION",
+        "FOREGROUND_SERVICE",
+        "FOREGROUND_SERVICE_LOCATION",
+        "WAKE_LOCK",
+        "VIBRATE",
+        "RECEIVE_BOOT_COMPLETED"
+      ],
+      "intentFilters": [
+        {
+          "action": "android.intent.action.MAIN",
+          "category": ["android.intent.category.LAUNCHER"]
+        }
       ]
     },
     "web": {

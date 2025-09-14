@@ -2,6 +2,7 @@ import { Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import NetInfo from '@react-native-community/netinfo';
 import Constants from 'expo-constants';
+// import * as Sentry from '@sentry/react-native'; // Temporarily disabled for EAS update
 
 // Types for error tracking
 interface ErrorReport {
@@ -41,8 +42,57 @@ class ProductionMonitoring {
    */
   init(userId?: string) {
     this.userId = userId;
+    
+    // Initialize Sentry - temporarily disabled
+    // this.initializeSentry();
+    
     this.setupGlobalErrorHandler();
     console.log(`✅ Production Monitoring initialized for user: ${userId}`);
+  }
+
+  /**
+   * Initialize Sentry for error tracking - temporarily disabled
+   */
+  private initializeSentry() {
+    // Temporarily disabled for EAS update
+    console.log('⚠️ Sentry initialization temporarily disabled for EAS update');
+    /*
+    if (this.isProduction) {
+      const sentryDsn = Constants.expoConfig?.extra?.SENTRY_DSN || process.env.SENTRY_DSN;
+      
+      if (sentryDsn) {
+        Sentry.init({
+          dsn: sentryDsn,
+          environment: this.isProduction ? 'production' : 'development',
+          release: Constants.expoConfig?.version || '1.0.0',
+          dist: Constants.expoConfig?.ios?.buildNumber || Constants.expoConfig?.android?.versionCode || '1',
+          integrations: [
+            new Sentry.ReactNativeTracing({
+              routingInstrumentation: new Sentry.ReactNavigationInstrumentation(),
+            }),
+          ],
+          tracesSampleRate: this.isProduction ? 0.1 : 1.0,
+          beforeSend(event) {
+            // Filter out sensitive data
+            if (event.user) {
+              delete event.user.email;
+              delete event.user.ip_address;
+            }
+            return event;
+          },
+        });
+
+        // Set user context
+        if (this.userId) {
+          Sentry.setUser({ id: this.userId });
+        }
+
+        console.log('✅ Sentry initialized successfully');
+      } else {
+        console.warn('⚠️ SENTRY_DSN not found, monitoring will use local storage only');
+      }
+    }
+    */
   }
 
   /**
@@ -271,24 +321,62 @@ class ProductionMonitoring {
    */
   private async sendErrorToService(error: ErrorReport) {
     try {
-      // You can integrate with Sentry, LogRocket, or custom endpoint
-      // For now, using a placeholder implementation
-      
       if (__DEV__) {
         console.log('🔄 Would send error to monitoring service:', error.id);
         return;
       }
 
-      // Example integration with custom endpoint
-      // const response = await fetch('https://your-monitoring-service.com/errors', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify(error)
-      // });
+      // Send to Sentry - temporarily disabled
+      /*
+      if (this.isProduction) {
+        Sentry.withScope((scope) => {
+          scope.setTag('errorId', error.id);
+          scope.setTag('severity', error.severity);
+          scope.setLevel(this.mapSeverityToSentryLevel(error.severity));
+          
+          if (error.screen) {
+            scope.setTag('screen', error.screen);
+          }
+          
+          if (error.action) {
+            scope.setTag('action', error.action);
+          }
+          
+          if (error.metadata) {
+            scope.setContext('metadata', error.metadata);
+          }
+
+          Sentry.captureException(new Error(error.error), {
+            extra: {
+              stack: error.stack,
+              userAgent: error.userAgent,
+              timestamp: error.timestamp
+            }
+          });
+        });
+      }
+      */
 
     } catch (error) {
       console.error('❌ Failed to send error to service:', error);
     }
+  }
+
+  /**
+   * Map our severity levels to Sentry levels - temporarily disabled
+   */
+  private mapSeverityToSentryLevel(severity: string): string {
+    // Temporarily disabled for EAS update
+    return severity;
+    /*
+    switch (severity) {
+      case 'critical': return 'fatal';
+      case 'high': return 'error';
+      case 'medium': return 'warning';
+      case 'low': return 'info';
+      default: return 'error';
+    }
+    */
   }
 
   /**

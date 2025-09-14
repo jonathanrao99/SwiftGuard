@@ -70,6 +70,9 @@ const NotificationCenterScreen = lazy(() => import('./screens/client/profile/Not
 const NotificationPreferencesScreen = lazy(() => import('./screens/client/profile/NotificationPreferencesScreen'));
 const NotificationTestScreen = lazy(() => import('./screens/client/profile/NotificationTestScreen'));
 
+// Payment screens
+const PaymentHistoryScreen = lazy(() => import('./screens/client/profile/PaymentHistoryScreen'));
+
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
 
@@ -359,6 +362,13 @@ export default function App() {
         <Stack.Screen
           name="NotificationTest"
           component={NotificationTestScreen}
+          options={{ headerShown: false }}
+        />
+        
+        {/* Payment screens */}
+        <Stack.Screen
+          name="PaymentHistory"
+          component={PaymentHistoryScreen}
           options={{ headerShown: false }}
         />
       </Stack.Navigator>

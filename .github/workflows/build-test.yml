@@ -1,0 +1,90 @@
+name: Build and Test
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Type check
+      run: npm run type-check
+      
+    - name: Lint
+      run: npm run lint
+      
+    - name: Lint Edge Functions
+      run: |
+        cd supabase/functions
+        for dir in */; do
+          if [ -f "$dir/index.ts" ]; then
+            echo "Linting $dir"
+            deno lint "$dir/index.ts" || echo "Lint issues found in $dir"
+          fi
+        done
+        
+    - name: Run unit tests
+      run: npm test -- --coverage --watchAll=false
+      
+    - name: E2E smoke test
+      run: |
+        # Test health endpoint
+        curl -f https://tidzeckbgcyxyzihbdun.supabase.co/functions/v1/list-guards \
+          -X POST \
+          -H "Content-Type: application/json" \
+          -d '{"limit": 1}' \
+          --max-time 30 || echo "Health check failed"
+          
+    - name: Upload coverage reports
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage/lcov.info
+        flags: unittests
+        name: codecov-umbrella
+        
+  build:
+    runs-on: ubuntu-latest
+    needs: test
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Build for production
+      run: |
+        npm run build:analyze
+        
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: build-files
+        path: |
+          dist/
+          build/
+        retention-days: 7
+

@@ -210,6 +210,16 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
                 <MaterialIcons name="chevron-right" size={20} color={colors.textSecondary} />
               </TouchableOpacity>
             </Pressable>
+
+            <Pressable style={styles.menuItemCard} android_ripple={{ color: colors.border }}>
+                <TouchableOpacity style={styles.menuItem} activeOpacity={0.7} onPress={() => navigation.navigate('PaymentHistory')}>
+                <View style={styles.menuItemLeft}>
+                  <MaterialIcons name="receipt-long" size={18} color={colors.primary} />
+                  <Text style={styles.menuItemText}>Payment History</Text>
+                </View>
+                <MaterialIcons name="chevron-right" size={20} color={colors.textSecondary} />
+              </TouchableOpacity>
+            </Pressable>
           </View>
 
           <View style={styles.divider} />

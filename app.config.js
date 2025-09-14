@@ -5,8 +5,8 @@ export default {
   expo: {
     ...appJson.expo,
     plugins: [
-      ...(appJson.expo.plugins || []),
-      "expo-font"
+      "expo-font",
+      "expo-video"
     ],
     extra: {
       ...appJson.expo.extra,
