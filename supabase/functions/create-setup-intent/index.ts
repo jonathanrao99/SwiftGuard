@@ -1,26 +1,7 @@
+// @ts-nocheck
+
 import { serve } from 'https://deno.land/std@0.171.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-
-// TypeScript interfaces for request/response
-interface SetupIntentRequest {
-  userId: string;
-}
-
-interface StripeCustomer {
-  id: string;
-  metadata?: {
-    supabaseUUID?: string;
-  };
-}
-
-interface StripeSetupIntent {
-  id: string;
-  client_secret: string;
-}
-
-interface UserRecord {
-  stripe_customer_id: string | null;
-}
 
 // Log critical env variables on startup
 console.log('Edge Function ENV:', {
@@ -39,7 +20,7 @@ const authHeader = 'Basic ' + btoa(stripeKey + ':');
 
 serve(async (req: Request) => {
   try {
-    const { userId }: SetupIntentRequest = await req.json();
+    const { userId } = await req.json();
     console.log('Invoked with userId:', userId);
 
     // Fetch existing Stripe customer ID
@@ -47,7 +28,7 @@ serve(async (req: Request) => {
       .from('users')
       .select('stripe_customer_id')
       .eq('id', userId)
-      .single() as { data: UserRecord | null; error: any };
+      .single();
     if (userError) throw new Error(`Supabase fetch error: ${userError.message}`);
 
     let customerId = user.stripe_customer_id;
@@ -59,7 +40,7 @@ serve(async (req: Request) => {
         headers: { 'Authorization': authHeader },
         body: new URLSearchParams({ ['metadata[supabaseUUID]']: userId })
       });
-      const custJson: StripeCustomer = await custRes.json();
+      const custJson = await custRes.json();
       if (!custRes.ok) throw new Error(`Stripe customer create error: ${custJson.error?.message || JSON.stringify(custJson)}`);
       customerId = custJson.id;
       console.log('Created Stripe customer:', customerId);
@@ -77,7 +58,7 @@ serve(async (req: Request) => {
       headers: { 'Authorization': authHeader },
       body: new URLSearchParams({ customer: customerId })
     });
-    const siJson: StripeSetupIntent = await siRes.json();
+    const siJson = await siRes.json();
     if (!siRes.ok) throw new Error(`Stripe SetupIntent error: ${siJson.error?.message || JSON.stringify(siJson)}`);
     console.log('SetupIntent created:', siJson.id);
 

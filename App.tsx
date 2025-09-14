@@ -18,8 +18,11 @@ import CustomBottomNav from './components/CustomBottomNav';
 import { AuthProvider } from './contexts/AuthContext';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import Constants from 'expo-constants';
+<<<<<<< HEAD
 import { initializeMonitoring } from './utils/monitoringSetup';
 import NotificationService from './services/NotificationService';
+=======
+>>>>>>> parent of c623858 (Enhance app configuration and payment functions: Updated app.config.js to include expo-font plugin, improved App.tsx with monitoring initialization, and refined metro.config.js for better module resolution. Enhanced Supabase functions with TypeScript interfaces for better type safety and error handling in payment methods and setup intent functions.)
 
 // Lazy load screens for better performance
 const LoadingScreen = lazy(() => import('./screens/onboarding/LoadingScreen'));
@@ -124,6 +127,7 @@ function ClientTabs() {
 }
 
 export default function App() {
+<<<<<<< HEAD
   // Initialize monitoring system
   React.useEffect(() => {
     initializeMonitoring().catch(console.error);
@@ -139,6 +143,8 @@ export default function App() {
     };
   }, []);
 
+=======
+>>>>>>> parent of c623858 (Enhance app configuration and payment functions: Updated app.config.js to include expo-font plugin, improved App.tsx with monitoring initialization, and refined metro.config.js for better module resolution. Enhanced Supabase functions with TypeScript interfaces for better type safety and error handling in payment methods and setup intent functions.)
   // Get Stripe key from environment variables
   const extra = (Constants as any).expoConfig?.extra || (Constants as any).manifest?.extra;
   const STRIPE_PUBLIC_KEY = extra?.STRIPE_PUBLIC_KEY || process.env.STRIPE_PUBLIC_KEY;
