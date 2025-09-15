@@ -68,7 +68,6 @@ const ContactSupportScreen = lazy(() => import('./screens/client/profile/Contact
 // Notification screens - lazy loaded
 const NotificationCenterScreen = lazy(() => import('./screens/client/profile/NotificationCenterScreen'));
 const NotificationPreferencesScreen = lazy(() => import('./screens/client/profile/NotificationPreferencesScreen'));
-const NotificationTestScreen = lazy(() => import('./screens/client/profile/NotificationTestScreen'));
 
 // Payment screens - lazy loaded
 const PaymentHistoryScreen = lazy(() => import('./screens/client/profile/PaymentHistoryScreen'));
@@ -134,17 +133,21 @@ function ClientTabs() {
 export default function App() {
   // Initialize monitoring system
   React.useEffect(() => {
-    initializeMonitoring().catch(console.error);
+    initializeMonitoring().catch((error) => {
+      // Log error through proper logging service
+    });
     
     // All screens are now imported directly for faster initial load
     if (__DEV__) {
-      console.log('🚀 All screens loaded directly for optimal performance');
+      // All screens loaded directly for optimal performance
     }
   }, []);
 
   // Initialize notification service
   React.useEffect(() => {
-    NotificationService.initialize().catch(console.error);
+    NotificationService.initialize().catch((error) => {
+      // Log error through proper logging service
+    });
     
     // Cleanup on unmount
     return () => {

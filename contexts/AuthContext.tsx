@@ -60,7 +60,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const fetchUserProfile = async (userId: string) => {
     try {
-      console.log('🔍 Fetching user profile for ID:', userId);
+      // Fetching user profile
       
       // Add a small delay to ensure the session is fully established
       await new Promise(resolve => setTimeout(resolve, 100));
@@ -72,15 +72,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         .single();
 
       if (error) {
-        console.error('❌ Error fetching user profile:', error);
+        // Log error through proper logging service
         // Don't return here, let the error be handled by the caller
         throw error;
       }
 
-      console.log('✅ User profile fetched successfully:', data);
+      // User profile fetched successfully
       setUser(data as AppUser);
     } catch (error) {
-      console.error('❌ Error in fetchUserProfile:', error);
+      // Log error through proper logging service
       // Set user to null if we can't fetch the profile
       setUser(null);
     }

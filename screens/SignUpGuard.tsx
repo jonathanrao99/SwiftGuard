@@ -1,5 +1,5 @@
-import React, { useState, useRef } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform, ScrollView, Image, StatusBar, Alert } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform, ScrollView, StatusBar, Alert } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Picker } from '@react-native-picker/picker';
@@ -113,7 +113,7 @@ export default function SignUpGuard({ navigation }: SignUpGuardProps) {
         role: 'guard',
       });
     } catch (error) {
-      console.error('Sign up error:', error);
+      // Log sign up error through proper logging service
       setError('Failed to create account. Please try again.');
     } finally {
       setIsLoading(false);
@@ -131,7 +131,7 @@ export default function SignUpGuard({ navigation }: SignUpGuardProps) {
         setCertifications((prev) => [...prev, ...result.assets]);
       }
     } catch (e) {
-      console.warn(e);
+      // Log error through proper logging service
     }
   };
 

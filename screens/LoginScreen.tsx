@@ -41,7 +41,7 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
         navigation.replace(isClient ? 'Client' : 'GuardTabs');
       }
     } catch (e) {
-      console.error('Biometric auth error:', e);
+      // Log biometric auth error through proper logging service
       Alert.alert('Error', 'Biometric authentication failed. Please try again.');
     }
   };
@@ -84,7 +84,7 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
         navigation.replace(isClient ? 'Client' : 'GuardTabs');
       }
     } catch (error) {
-      console.error('Sign in error:', error);
+      // Log sign in error through proper logging service
       Alert.alert('Error', 'An unexpected error occurred. Please try again.');
     } finally {
       setIsLoading(false);

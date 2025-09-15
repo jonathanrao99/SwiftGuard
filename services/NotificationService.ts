@@ -61,7 +61,7 @@ class NotificationService {
     try {
       // TEMPORARILY DISABLED - expo-notifications removed
       if (__DEV__) {
-        console.log('⚠️ Notification service temporarily disabled - expo-notifications removed');
+        // Notification service temporarily disabled - expo-notifications removed
       }
       this.isInitialized = true;
       return;
@@ -71,7 +71,7 @@ class NotificationService {
       // Check if running in Expo Go (limited notification support)
       const isExpoGo = Constants.appOwnership === 'expo';
       if (isExpoGo) {
-        console.warn('⚠️ Running in Expo Go - notification functionality is limited. Use a development build for full functionality.');
+        // Running in Expo Go - notification functionality is limited. Use a development build for full functionality.
         this.isInitialized = true;
         return;
       }

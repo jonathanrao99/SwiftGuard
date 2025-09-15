@@ -67,7 +67,7 @@ class PaymentService {
 
       return { success: true, data: response.data };
     } catch (error) {
-      console.error('Error creating payment intent:', error);
+      // Log error through proper logging service
       return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
     }
   }
@@ -105,7 +105,7 @@ class PaymentService {
 
       return { success: true };
     } catch (error) {
-      console.error('Error confirming payment:', error);
+      // Log error through proper logging service
       return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
     }
   }

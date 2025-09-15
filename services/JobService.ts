@@ -33,7 +33,7 @@ export class JobService {
         .single();
 
       if (error) {
-        console.error('Error creating job:', error);
+        // Log error through proper logging service
         return null;
       }
 

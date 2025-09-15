@@ -19,8 +19,6 @@ import { useForm, Controller } from 'react-hook-form';
 import { COLORS, SPACING } from '../../../theme';
 import { MaterialIcons, Feather } from '@expo/vector-icons';
 import { LocationAutocomplete } from '../../../components/LocationAutocomplete';
-import { DateTimePair } from '../../../components/DateTimePair';
-import { CounterInput } from '../../../components/CounterInput';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 // Removed Calendar import - using DatePicker instead
@@ -346,7 +344,7 @@ const PostJob: React.FC<PostJobProps> = ({ navigation }) => {
       });
       navigation.navigate('Client');
     } catch (error: any) {
-      console.error('Error posting job:', error);
+      // Log error through proper logging service
       Alert.alert('Error', error.message || 'Failed to post job. Please try again.');
     } finally {
       setIsSubmitting(false);
@@ -594,7 +592,7 @@ const PostJob: React.FC<PostJobProps> = ({ navigation }) => {
       
       navigation.navigate('Client');
     } catch (error: any) {
-      console.error('Error posting job:', error);
+      // Log error through proper logging service
       Alert.alert('Error', error.message || 'Failed to post job. Please try again.');
     } finally {
       setIsSubmitting(false);

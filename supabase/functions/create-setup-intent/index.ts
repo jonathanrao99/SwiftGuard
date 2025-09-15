@@ -1,27 +1,92 @@
-// @ts-nocheck
-
 import { serve } from 'https://deno.land/std@0.171.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
-// Log critical env variables on startup
-console.log('Edge Function ENV:', {
-  SUPABASE_URL: Deno.env.get('SUPABASE_URL')?.slice(0,30) + '...',  
-  HAS_SERVICE_ROLE: !!Deno.env.get('SUPABASE_SERVICE_ROLE_KEY'),
-  HAS_STRIPE_KEY: !!Deno.env.get('STRIPE_SECRET_KEY')
-});
+// Environment validation
+const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
+const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+const STRIPE_SECRET_KEY = Deno.env.get('STRIPE_SECRET_KEY');
 
-const supabaseAdmin = createClient(
-  Deno.env.get('SUPABASE_URL')!,
-  Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-);
-const stripeKey = Deno.env.get('STRIPE_SECRET_KEY');
-if (!stripeKey) throw new Error('Missing STRIPE_SECRET_KEY');
-const authHeader = 'Basic ' + btoa(stripeKey + ':');
+if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY || !STRIPE_SECRET_KEY) {
+  throw new Error('Missing required environment variables');
+}
+
+const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+const authHeader = 'Basic ' + btoa(STRIPE_SECRET_KEY + ':');
+
+// JWT validation function
+async function validateJWT(request: Request): Promise<{ isValid: boolean; userId?: string; error?: string }> {
+  const authHeader = request.headers.get('authorization');
+  
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return { isValid: false, error: 'Missing or invalid authorization header' };
+  }
+
+  const token = authHeader.substring(7);
+  
+  try {
+    const { data: { user }, error } = await supabaseAdmin.auth.getUser(token);
+    
+    if (error || !user) {
+      return { isValid: false, error: 'Invalid token' };
+    }
+
+    return { isValid: true, userId: user.id };
+  } catch (error) {
+    return { isValid: false, error: 'Token validation failed' };
+  }
+}
+
+// Type definitions
+interface SetupIntentRequest {
+  userId: string;
+}
+
+interface SetupIntentResponse {
+  clientSecret: string;
+}
+
+interface ErrorResponse {
+  error: string;
+  stack?: string;
+}
 
 serve(async (req: Request) => {
   try {
-    const { userId } = await req.json();
-    console.log('Invoked with userId:', userId);
+    // Validate request method
+    if (req.method !== 'POST') {
+      return new Response(JSON.stringify({ error: 'Method not allowed' }), {
+        status: 405,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    // Validate JWT token
+    const jwtValidation = await validateJWT(req);
+    if (!jwtValidation.isValid) {
+      return new Response(JSON.stringify({ error: jwtValidation.error }), {
+        status: 401,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    // Parse and validate request body
+    const body = await req.json() as SetupIntentRequest;
+    const { userId } = body;
+
+    if (!userId) {
+      return new Response(JSON.stringify({ error: 'Missing userId' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    // Verify the userId matches the JWT token
+    if (jwtValidation.userId !== userId) {
+      return new Response(JSON.stringify({ error: 'User ID mismatch' }), {
+        status: 403,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
 
     // Fetch existing Stripe customer ID
     const { data: user, error: userError } = await supabaseAdmin
@@ -33,8 +98,7 @@ serve(async (req: Request) => {
 
     let customerId = user.stripe_customer_id;
     if (!customerId) {
-      console.log('No existing customer, creating new...');
-      // POST https://api.stripe.com/v1/customers
+      // Create new Stripe customer
       const custRes = await fetch('https://api.stripe.com/v1/customers', {
         method: 'POST',
         headers: { 'Authorization': authHeader },
@@ -43,7 +107,7 @@ serve(async (req: Request) => {
       const custJson = await custRes.json();
       if (!custRes.ok) throw new Error(`Stripe customer create error: ${custJson.error?.message || JSON.stringify(custJson)}`);
       customerId = custJson.id;
-      console.log('Created Stripe customer:', customerId);
+      
       const { error: updateError } = await supabaseAdmin
         .from('users')
         .update({ stripe_customer_id: customerId })
@@ -51,8 +115,7 @@ serve(async (req: Request) => {
       if (updateError) throw new Error(`Supabase update error: ${updateError.message}`);
     }
 
-    console.log('Creating SetupIntent for customer:', customerId);
-    // POST https://api.stripe.com/v1/setup_intents
+    // Create SetupIntent
     const siRes = await fetch('https://api.stripe.com/v1/setup_intents', {
       method: 'POST',
       headers: { 'Authorization': authHeader },
@@ -60,16 +123,21 @@ serve(async (req: Request) => {
     });
     const siJson = await siRes.json();
     if (!siRes.ok) throw new Error(`Stripe SetupIntent error: ${siJson.error?.message || JSON.stringify(siJson)}`);
-    console.log('SetupIntent created:', siJson.id);
 
-    return new Response(JSON.stringify({ clientSecret: siJson.client_secret }), {
+    const response: SetupIntentResponse = { clientSecret: siJson.client_secret };
+    return new Response(JSON.stringify(response), {
       status: 200,
       headers: { 'Content-Type': 'application/json' }
     });
   } catch (err: any) {
-    console.error('Function caught error:', err.stack || err);
-    return new Response(JSON.stringify({ error: err.message, stack: err.stack }), {
-      status: 400,
+    // Sanitize error response for production
+    const errorMessage = err.message?.includes('Stripe') || err.message?.includes('Supabase') 
+      ? 'Setup intent creation error. Please try again.' 
+      : err.message || 'Internal server error';
+    
+    const errorResponse: ErrorResponse = { error: errorMessage };
+    return new Response(JSON.stringify(errorResponse), {
+      status: 500,
       headers: { 'Content-Type': 'application/json' }
     });
   }
