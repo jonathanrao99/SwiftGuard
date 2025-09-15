@@ -38,8 +38,10 @@ export default function LoadingScreen({ navigation }: LoadingScreenProps) {
           player={player}
           style={styles.logoVideo}
           contentFit="contain"
-          allowsFullscreen={false}
-          allowsPictureInPicture={false}
+          fullscreenOptions={{
+            allowsFullscreen: false,
+            allowsPictureInPicture: false,
+          }}
         />
       </View>
     </>

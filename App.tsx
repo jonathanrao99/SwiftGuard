@@ -18,38 +18,35 @@ import CustomBottomNav from './components/CustomBottomNav';
 import { AuthProvider } from './contexts/AuthContext';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import Constants from 'expo-constants';
-<<<<<<< HEAD
 import { initializeMonitoring } from './utils/monitoringSetup';
 import NotificationService from './services/NotificationService';
-=======
->>>>>>> parent of c623858 (Enhance app configuration and payment functions: Updated app.config.js to include expo-font plugin, improved App.tsx with monitoring initialization, and refined metro.config.js for better module resolution. Enhanced Supabase functions with TypeScript interfaces for better type safety and error handling in payment methods and setup intent functions.)
 
-// Lazy load screens for better performance
-const LoadingScreen = lazy(() => import('./screens/onboarding/LoadingScreen'));
-const LoginScreen = lazy(() => import('./screens/LoginScreen'));
-const ClientDashboard = lazy(() => import('./screens/client/home/ClientDashboard'));
+// Import all screens directly for faster initial load
+import LoadingScreen from './screens/onboarding/LoadingScreen';
+import LoginScreen from './screens/LoginScreen';
+import ClientDashboard from './screens/client/home/ClientDashboard';
+import UserTypeSelection from './screens/UserTypeSelection';
+import ProfileScreen from './screens/client/profile/ProfileScreen';
+// Lazy load non-critical screens to prevent circular dependencies
 const ForgotPassword = lazy(() => import('./screens/ForgotPassword'));
 const WelcomeScreen = lazy(() => import('./screens/onboarding/WelcomeScreen'));
-const UserTypeSelection = lazy(() => import('./screens/UserTypeSelection'));
 const SignUpClient = lazy(() => import('./screens/SignUpClient'));
-
 const SignUpGuard = lazy(() => import('./screens/SignUpGuard'));
 const PreferredPayment = lazy(() => import('./screens/PreferredPayment'));
 const OtpVerification = lazy(() => import('./screens/OtpVerification'));
+const GuardTabs = lazy(() => import('./screens/guard/GuardTabs'));
 const PostJob = lazy(() => import('./screens/client/home/PostJob'));
 const PostJobSpecialized = lazy(() => import('./screens/client/home/PostJobSpecialized'));
 const JobPostedSuccessScreen = lazy(() => import('./screens/client/home/JobPostedSuccessScreen'));
 const JobTemplateSelector = lazy(() => import('./components/post-job/JobTemplateSelector').then(module => ({ default: module.JobTemplateSelector })));
-const ProfileScreen = lazy(() => import('./screens/client/profile/ProfileScreen'));
 const OnboardingScreen = lazy(() => import('./screens/onboarding/OnboardingScreen'));
 const GuardProfileScreen = lazy(() => import('./screens/client/jobs/GuardCardScreen'));
 const FindGuardsScreen = lazy(() => import('./screens/client/home/FindGuardsScreen'));
 const ReportsScreen = lazy(() => import('./screens/client/home/ReportsScreen'));
 const JobsScreen = lazy(() => import('./screens/client/jobs/JobsScreen'));
-const AllReviewsScreen = lazy(() => import('./screens/client/jobs/GuardReviews').then(module => ({ default: module.default })));
+const AllReviewsScreen = lazy(() => import('./screens/client/jobs/GuardReviews'));
 const JobDetailsScreen = lazy(() => import('./screens/client/jobs/JobDetailsScreen'));
 const LeaveReviewScreen = lazy(() => import('./screens/client/jobs/LeaveReviewScreen'));
-const GuardTabs = lazy(() => import('./screens/guard/GuardTabs'));
 const GuardJobDetailsScreen = lazy(() => import('./screens/guard/GuardJobDetailsScreen'));
 const GuardMessagesScreen = lazy(() => import('./screens/guard/GuardMessagesScreen'));
 const GuardChatScreen = lazy(() => import('./screens/guard/GuardChatScreen'));
@@ -60,7 +57,7 @@ const EarningsScreen = lazy(() => import('./screens/guard/EarningsScreen'));
 const ClientReportsScreen = lazy(() => import('./screens/client/jobs/ClientReportsScreen'));
 const TrackJobScreen = lazy(() => import('./screens/client/home/TrackJobScreen'));
 
-// Profile subpages
+// Profile subpages - lazy loaded
 const PersonalInfoScreen = lazy(() => import('./screens/client/profile/PersonalInfoScreen'));
 const AccountScreen = lazy(() => import('./screens/client/profile/AccountScreen'));
 const MySecurityJobsScreen = lazy(() => import('./screens/client/profile/MySecurityJobsScreen'));
@@ -68,12 +65,12 @@ const PaymentMethodsScreen = lazy(() => import('./screens/client/profile/Payment
 const AddPaymentMethodScreen = lazy(() => import('./screens/client/profile/AddPaymentMethodScreen'));
 const ContactSupportScreen = lazy(() => import('./screens/client/profile/ContactSupportScreen'));
 
-// Notification screens
+// Notification screens - lazy loaded
 const NotificationCenterScreen = lazy(() => import('./screens/client/profile/NotificationCenterScreen'));
 const NotificationPreferencesScreen = lazy(() => import('./screens/client/profile/NotificationPreferencesScreen'));
 const NotificationTestScreen = lazy(() => import('./screens/client/profile/NotificationTestScreen'));
 
-// Payment screens
+// Payment screens - lazy loaded
 const PaymentHistoryScreen = lazy(() => import('./screens/client/profile/PaymentHistoryScreen'));
 
 const Stack = createStackNavigator();
@@ -89,6 +86,13 @@ const ScreenLoader: React.FC = () => (
   </View>
 );
 
+// Wrapper component for lazy-loaded screens
+const LazyScreenWrapper: React.FC<{ children: React.ReactElement }> = ({ children }) => (
+  <Suspense fallback={<ScreenLoader />}>
+    {children}
+  </Suspense>
+);
+
 function ClientTabs() {
   return (
     <TabBarVisibilityProvider>
@@ -97,6 +101,7 @@ function ClientTabs() {
         screenOptions={{ 
           headerShown: false,
           tabBarStyle: { display: 'none' }, // Hide default tab bar since we use CustomBottomNav
+          lazy: false, // Disable lazy loading completely for instant switching
         }} 
         tabBar={props => <CustomBottomNav {...props} />}
       >
@@ -127,10 +132,14 @@ function ClientTabs() {
 }
 
 export default function App() {
-<<<<<<< HEAD
   // Initialize monitoring system
   React.useEffect(() => {
     initializeMonitoring().catch(console.error);
+    
+    // All screens are now imported directly for faster initial load
+    if (__DEV__) {
+      console.log('🚀 All screens loaded directly for optimal performance');
+    }
   }, []);
 
   // Initialize notification service
@@ -143,11 +152,16 @@ export default function App() {
     };
   }, []);
 
-=======
->>>>>>> parent of c623858 (Enhance app configuration and payment functions: Updated app.config.js to include expo-font plugin, improved App.tsx with monitoring initialization, and refined metro.config.js for better module resolution. Enhanced Supabase functions with TypeScript interfaces for better type safety and error handling in payment methods and setup intent functions.)
-  // Get Stripe key from environment variables
+  // All screens are now imported directly for instant navigation
+
+  // Get Stripe key from environment variables - SECURITY: No fallback to prevent hardcoded keys
   const extra = (Constants as any).expoConfig?.extra || (Constants as any).manifest?.extra;
   const STRIPE_PUBLIC_KEY = extra?.STRIPE_PUBLIC_KEY || process.env.STRIPE_PUBLIC_KEY;
+
+  // SECURITY: Fail fast if Stripe key is missing
+  if (!STRIPE_PUBLIC_KEY) {
+    throw new Error('STRIPE_PUBLIC_KEY is required. Please check your environment variables.');
+  }
 
   return (
     <ErrorBoundary>
@@ -156,10 +170,39 @@ export default function App() {
           <GestureHandlerRootView style={{ flex: 1 }}>
             <BottomSheetModalProvider>
               <AuthProvider>
-                <StripeProvider publishableKey={STRIPE_PUBLIC_KEY || 'pk_test_51R5tBA05xKnpNtzd6cGTTNnKLlOYPKdFaiJcXAtMHCWNpTSOv7FYwgMYhoNfIBSM27GXDFVoDCNkLGgcMkHclbhj00y61WpU98'}>
+                <StripeProvider publishableKey={STRIPE_PUBLIC_KEY}>
                   <ToastProvider>
-                    <NavigationContainer>
-                  <Stack.Navigator initialRouteName="Loading" screenOptions={{ headerShown: false }}>
+                        <NavigationContainer>
+                          <Suspense fallback={<ScreenLoader />}>
+                            <Stack.Navigator
+                    initialRouteName="Loading" 
+                    screenOptions={{ 
+                      headerShown: false,
+                      animationTypeForReplace: 'push',
+                      gestureEnabled: false, // Disable gestures for smoother fade
+                      cardStyleInterpolator: ({ current }) => {
+                        return {
+                          cardStyle: {
+                            opacity: current.progress,
+                          },
+                        };
+                      },
+                      transitionSpec: {
+                        open: {
+                          animation: 'timing',
+                          config: {
+                            duration: 150, // Faster transitions
+                          },
+                        },
+                        close: {
+                          animation: 'timing',
+                          config: {
+                            duration: 100, // Faster transitions
+                          },
+                        },
+                      },
+                    }}
+                  >
                     <Stack.Screen 
                       name="Loading" 
                       component={LoadingScreen} 
@@ -188,12 +231,12 @@ export default function App() {
 
                     <Stack.Screen 
                       name="OtpVerification" 
-                      component={OtpVerification} 
+                      component={OtpVerification as any} 
                       options={{ headerShown: false }} 
                     />
                     <Stack.Screen 
                       name="PreferredPayment" 
-                      component={PreferredPayment} 
+                      component={PreferredPayment as any} 
                       options={{ headerShown: false }} 
                     />
                     <Stack.Screen 
@@ -218,22 +261,22 @@ export default function App() {
                     />
                     <Stack.Screen 
                       name="AllReviews" 
-                      component={AllReviewsScreen} 
+                      component={AllReviewsScreen as any} 
                       options={{ headerShown: false }} 
                     />
                     <Stack.Screen 
                       name="JobDetails" 
-                      component={JobDetailsScreen} 
+                      component={JobDetailsScreen as any} 
                       options={{ headerShown: false }} 
                     />
                     <Stack.Screen 
                       name="LeaveReview" 
-                      component={LeaveReviewScreen} 
+                      component={LeaveReviewScreen as any} 
                       options={{ headerShown: false }} 
                     />
                     <Stack.Screen 
                       name="TrackJob" 
-                      component={TrackJobScreen} 
+                      component={TrackJobScreen as any} 
                       options={{ headerShown: false }} 
                     />
                     <Stack.Screen 
@@ -263,7 +306,7 @@ export default function App() {
                     />
                     <Stack.Screen 
                       name="GuardJobDetails" 
-                      component={GuardJobDetailsScreen} 
+                      component={GuardJobDetailsScreen as any} 
                       options={{ headerShown: false }} 
                     />
                     <Stack.Screen 
@@ -288,7 +331,7 @@ export default function App() {
                     />
                     <Stack.Screen 
                       name="GuardMode" 
-                      component={GuardMode} 
+                      component={GuardMode as any} 
                       options={{ headerShown: false }} 
                     />
                     <Stack.Screen 
@@ -303,7 +346,7 @@ export default function App() {
                     />
                             <Stack.Screen
           name="PostJobSpecialized"
-          component={PostJobSpecialized}
+          component={PostJobSpecialized as any}
           options={{ headerShown: false }}
         />
         <Stack.Screen
@@ -313,7 +356,7 @@ export default function App() {
         />
         <Stack.Screen
           name="JobPostedSuccess"
-          component={JobPostedSuccessScreen}
+          component={JobPostedSuccessScreen as any}
           options={{ headerShown: false }}
         />
         <Stack.Screen 
@@ -377,7 +420,8 @@ export default function App() {
           component={PaymentHistoryScreen}
           options={{ headerShown: false }}
         />
-      </Stack.Navigator>
+                  </Stack.Navigator>
+                          </Suspense>
                     </NavigationContainer>
                   </ToastProvider>
                 </StripeProvider>

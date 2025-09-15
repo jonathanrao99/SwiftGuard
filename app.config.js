@@ -1,21 +1,38 @@
 // Environment variables are loaded from .env file automatically by Expo
 import appJson from './app.json';
 
+// SECURITY: Validate critical environment variables
+const requiredEnvVars = {
+  SUPABASE_URL: process.env.SUPABASE_URL,
+  SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY,
+  STRIPE_PUBLIC_KEY: process.env.STRIPE_PUBLIC_KEY,
+};
+
+const optionalEnvVars = {
+  GOOGLE_PLACES_API_KEY: process.env.GOOGLE_PLACES_API_KEY,
+  SENTRY_DSN: process.env.SENTRY_DSN,
+};
+
+// Check for missing required environment variables
+const missingVars = Object.entries(requiredEnvVars)
+  .filter(([key, value]) => !value)
+  .map(([key]) => key);
+
+if (missingVars.length > 0) {
+  throw new Error(`Missing required environment variables: ${missingVars.join(', ')}`);
+}
+
 export default {
   expo: {
     ...appJson.expo,
-<<<<<<< HEAD
     plugins: [
       "expo-font",
       "expo-video"
     ],
-=======
->>>>>>> parent of c623858 (Enhance app configuration and payment functions: Updated app.config.js to include expo-font plugin, improved App.tsx with monitoring initialization, and refined metro.config.js for better module resolution. Enhanced Supabase functions with TypeScript interfaces for better type safety and error handling in payment methods and setup intent functions.)
     extra: {
       ...appJson.expo.extra,
-      SUPABASE_URL: process.env.SUPABASE_URL,
-      SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY,
-      GOOGLE_PLACES_API_KEY: process.env.GOOGLE_PLACES_API_KEY,
+      ...requiredEnvVars,
+      ...optionalEnvVars,
     },
   },
 }; 

@@ -66,8 +66,8 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
     }
 
     // Basic password validation
-    if (password.length < 6) {
-      Alert.alert('Invalid Password', 'Password must be at least 6 characters long.');
+    if (password.length < 8) {
+      Alert.alert('Invalid Password', 'Password must be at least 8 characters long.');
       return;
     }
 

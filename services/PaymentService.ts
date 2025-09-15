@@ -47,32 +47,25 @@ class PaymentService {
    */
   async createPaymentIntent(params: CreatePaymentIntentParams): Promise<{ success: boolean; data?: PaymentStatus; error?: string }> {
     try {
-      const response = await fetch(`${process.env.EXPO_PUBLIC_SUPABASE_URL}/functions/v1/create-payment-intent`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY}`,
-        },
-        body: JSON.stringify({
+      const response = await supabase.functions.invoke('create-payment-intent', {
+        body: {
           jobId: params.jobId,
           amount: params.amount,
           currency: params.currency,
           clientId: params.clientId,
           guardId: params.guardId,
           description: params.description,
-        }),
+        },
       });
 
-      const result = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(result.error || 'Failed to create payment intent');
+      if (response.error) {
+        throw new Error(response.error.message || 'Failed to create payment intent');
       }
 
       // Update job with payment intent ID
-      await this.updateJobPaymentIntent(params.jobId, result.data.id);
+      await this.updateJobPaymentIntent(params.jobId, response.data.id);
 
-      return { success: true, data: result.data };
+      return { success: true, data: response.data };
     } catch (error) {
       console.error('Error creating payment intent:', error);
       return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };

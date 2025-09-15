@@ -6,7 +6,7 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
-    "newArchEnabled": false,
+    "newArchEnabled": true,
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
@@ -50,7 +50,7 @@
     },
     "extra": {
       "eas": {
-        "projectId": "61411682-2546-4ab5-b319-1bba68870668"
+        "projectId": "874f6364-e899-4f7d-bf41-55cf0a8f93bf"
       }
     },
     "runtimeVersion": {
@@ -59,7 +59,7 @@
     "updates": {
       "enabled": false,
       "checkAutomatically": "NEVER",
-      "url": "https://u.expo.dev/61411682-2546-4ab5-b319-1bba68870668"
+      "url": "https://u.expo.dev/874f6364-e899-4f7d-bf41-55cf0a8f93bf"
     }
   }
 }

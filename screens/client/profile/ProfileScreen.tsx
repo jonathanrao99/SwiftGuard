@@ -13,7 +13,6 @@ import Animated, {
   withSpring, 
   withTiming, 
   withDelay,
-  withSequence,
   runOnJS
 } from 'react-native-reanimated';
 import TabScreenWrapper from '../../../components/TabScreenWrapper';
@@ -60,29 +59,12 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
   const isFocused = useTabFocus();
   const [darkMode, setDarkMode] = useState(false);
 
-  // Animation values
-  const headerOpacity = useSharedValue(0);
-  const headerTranslateY = useSharedValue(-50);
-  const userInfoOpacity = useSharedValue(0);
-  const userInfoScale = useSharedValue(0.8);
-  const menuItemsOpacity = useSharedValue(0);
-  const menuItemsTranslateY = useSharedValue(30);
-  const logoutButtonOpacity = useSharedValue(0);
-  const logoutButtonScale = useSharedValue(0.9);
+  // Simplified animation values for fade transitions
+  const containerOpacity = useSharedValue(0);
 
   useEffect(() => {
-    // Start animations when component mounts
-    headerOpacity.value = withTiming(1, { duration: 800 });
-    headerTranslateY.value = withSpring(0, { damping: 15, stiffness: 100 });
-    
-    userInfoOpacity.value = withDelay(200, withTiming(1, { duration: 600 }));
-    userInfoScale.value = withDelay(200, withSpring(1, { damping: 15, stiffness: 100 }));
-    
-    menuItemsOpacity.value = withDelay(400, withTiming(1, { duration: 600 }));
-    menuItemsTranslateY.value = withDelay(400, withSpring(0, { damping: 15, stiffness: 100 }));
-    
-    logoutButtonOpacity.value = withDelay(600, withTiming(1, { duration: 600 }));
-    logoutButtonScale.value = withDelay(600, withSpring(1, { damping: 15, stiffness: 100 }));
+    // Simple fade-in animation for the entire container
+    containerOpacity.value = withTiming(1, { duration: 150 });
   }, []);
 
   useEffect(() => {
@@ -99,29 +81,15 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
   };
 
   const handleLogout = async () => {
-    await signOut();
+    // Immediate navigation for better UX
     navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
+    // Sign out in background
+    signOut().catch(console.error);
   };
 
-  // Animated styles
-  const headerAnimatedStyle = useAnimatedStyle(() => ({
-    opacity: headerOpacity.value,
-    transform: [{ translateY: headerTranslateY.value }],
-  }));
-
-  const userInfoAnimatedStyle = useAnimatedStyle(() => ({
-    opacity: userInfoOpacity.value,
-    transform: [{ scale: userInfoScale.value }],
-  }));
-
-  const menuItemsAnimatedStyle = useAnimatedStyle(() => ({
-    opacity: menuItemsOpacity.value,
-    transform: [{ translateY: menuItemsTranslateY.value }],
-  }));
-
-  const logoutButtonAnimatedStyle = useAnimatedStyle(() => ({
-    opacity: logoutButtonOpacity.value,
-    transform: [{ scale: logoutButtonScale.value }],
+  // Simplified animated style for fade transition
+  const containerAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: containerOpacity.value,
   }));
 
   return (
@@ -133,7 +101,7 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
       >
         <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
         {/* Header matching JobsScreen styling */}
-        <Animated.View style={[styles.header, headerAnimatedStyle]}>
+        <Animated.View style={[styles.header, containerAnimatedStyle]}>
           <View style={{ width: 24 }} />
           <Text style={styles.headerTitle}>Profile</Text>
           <View style={{ width: 24 }} />
@@ -146,7 +114,7 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
             showsVerticalScrollIndicator={false}
           >
                     {/* User Info Section */}
-          <Animated.View style={userInfoAnimatedStyle}>
+          <Animated.View style={containerAnimatedStyle}>
             <Pressable style={styles.userInfoCard} android_ripple={{ color: colors.border }}>
               <TouchableOpacity 
                 style={styles.userInfoSection} 
@@ -170,7 +138,7 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
           <View style={styles.divider} />
 
           {/* General Settings Section */}
-                      <Animated.View style={menuItemsAnimatedStyle}>
+                      <Animated.View style={containerAnimatedStyle}>
               <View style={styles.sectionContainer}>
                 <Text style={styles.sectionTitle}>General</Text>
                 
@@ -278,7 +246,7 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
           <View style={styles.divider} />
 
           {/* Logout Button */}
-          <Animated.View style={logoutButtonAnimatedStyle}>
+          <Animated.View style={containerAnimatedStyle}>
           <Pressable style={styles.logoutButton} android_ripple={{ color: colors.primary }}>
             <TouchableOpacity style={styles.logoutButtonInner} activeOpacity={0.7} onPress={handleLogout}>
               <MaterialIcons name="logout" size={20} color={colors.surface} style={{ marginRight: spacing.sm }} />

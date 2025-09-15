@@ -1,7 +1,8 @@
-import * as Notifications from 'expo-notifications';
+// import * as Notifications from 'expo-notifications'; // Removed - will install later
 import { Platform, Alert } from 'react-native';
 import { supabase } from '../supabaseClient';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import Constants from 'expo-constants';
 
 // Notification types
 export type NotificationType = 
@@ -58,14 +59,33 @@ class NotificationService {
     if (this.isInitialized) return;
 
     try {
+      // TEMPORARILY DISABLED - expo-notifications removed
+      if (__DEV__) {
+        console.log('⚠️ Notification service temporarily disabled - expo-notifications removed');
+      }
+      this.isInitialized = true;
+      return;
+
+      // TODO: Re-enable when expo-notifications is installed
+      /*
+      // Check if running in Expo Go (limited notification support)
+      const isExpoGo = Constants.appOwnership === 'expo';
+      if (isExpoGo) {
+        console.warn('⚠️ Running in Expo Go - notification functionality is limited. Use a development build for full functionality.');
+        this.isInitialized = true;
+        return;
+      }
+
       // Configure notification behavior
       await this.configureNotifications();
       
       // Request permissions
       await this.requestPermissions();
       
-      // Get push token
-      await this.getPushToken();
+      // Get push token (skip in Expo Go)
+      if (!isExpoGo) {
+        await this.getPushToken();
+      }
       
       // Set up notification listeners
       this.setupNotificationListeners();
@@ -75,6 +95,7 @@ class NotificationService {
       
       this.isInitialized = true;
       console.log('✅ Notification service initialized successfully');
+      */
     } catch (error) {
       console.error('❌ Failed to initialize notification service:', error);
       throw error;
@@ -148,8 +169,23 @@ class NotificationService {
    */
   private async getPushToken(): Promise<void> {
     try {
+      // Skip push token in Expo Go
+      const isExpoGo = Constants.appOwnership === 'expo';
+      if (isExpoGo) {
+        console.log('⚠️ Skipping push token generation in Expo Go');
+        return;
+      }
+
+      // Get project ID from app config
+      const projectId = Constants.expoConfig?.extra?.expoProjectId || Constants.expoConfig?.projectId;
+      
+      if (!projectId) {
+        console.warn('⚠️ No Expo project ID found, skipping push token generation');
+        return;
+      }
+
       const token = await Notifications.getExpoPushTokenAsync({
-        projectId: process.env.EXPO_PROJECT_ID || 'your-project-id',
+        projectId: projectId,
       });
       
       this.pushToken = token.data;

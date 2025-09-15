@@ -30,7 +30,7 @@ export default function SignUpGuard({ navigation }: SignUpGuardProps) {
   const [gender, setGender] = useState('');
   const [experienceLevel, setExperienceLevel] = useState('');
   const [yearsExperience, setYearsExperience] = useState('');
-  const [certifications, setCertifications] = useState([]);
+  const [certifications, setCertifications] = useState<any[]>([]);
   const [availability, setAvailability] = useState('');
   const [address, setAddress] = useState('');
   const [bio, setBio] = useState('');
@@ -72,7 +72,6 @@ export default function SignUpGuard({ navigation }: SignUpGuardProps) {
       return;
     }
 
-<<<<<<< HEAD
       // Create user with Supabase Auth using correct AuthContext signature
       const { error } = await signUp(email, password, {
         first_name: firstName,
@@ -87,30 +86,6 @@ export default function SignUpGuard({ navigation }: SignUpGuardProps) {
         bio,
         emergency_contact: emergencyContact,
         role: 'guard',
-=======
-    try {
-      // Create user with Supabase Auth
-      const { data, error } = await signUp({
-        email,
-        password,
-        options: {
-          data: {
-            first_name: firstName,
-            last_name: lastName,
-            phone,
-            gender,
-            dob,
-            experience_level: experienceLevel,
-            years_experience: yearsExperience,
-            certifications,
-            availability,
-            address,
-            bio,
-            emergency_contact: emergencyContact,
-            role: 'guard',
-          },
-        },
->>>>>>> parent of c623858 (Enhance app configuration and payment functions: Updated app.config.js to include expo-font plugin, improved App.tsx with monitoring initialization, and refined metro.config.js for better module resolution. Enhanced Supabase functions with TypeScript interfaces for better type safety and error handling in payment methods and setup intent functions.)
       });
 
       if (error) {
@@ -171,15 +146,30 @@ export default function SignUpGuard({ navigation }: SignUpGuardProps) {
     }
   };
 
+  if (isLoading) {
+    return (
+      <View style={styles.container}>
+        <LoadingSpinner text="Creating account..." />
+      </View>
+    );
+  }
+
   return (
     <>
       <StatusBar translucent backgroundColor="transparent" barStyle="dark-content" />
     <View style={styles.safe}>
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : null} style={styles.container}>
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.container}>
         <ScrollView contentContainerStyle={styles.innerContainer} keyboardShouldPersistTaps="handled">
           
           <Text style={styles.header}>Security Sign Up</Text>
           <Text style={styles.subheader}>Join our guard community.</Text>
+
+          {error && (
+            <View style={styles.errorContainer}>
+              <MaterialIcons name="error-outline" size={20} color="#DC2626" />
+              <Text style={styles.errorMessage}>{error}</Text>
+            </View>
+          )}
 
           {/* Shared Fields */}
           <View style={styles.rowContainer}>
@@ -538,4 +528,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   errorText: { color: 'red', fontSize: 12, marginTop: -14, marginBottom: 4 },
+  errorContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FEE2E2',
+    padding: 16,
+    borderRadius: 8,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: '#DC2626',
+  },
+  errorMessage: {
+    color: '#DC2626',
+    fontSize: 14,
+    marginLeft: 12,
+    flex: 1,
+  },
 }); 

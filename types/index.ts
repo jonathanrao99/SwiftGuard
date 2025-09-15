@@ -64,6 +64,9 @@ export interface Job {
   manager_phone: string;
   status: 'pending' | 'paid' | 'active' | 'completed' | 'cancelled';
   payment_intent_id?: string;
+  payment_status?: 'pending' | 'paid' | 'completed' | 'refunded' | 'disputed';
+  payment_amount?: number;
+  payment_currency?: string;
   created_at: string;
   updated_at: string;
   job_guards?: JobGuard[];
@@ -391,50 +394,4 @@ export interface PaymentWebhook {
   processed_at?: string;
 }
 
-// Update Job interface to include payment fields
-export interface Job {
-  id: string;
-  client_id: string;
-  title: string;
-  description?: string;
-  location: string;
-  venue_type: string;
-  custom_venue_type?: string;
-  recurring_mode: string;
-  recurring_pattern_type?: 'weekly' | 'monthly';
-  event_dates: string[];
-  start_time: string;
-  end_time: string;
-  duration: number;
-  num_guards: number;
-  hourly_pay: number;
-  total_amount: number;
-  requirements?: string[];
-  other_requirement?: string;
-  manager_name: string;
-  manager_phone: string;
-  status: 'pending' | 'paid' | 'active' | 'completed' | 'cancelled';
-  payment_intent_id?: string;
-  payment_status?: 'pending' | 'paid' | 'completed' | 'refunded' | 'disputed';
-  payment_amount?: number;
-  payment_currency?: string;
-  created_at: string;
-  updated_at: string;
-  job_guards?: JobGuard[];
-  priority_level?: 'low' | 'medium' | 'high' | 'urgent';
-  special_instructions?: string;
-  client_contact_info?: {
-    primary_contact: string;
-    secondary_contact?: string;
-    emergency_contact: string;
-  };
-  
-  // Security-specific fields
-  geofence?: {
-    latitude: number;
-    longitude: number;
-    radius: number; // in meters
-  };
-  checkpoint_locations?: CheckpointLocation[];
-  emergency_procedures?: string;
-} 
+// REMOVED: Duplicate Job interface - consolidated with the one above 

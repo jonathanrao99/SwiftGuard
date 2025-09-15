@@ -1,4 +1,5 @@
 import { supabase } from '../supabaseClient';
+import { Job } from '../types';
 
 export interface JobData {
   title: string;
@@ -11,19 +12,7 @@ export interface JobData {
   client_id: string;
 }
 
-export interface Job {
-  id: string;
-  client_id: string;
-  title: string;
-  description: string;
-  location: string;
-  pay: number;
-  start_time: string;
-  end_time: string;
-  num_guards: number;
-  status: 'open' | 'assigned' | 'in_progress' | 'completed' | 'cancelled';
-  created_at: string;
-}
+// REMOVED: Duplicate Job interface - use the one from types/index.ts instead
 
 export interface JobGuard {
   id: string;

@@ -39,9 +39,9 @@ interface JobCardProps {
 }
 
 const ANIMATION_CONFIG = {
-  damping: 15,
-  stiffness: 300,
-  mass: 1,
+  damping: 20,
+  stiffness: 400,
+  mass: 0.8,
 } as const;
 
 const MAX_AVATARS = 2;
@@ -176,8 +176,8 @@ const OptimizedJobCard: React.FC<JobCardProps> = ({
 
   const handlePress = useCallback(() => {
     if (onPress) {
-      // Haptic feedback on press
-      scale.value = withTiming(1.02, { duration: 100 }, () => {
+      // Immediate press feedback
+      scale.value = withTiming(1.01, { duration: 50 }, () => {
         scale.value = withSpring(1, ANIMATION_CONFIG);
       });
       onPress(job.id);
