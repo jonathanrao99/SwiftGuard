@@ -2,7 +2,24 @@ import React, { lazy, Suspense } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { Platform, View, ActivityIndicator } from 'react-native';
-import { StripeProvider } from '@stripe/stripe-react-native';
+// Conditionally import Stripe for native platforms only
+let StripeProvider: any = null;
+if (Platform.OS !== 'web') {
+  try {
+    const StripeModule = require('@stripe/stripe-react-native');
+    StripeProvider = StripeModule.StripeProvider;
+  } catch (error) {
+    console.warn('Stripe module not available for this platform');
+  }
+}
+
+// Wrapper component for conditional Stripe rendering
+const AppWrapper: React.FC<{ children: React.ReactNode; stripeKey: string }> = ({ children, stripeKey }) => {
+  if (StripeProvider) {
+    return <StripeProvider publishableKey={stripeKey}>{children}</StripeProvider>;
+  }
+  return <>{children}</>;
+};
 import { enableScreens } from 'react-native-screens';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
@@ -173,11 +190,11 @@ export default function App() {
           <GestureHandlerRootView style={{ flex: 1 }}>
             <BottomSheetModalProvider>
               <AuthProvider>
-                <StripeProvider publishableKey={STRIPE_PUBLIC_KEY}>
+                <AppWrapper stripeKey={STRIPE_PUBLIC_KEY}>
                   <ToastProvider>
-                        <NavigationContainer>
-                          <Suspense fallback={<ScreenLoader />}>
-                            <Stack.Navigator
+                    <NavigationContainer>
+                      <Suspense fallback={<ScreenLoader />}>
+                        <Stack.Navigator
                     initialRouteName="Loading" 
                     screenOptions={{ 
                       headerShown: false,
@@ -423,11 +440,11 @@ export default function App() {
           component={PaymentHistoryScreen}
           options={{ headerShown: false }}
         />
-                  </Stack.Navigator>
-                          </Suspense>
+                        </Stack.Navigator>
+                      </Suspense>
                     </NavigationContainer>
                   </ToastProvider>
-                </StripeProvider>
+                </AppWrapper>
               </AuthProvider>
             </BottomSheetModalProvider>
           </GestureHandlerRootView>
