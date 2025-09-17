@@ -49,17 +49,13 @@
       "favicon": "./assets/favicon.png"
     },
     "extra": {
-      "eas": {
-        "projectId": "874f6364-e899-4f7d-bf41-55cf0a8f93bf"
-      }
     },
     "runtimeVersion": {
       "policy": "appVersion"
     },
     "updates": {
       "enabled": false,
-      "checkAutomatically": "NEVER",
-      "url": "https://u.expo.dev/874f6364-e899-4f7d-bf41-55cf0a8f93bf"
+      "checkAutomatically": "NEVER"
     }
   }
 }

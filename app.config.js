@@ -1,5 +1,11 @@
-// Environment variables are loaded from .env file automatically by Expo
-import appJson from './app.json';
+// Load environment variables from .env file
+import { config } from 'dotenv';
+
+// Load .env file
+config();
+
+// Import app.json using require for better compatibility
+const appJson = require('./app.json');
 
 // SECURITY: Validate critical environment variables
 const requiredEnvVars = {
