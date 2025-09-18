@@ -428,11 +428,6 @@ export default function App() {
           component={NotificationPreferencesScreen}
           options={{ headerShown: false }}
         />
-        <Stack.Screen
-          name="NotificationTest"
-          component={NotificationTestScreen}
-          options={{ headerShown: false }}
-        />
         
         {/* Payment screens */}
         <Stack.Screen

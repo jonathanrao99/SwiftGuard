@@ -8,12 +8,12 @@ import {
   StatusBar,
   Dimensions,
   TouchableOpacity,
-  SafeAreaView,
   Alert,
   Image,
   useColorScheme,
   ActivityIndicator 
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, { 
   useSharedValue, 
   useAnimatedStyle, 
@@ -57,7 +57,7 @@ const ANIMATION_CONFIG = {
   stiffness: 100,
   mass: 1,
   overshootClamping: false,
-  restDisplacementThreshold: 0.01,
+        // restDisplacementThreshold: 0.01, // Removed - not supported in current version
   restSpeedThreshold: 0.01,
 } as const;
 
@@ -281,7 +281,7 @@ export default function GuardDashboard({ navigation }: GuardDashboardProps) {
       return;
     }
 
-    let location = null;
+    let location: Location.LocationObject | null = null;
     try {
       let { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
@@ -305,8 +305,8 @@ export default function GuardDashboard({ navigation }: GuardDashboardProps) {
           job_id: dummyJobId,
           guard_id: user.id,
           client_id: dummyClientId,
-          location_latitude: location?.coords.latitude,
-          location_longitude: location?.coords.longitude,
+          location_latitude: location?.coords?.latitude,
+          location_longitude: location?.coords?.longitude,
         },
       ]);
 
@@ -510,7 +510,7 @@ function QuickActionButton({ icon, label, color = '#e0e7ff', onPress, darkMode =
     'shield-plus': <MaterialCommunityIcons name="shield-plus" size={48} color={iconColor} />,
     'play-circle-outline': <MaterialIcons name="play-circle-outline" size={48} color={iconColor} />,
     'pause-circle-outline': <MaterialIcons name="pause-circle-outline" size={48} color={iconColor} />,
-    'alert-circle-outline': <MaterialIcons name="alert-circle-outline" size={48} color={iconColor} />,
+    'alert-circle-outline': <MaterialIcons name="warning" size={48} color={iconColor} />,
     earnings: <MaterialIcons name="attach-money" size={48} color={iconColor} />,
   };
 

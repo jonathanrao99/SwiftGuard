@@ -54,11 +54,14 @@ class MonitoringSetup {
       const extra = (Constants as any).expoConfig?.extra || (Constants as any).manifest?.extra;
       this.config.sentryDsn = this.config.sentryDsn || extra?.SENTRY_DSN;
 
-      logger.info('Initializing monitoring systems', {
-        environment: this.config.environment,
-        debugMode: this.config.debugMode,
-        hasSentryDsn: !!this.config.sentryDsn,
-      });
+      // Only log initialization in debug mode
+      if (this.config.debugMode) {
+        logger.info('Initializing monitoring systems', {
+          environment: this.config.environment,
+          debugMode: this.config.debugMode,
+          hasSentryDsn: !!this.config.sentryDsn,
+        });
+      }
 
       // Add error boundary for monitoring initialization
       const safeInitialize = async () => {
@@ -67,7 +70,9 @@ class MonitoringSetup {
           if (this.config.sentryDsn) {
             await this.initializeSentry();
           } else {
-            logger.warn('Sentry DSN not provided, skipping Sentry initialization');
+            if (this.config.debugMode) {
+              logger.warn('Sentry DSN not provided, skipping Sentry initialization');
+            }
           }
           
           await this.initializeCrashReporting();
@@ -81,7 +86,9 @@ class MonitoringSetup {
       await safeInitialize();
 
       this.isInitialized = true;
-      logger.info('Monitoring systems initialized successfully');
+      if (this.config.debugMode) {
+        logger.info('Monitoring systems initialized successfully');
+      }
     } catch (error) {
       logger.error('Failed to initialize monitoring systems', {}, error as Error);
       throw error;
@@ -162,7 +169,9 @@ class MonitoringSetup {
   private async initializeCrashReporting(): Promise<void> {
     try {
       await initCrashReporting();
-      logger.info('Crash reporting initialized successfully');
+      if (this.config.debugMode) {
+        logger.info('Crash reporting initialized successfully');
+      }
     } catch (error) {
       logger.error('Failed to initialize crash reporting', {}, error as Error);
       throw error;
@@ -188,7 +197,9 @@ class MonitoringSetup {
       // Monitor render performance
       this.monitorRenderPerformance();
       
-      logger.info('Performance monitoring initialized successfully');
+      if (this.config.debugMode) {
+        logger.info('Performance monitoring initialized successfully');
+      }
     } catch (error) {
       logger.error('Failed to initialize performance monitoring', {}, error as Error);
     }
@@ -225,11 +236,14 @@ class MonitoringSetup {
           const response = await originalFetch(...args);
           const duration = Date.now() - startTime;
           
-          logger.logPerformance('network_request', duration, {
-            url: url.replace(/[?&]token=[^&]+/g, 'token=***'), // Remove tokens
-            method: args[1]?.method || 'GET',
-            status: response.status,
-          });
+          // Only log slow requests (>500ms) or errors in development
+          if (this.config.debugMode && (duration > 500 || !response.ok)) {
+            logger.logPerformance('network_request', duration, {
+              url: url.replace(/[?&]token=[^&]+/g, 'token=***'), // Remove tokens
+              method: args[1]?.method || 'GET',
+              status: response.status,
+            });
+          }
           
           return response;
         } catch (error) {
@@ -245,7 +259,9 @@ class MonitoringSetup {
         }
       };
       
-      logger.info('Network performance monitoring initialized');
+      if (this.config.debugMode) {
+        logger.info('Network performance monitoring initialized');
+      }
     } catch (error) {
       logger.error('Failed to initialize network monitoring', {}, error as Error);
     }
@@ -257,7 +273,9 @@ class MonitoringSetup {
   private monitorRenderPerformance(): void {
     try {
       // This would integrate with React DevTools or custom performance monitoring
-      logger.info('Render performance monitoring initialized');
+      if (this.config.debugMode) {
+        logger.info('Render performance monitoring initialized');
+      }
     } catch (error) {
       logger.error('Failed to initialize render monitoring', {}, error as Error);
     }
@@ -269,7 +287,9 @@ class MonitoringSetup {
   private setupErrorBoundaries(): void {
     try {
       // Global error handling is already set up in crashReporting.ts
-      logger.info('Error boundaries configured');
+      if (this.config.debugMode) {
+        logger.info('Error boundaries configured');
+      }
     } catch (error) {
       logger.error('Failed to setup error boundaries', {}, error as Error);
     }

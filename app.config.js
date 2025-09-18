@@ -16,6 +16,8 @@ const requiredEnvVars = {
 
 const optionalEnvVars = {
   GOOGLE_PLACES_API_KEY: process.env.GOOGLE_PLACES_API_KEY,
+  ID_ANALYZER_SERVER_API_KEY: process.env.ID_ANALYZER_SERVER_API_KEY,
+  ID_ANALYZER_RESTRICTED_API_KEY: process.env.ID_ANALYZER_RESTRICTED_API_KEY,
   SENTRY_DSN: process.env.SENTRY_DSN,
 };
 
@@ -35,8 +37,14 @@ export default {
       "expo-font",
       "expo-video"
     ],
+    updates: {
+      url: "https://u.expo.dev/61411682-2546-4ab5-b319-1bba68870668"
+    },
     extra: {
       ...appJson.expo.extra,
+      eas: {
+        projectId: "61411682-2546-4ab5-b319-1bba68870668"
+      },
       ...requiredEnvVars,
       ...optionalEnvVars,
     },

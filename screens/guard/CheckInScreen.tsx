@@ -18,6 +18,9 @@ import { supabase } from '../../supabaseClient';
 import { useAuth } from '../../contexts/AuthContext';
 import { COLORS, SPACING } from '../../theme';
 import ErrorBoundary from '../../components/ErrorBoundary';
+import IDScanner from '../../components/IDScanner';
+import IDVerificationResults from '../../components/IDVerificationResults';
+import { idAnalyzerService } from '../../services/IDAnalyzerService';
 
 interface Job {
   id: string;
@@ -47,6 +50,13 @@ export default function CheckInScreen({ navigation }: { navigation: any }) {
   const [isCheckingIn, setIsCheckingIn] = useState(false);
   const [countdownTimers, setCountdownTimers] = useState<{ [key: string]: CountdownTimer }>({});
   const [isInGuardMode, setIsInGuardMode] = useState(false);
+  
+  // ID Verification states
+  const [showIDScanner, setShowIDScanner] = useState(false);
+  const [showVerificationResults, setShowVerificationResults] = useState(false);
+  const [isVerifyingID, setIsVerifyingID] = useState(false);
+  const [verificationData, setVerificationData] = useState<any>(null);
+  const [verificationError, setVerificationError] = useState<string | null>(null);
 
   useEffect(() => {
     requestLocationPermission();
@@ -281,6 +291,63 @@ export default function CheckInScreen({ navigation }: { navigation: any }) {
     });
   };
 
+  // ID Verification Functions
+  const handleIDVerification = () => {
+    // Check if ID Analyzer is configured
+    const status = idAnalyzerService.getStatus();
+    if (!status.configured) {
+      Alert.alert(
+        'ID Analyzer Not Configured',
+        'ID verification service is not properly configured. Please contact support.',
+        [{ text: 'OK' }]
+      );
+      return;
+    }
+    
+    setShowIDScanner(true);
+  };
+
+  const handleIDScanned = async (imageUri: string) => {
+    try {
+      setIsVerifyingID(true);
+      setVerificationError(null);
+      setShowVerificationResults(true);
+
+      console.log('🔍 Starting ID verification for image:', imageUri);
+      
+      const result = await idAnalyzerService.verifyID(imageUri);
+      
+      if (result.success && result.data) {
+        setVerificationData(result.data);
+        console.log('✅ ID verification successful:', result.data);
+      } else {
+        setVerificationError(result.error || 'ID verification failed');
+        console.error('❌ ID verification failed:', result.error);
+      }
+    } catch (error) {
+      console.error('❌ ID verification error:', error);
+      setVerificationError(error instanceof Error ? error.message : 'Unknown error occurred');
+    } finally {
+      setIsVerifyingID(false);
+    }
+  };
+
+  const handleVerificationError = (error: string) => {
+    setVerificationError(error);
+    setShowVerificationResults(true);
+    setIsVerifyingID(false);
+  };
+
+  const handleCloseScanner = () => {
+    setShowIDScanner(false);
+  };
+
+  const handleCloseResults = () => {
+    setShowVerificationResults(false);
+    setVerificationData(null);
+    setVerificationError(null);
+  };
+
   return (
     <ErrorBoundary>
       <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
@@ -349,6 +416,15 @@ export default function CheckInScreen({ navigation }: { navigation: any }) {
                   <Text style={styles.permissionButtonText}>Enable Location</Text>
                 </TouchableOpacity>
               )}
+              
+              {/* ID Verification Button */}
+              <TouchableOpacity 
+                style={styles.idVerificationButton}
+                onPress={handleIDVerification}
+              >
+                <MaterialIcons name="qr-code-scanner" size={16} color={COLORS.primary} />
+                <Text style={styles.idVerificationButtonText}>Test ID Verification</Text>
+              </TouchableOpacity>
             </View>
           </View>
 
@@ -540,6 +616,23 @@ export default function CheckInScreen({ navigation }: { navigation: any }) {
             )}
           </ScrollView>
         </View>
+
+        {/* ID Scanner Modal */}
+        <IDScanner
+          visible={showIDScanner}
+          onClose={handleCloseScanner}
+          onIDScanned={handleIDScanned}
+          onError={handleVerificationError}
+        />
+
+        {/* ID Verification Results Modal */}
+        <IDVerificationResults
+          visible={showVerificationResults}
+          onClose={handleCloseResults}
+          data={verificationData}
+          loading={isVerifyingID}
+          error={verificationError}
+        />
     </SafeAreaView>
     </ErrorBoundary>
   );
@@ -647,6 +740,24 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 14,
     fontWeight: '600',
+  },
+  idVerificationButton: {
+    backgroundColor: COLORS.primary + '10',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 12,
+    borderWidth: 1,
+    borderColor: COLORS.primary + '30',
+  },
+  idVerificationButtonText: {
+    color: COLORS.primary,
+    fontSize: 14,
+    fontWeight: '600',
+    marginLeft: 8,
   },
   emptyState: {
     alignItems: 'center',

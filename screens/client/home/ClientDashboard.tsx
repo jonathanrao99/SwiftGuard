@@ -9,11 +9,11 @@ import {
   StatusBar, 
   Dimensions, 
   TouchableOpacity, 
-  SafeAreaView, 
   useColorScheme,
   ActivityIndicator,
   Alert 
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, { 
   useSharedValue, 
   useAnimatedStyle, 
@@ -83,7 +83,7 @@ const ANIMATION_CONFIG = {
   stiffness: 100,
   mass: 1,
   overshootClamping: false,
-  restDisplacementThreshold: 0.01,
+        // restDisplacementThreshold: 0.01, // Removed - not supported in current version
   restSpeedThreshold: 0.01,
 } as const;
 
