@@ -145,60 +145,60 @@ export default function IDScanner({ visible, onClose, onIDScanned, onError }: ID
           style={styles.camera}
           facing={cameraType}
           flash={flashMode}
-        >
-          {/* Header */}
-          <View style={styles.header}>
-            <TouchableOpacity style={styles.headerButton} onPress={onClose}>
-              <Feather name="x" size={24} color="white" />
-            </TouchableOpacity>
-            <Text style={styles.headerTitle}>Scan ID Document</Text>
-            <TouchableOpacity style={styles.headerButton} onPress={toggleFlash}>
-              <MaterialIcons 
-                name={flashMode === 'on' ? "flash-on" : "flash-off"} 
-                size={24} 
-                color="white" 
-              />
-            </TouchableOpacity>
+        />
+        
+        {/* Header - Positioned absolutely over camera */}
+        <View style={styles.header}>
+          <TouchableOpacity style={styles.headerButton} onPress={onClose}>
+            <Feather name="x" size={24} color="white" />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Scan ID Document</Text>
+          <TouchableOpacity style={styles.headerButton} onPress={toggleFlash}>
+            <MaterialIcons 
+              name={flashMode === 'on' ? "flash-on" : "flash-off"} 
+              size={24} 
+              color="white" 
+            />
+          </TouchableOpacity>
+        </View>
+
+        {/* Scanning Overlay - Positioned absolutely over camera */}
+        <View style={styles.overlay}>
+          <View style={styles.scanningArea}>
+            <View style={styles.corner} />
+            <View style={[styles.corner, styles.topRight]} />
+            <View style={[styles.corner, styles.bottomLeft]} />
+            <View style={[styles.corner, styles.bottomRight]} />
           </View>
+          <Text style={styles.instructionText}>
+            Position the ID document within the frame
+          </Text>
+        </View>
 
-          {/* Scanning Overlay */}
-          <View style={styles.overlay}>
-            <View style={styles.scanningArea}>
-              <View style={styles.corner} />
-              <View style={[styles.corner, styles.topRight]} />
-              <View style={[styles.corner, styles.bottomLeft]} />
-              <View style={[styles.corner, styles.bottomRight]} />
-            </View>
-            <Text style={styles.instructionText}>
-              Position the ID document within the frame
-            </Text>
-          </View>
+        {/* Bottom Controls - Positioned absolutely over camera */}
+        <View style={styles.bottomControls}>
+          <TouchableOpacity style={styles.controlButton} onPress={pickImageFromGallery}>
+            <MaterialIcons name="photo-library" size={24} color="white" />
+            <Text style={styles.controlButtonText}>Gallery</Text>
+          </TouchableOpacity>
 
-          {/* Bottom Controls */}
-          <View style={styles.bottomControls}>
-            <TouchableOpacity style={styles.controlButton} onPress={pickImageFromGallery}>
-              <MaterialIcons name="photo-library" size={24} color="white" />
-              <Text style={styles.controlButtonText}>Gallery</Text>
-            </TouchableOpacity>
+          <TouchableOpacity 
+            style={[styles.captureButton, isScanning && styles.captureButtonDisabled]} 
+            onPress={takePicture}
+            disabled={isScanning}
+          >
+            {isScanning ? (
+              <ActivityIndicator color="white" size="small" />
+            ) : (
+              <View style={styles.captureButtonInner} />
+            )}
+          </TouchableOpacity>
 
-            <TouchableOpacity 
-              style={[styles.captureButton, isScanning && styles.captureButtonDisabled]} 
-              onPress={takePicture}
-              disabled={isScanning}
-            >
-              {isScanning ? (
-                <ActivityIndicator color="white" size="small" />
-              ) : (
-                <View style={styles.captureButtonInner} />
-              )}
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.controlButton} onPress={toggleCameraType}>
-              <MaterialIcons name="flip-camera-ios" size={24} color="white" />
-              <Text style={styles.controlButtonText}>Flip</Text>
-            </TouchableOpacity>
-          </View>
-        </CameraView>
+          <TouchableOpacity style={styles.controlButton} onPress={toggleCameraType}>
+            <MaterialIcons name="flip-camera-ios" size={24} color="white" />
+            <Text style={styles.controlButtonText}>Flip</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     </Modal>
   );
@@ -246,12 +246,17 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   header: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: SPACING.lg,
     paddingTop: SPACING.xl,
     paddingBottom: SPACING.md,
+    zIndex: 1,
   },
   headerButton: {
     width: 40,
@@ -267,9 +272,14 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   overlay: {
-    flex: 1,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     justifyContent: 'center',
     alignItems: 'center',
+    zIndex: 1,
   },
   scanningArea: {
     width: width * 0.8,
@@ -323,12 +333,17 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   bottomControls: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: SPACING.lg,
     paddingBottom: SPACING.xl,
     paddingTop: SPACING.lg,
+    zIndex: 1,
   },
   controlButton: {
     alignItems: 'center',

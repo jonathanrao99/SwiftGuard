@@ -59,14 +59,14 @@ class IDAnalyzerService {
       formData.append('file_base64', base64Image);
       formData.append('country', 'US'); // Default to US, can be made configurable
       formData.append('outputformat', 'json');
-      formData.append('verify_enabled', 'true');
-      formData.append('verify_documentno', 'true');
-      formData.append('verify_dob', 'true');
-      formData.append('verify_expiry', 'true');
+      formData.append('verify_enabled', '1');
+      formData.append('verify_documentno', '1');
+      formData.append('verify_dob', '1');
+      formData.append('verify_expiry', '1');
 
       console.log('🔍 Sending ID verification request to ID Analyzer...');
 
-      const response = await fetch(`${this.config.baseUrl}/coreapi`, {
+      const response = await fetch(`${this.config.baseUrl}/v2/scan`, {
         method: 'POST',
         body: formData,
         headers: {
@@ -74,8 +74,16 @@ class IDAnalyzerService {
         },
       });
 
-      const result = await response.json();
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('❌ ID Analyzer API error:', response.status, errorText);
+        return {
+          success: false,
+          error: `API Error ${response.status}: ${errorText}`
+        };
+      }
 
+      const result = await response.json();
       console.log('📋 ID Analyzer response:', result);
 
       if (result.error) {
